@@ -20,6 +20,12 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

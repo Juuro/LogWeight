@@ -1,6 +1,6 @@
 name: LogWeight
 options:
-  bundleIdPrefix: dev.logweight
+  bundleIdPrefix: de.juuronina
   deploymentTarget:
     iOS: "17.0"
   developmentLanguage: en
@@ -40,6 +40,9 @@ targets:
         CFBundleDisplayName: LogWeight
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # Required by HealthKit before requestAuthorization / save (crash if missing).
+        NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
+        NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
         UILaunchScreen:
           UIColorName: ""
         UIApplicationSceneManifest:
@@ -53,7 +56,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeight
+        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight
         CODE_SIGN_ENTITLEMENTS: App/iOS/Resources/LogWeight.entitlements
         INFOPLIST_FILE: App/iOS/Resources/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
