@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Xcode build artefacts
+DerivedData/
+build/
+*.xcuserstate
+*.xcodeproj/xcuserdata
+*.xcworkspace/xcuserdata
+
+# XcodeGen output — the canonical source of truth is project.yml.
+# .xcodeproj is regenerated locally via `xcodegen generate`.
+LogWeight.xcodeproj/
+
+# SwiftPM build artefacts (the Package.swift itself is committed)
+.swiftpm/
+.build/
+Package.resolved
+
+# JMAT internal state (planning artefacts live in docs/jmat-reports/)
+.claude/
+
+# Editor / OS noise
+*.swp
+*~
