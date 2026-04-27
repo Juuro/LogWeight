@@ -63,10 +63,15 @@ public final class EntryState {
 
     /// Persists the current value via `store`. The function returns when the save
     /// has either succeeded or failed; UI observes `saveStatus` to react.
+    ///
+    /// Always calls `requestAuthorization()` before `save`. Opening the Health
+    /// app or adding manual samples does **not** grant LogWeight access — the user
+    /// must allow this app in the system HealthKit sheet (or in Settings → Health).
     public func commit(store: HealthKitStore, now: Date = .now) async {
         saveStatus = .saving
         let weight = Weight(valueInKilograms: displayValueInKilograms, recordedAt: now)
         do {
+            try await store.requestAuthorization()
             try await store.save(weight)
             saveStatus = .savedAt(now)
             lastSavedWeight = weight

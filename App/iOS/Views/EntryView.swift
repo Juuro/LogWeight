@@ -1,4 +1,5 @@
 import SwiftUI
+import HealthKit
 import LogWeightCore
 
 /// Stepper-primary entry surface.
@@ -153,8 +154,8 @@ struct EntryView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .accessibilityIdentifier("entry.status.saved")
-        case .failed:
-            Text("Save failed. Check Apple Health permissions in Settings.")
+        case .failed(let code):
+            Text(saveFailureMessage(code: code))
                 .font(.callout)
                 .foregroundStyle(.red)
                 .multilineTextAlignment(.center)
@@ -184,6 +185,21 @@ struct EntryView: View {
             return Color.accentColor.opacity(0.4)
         }
         return Color.accentColor
+    }
+
+    /// Maps `EntryState.SaveStatus.failed` reason codes to user-facing copy.
+    /// Uses `HKError.Code` for values returned from `HealthKitError.saveFailed`.
+    private func saveFailureMessage(code: Int) -> String {
+        if code == HKError.Code.errorAuthorizationDenied.rawValue {
+            return "LogWeight can’t write to Apple Health. Open Settings → Health → Data Access & Devices → LogWeight, then turn on Body Mass."
+        }
+        if code == HKError.Code.errorHealthDataUnavailable.rawValue {
+            return "Health data isn’t available on this device. LogWeight can’t save here."
+        }
+        if code == -3 {
+            return "Health access was denied. You can allow it in Settings → Health → Data Access & Devices → LogWeight."
+        }
+        return "Save failed. Check Apple Health permissions in Settings."
     }
 
     private func commitTypedValueIfNeeded() {

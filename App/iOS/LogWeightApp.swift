@@ -20,6 +20,10 @@ struct LogWeightApp: App {
             EntryView(state: entryState, store: healthKitStore)
                 .modifier(PrivacyRedactionModifier())
                 .task {
+                    // Prompt for HealthKit before first save so "Save" stays one tap
+                    // after the user has allowed access. Configuring the Health app alone
+                    // does not grant LogWeight read/write — this call is required.
+                    try? await healthKitStore.requestAuthorization()
                     await entryState.loadLastWeight(from: healthKitStore)
                 }
         }

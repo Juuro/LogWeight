@@ -56,6 +56,17 @@ final class EntryStateTests: XCTestCase {
         XCTAssertNil(state.lastSavedWeight)
     }
 
+    func testCommitFailsWhenRequestAuthorizationDenied() async {
+        let state = EntryState(initialValueInKilograms: 80.0)
+        let store = InMemoryHealthKitStore(
+            authorizationStatus: .notDetermined,
+            failureMode: .authorizationDenied
+        )
+        await state.commit(store: store, now: referenceDate)
+        XCTAssertEqual(state.saveStatus, .failed(reasonCode: -3))
+        XCTAssertNil(state.lastSavedWeight)
+    }
+
     func testLoadLastWeightPreFillsValue() async {
         let store = InMemoryHealthKitStore(samples: [
             Weight(valueInKilograms: 78.5, recordedAt: referenceDate)
