@@ -39,8 +39,9 @@ public enum HealthKitError: Error, Sendable, Equatable {
 ///    cancellation of the consuming `Task` does not leak.
 /// 3. Set `continuation.onTermination` to invalidate any underlying observer
 ///    (e.g. stop an `HKObserverQuery`) so observers do not outlive their consumer.
-/// 4. Phase 1 uses foreground delivery only. Background delivery
-///    (`enableBackgroundDelivery`) is deferred to Phase 2 with watchOS.
+/// 4. Phase 1 uses foreground delivery only. Optional
+///    `enableBackgroundDelivery` for observer-driven refreshes is a later
+///    optimisation (battery review on watchOS before enabling).
 public protocol HealthKitStore: Sendable {
     /// Current authorisation state for body-mass write. Read access is implicitly
     /// ungrantable per Apple's HealthKit privacy model — `recentWeights` will

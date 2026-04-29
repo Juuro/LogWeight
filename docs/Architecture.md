@@ -8,7 +8,7 @@ This document records the architectural decisions that shape Phase 1. Decisions 
 
 **Decision.** A single Xcode project (managed by XcodeGen, see ADR-005) hosts every platform target. Business logic lives in a local Swift Package — `Packages/LogWeightCore/` — that is consumed by every app target. Per-platform UI lives in `App/<Platform>/`.
 
-**Rationale.** Phase 1 ships only iOS, but watchOS and macOS targets are committed for Phases 2 and 3. Putting business logic in a Package means each app target reuses identical, tested code. SPM is the lowest-friction way to share Swift code across Apple platforms — no third-party module manager required.
+**Rationale.** Phase 1 shipped iOS first; **Phase 2** adds a watchOS companion (`LogWeightWatchApp`) plus an embedded WidgetKit extension, both depending on the same `LogWeightCore` package. **Phase 3** adds `LogWeightMac` (menu-bar SwiftUI app, no dock icon) on macOS 14+. The watch target compiles `App/Shared` but excludes `SettingsView.swift` because watchOS does not support `.pickerStyle(.segmented)`; the Watch uses `WatchSettingsView` instead. Putting business logic in a Package means each app target reuses identical, tested code. SPM is the lowest-friction way to share Swift code across Apple platforms — no third-party module manager required.
 
 ## ADR-002 — MV with `@Observable`, no separate ViewModel layer
 
@@ -65,3 +65,19 @@ This document records the architectural decisions that shape Phase 1. Decisions 
 **Decision.** `HealthKitStore.observeChanges()` returns an `AsyncStream<Void>` built via `AsyncStream.makeStream()`. The producer side holds the underlying observer (e.g. `HKObserverQuery` or in-memory continuation list) in a class-bound holder so `continuation.onTermination` can stop it. Cancelling the consuming `Task` MUST stop the underlying observer.
 
 **Rationale.** DA4 highlighted memory-leak and silent-termination risks in the bridge from `HKObserverQuery` to `AsyncStream`. The contract is now explicit in the protocol comments and verified by `InMemoryHealthKitStoreTests.testObserveChangesStopsWhenConsumerCancels`.
+
+## ADR-009 — History chart is additive; list remains canonical
+
+**Status:** accepted (Phase 4).
+
+**Decision.** `HistoryView` now renders a compact Swift Charts trend (`LineMark` + `PointMark`) on iOS/iPadOS/macOS, while keeping the timestamped list beneath it. watchOS keeps list-only presentation.
+
+**Rationale.** The chart satisfies AC4 without creating a second data model or hiding precise values. The list remains the authoritative, auditable view of each sample.
+
+## ADR-010 — iOS UI tests cover accessibility-critical paths
+
+**Status:** accepted (Phase 4).
+
+**Decision.** iOS UI tests now include history/chart visibility, settings controls, keyboard-save guard, and an `Accessibility XXXL` save flow in addition to smoke save.
+
+**Rationale.** This captures common regressions (layout clipping, control discovery, broken save path) while keeping CI runtime practical.
