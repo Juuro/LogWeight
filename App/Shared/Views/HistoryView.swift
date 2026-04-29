@@ -1,9 +1,11 @@
 import SwiftUI
 import LogWeightCore
+#if !os(watchOS)
+import Charts
+#endif
 
-/// Plain text history list. Phase 1 deliberately ships no charts — that is the
-/// user's explicit choice (see DA7 / approval gate Q "history_scope = list_only").
-/// Charts arrive in Phase 4.
+/// HealthKit history (source of truth). Shared by iOS, watchOS, and macOS.
+/// Phase 4: iOS/iPadOS/macOS get a trend chart above the list.
 struct HistoryView: View {
 
     let store: HealthKitStore
@@ -33,11 +35,19 @@ struct HistoryView: View {
         NavigationStack {
             content
                 .navigationTitle("History")
+#if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
+#endif
                 .toolbar {
+#if os(macOS)
+                    ToolbarItem(placement: .automatic) {
+                        Button("Close") { dismiss() }
+                    }
+#else
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Done") { dismiss() }
                     }
+#endif
                 }
                 .task {
                     await load()
@@ -69,20 +79,67 @@ struct HistoryView: View {
                     .foregroundStyle(.secondary)
             }
         } else {
-            List(weights, id: \.recordedAt) { weight in
-                HStack {
-                    Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
-                        .font(.body.monospacedDigit())
-                    Spacer()
-                    Text(dateFormatter.string(from: weight.recordedAt))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+            List {
+#if !os(watchOS)
+                Section {
+                    chartSection
                 }
-                .privacySensitive()
+                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+#endif
+                Section {
+                    ForEach(weights, id: \.recordedAt) { weight in
+                        HStack {
+                            Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
+                                .font(.body.monospacedDigit())
+                            Spacer()
+                            Text(dateFormatter.string(from: weight.recordedAt))
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        .privacySensitive()
+                    }
+                } header: {
+                    Text("Recent entries")
+                }
             }
             .listStyle(.plain)
         }
     }
+
+#if !os(watchOS)
+    private var chartSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Trend")
+                .font(.headline)
+            Chart(weights.sorted(by: { $0.recordedAt < $1.recordedAt }), id: \.recordedAt) { weight in
+                LineMark(
+                    x: .value("Date", weight.recordedAt),
+                    y: .value("Weight", displayValue(for: weight))
+                )
+                .interpolationMethod(.catmullRom)
+                .foregroundStyle(.teal)
+
+                PointMark(
+                    x: .value("Date", weight.recordedAt),
+                    y: .value("Weight", displayValue(for: weight))
+                )
+                .foregroundStyle(.teal)
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+            .frame(height: 180)
+            .accessibilityIdentifier("history.chart")
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func displayValue(for weight: Weight) -> Double {
+        Measurement(value: weight.valueInKilograms, unit: UnitMass.kilograms)
+            .converted(to: displayUnit.unitMass)
+            .value
+    }
+#endif
 
     private func load() async {
         do {
@@ -97,9 +154,11 @@ struct HistoryView: View {
     }
 }
 
-#Preview {
+#if DEBUG
+#Preview("History") {
     HistoryView(store: InMemoryHealthKitStore(samples: [
         Weight(valueInKilograms: 80.0, recordedAt: .now),
         Weight(valueInKilograms: 79.5, recordedAt: .now.addingTimeInterval(-86_400))
     ]))
 }
+#endif

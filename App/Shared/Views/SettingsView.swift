@@ -19,6 +19,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .accessibilityIdentifier("settings.unit")
                 }
 
                 Section("Entry") {
@@ -26,7 +27,9 @@ struct SettingsView: View {
                         Text("Last saved").tag(DefaultEntryMode.lastSaved.rawValue)
                         Text("Fixed value").tag(DefaultEntryMode.fixedValue.rawValue)
                     }
+                    .accessibilityIdentifier("settings.prefill")
                     Toggle("Haptic feedback on save", isOn: $hapticsEnabled)
+                        .accessibilityIdentifier("settings.haptics")
                 }
 
                 Section("Apple Health") {
@@ -45,16 +48,22 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
+#if !os(macOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
+#endif
             }
         }
     }
 }
 
+#if DEBUG
 #Preview {
     SettingsView()
 }
+#endif
