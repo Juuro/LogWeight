@@ -57,6 +57,7 @@ struct EntryView: View {
                         Image(systemName: "clock")
                     }
                     .accessibilityLabel("History")
+                    .accessibilityIdentifier("entry.history")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -65,6 +66,7 @@ struct EntryView: View {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
+                    .accessibilityIdentifier("entry.settings")
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()

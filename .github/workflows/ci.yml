@@ -61,3 +61,49 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
+
+  watch-build:
+    name: watchOS build (LogWeightWatch scheme)
+    runs-on: macos-14
+    needs: core-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build for watchOS Simulator
+        run: |
+          xcodebuild build \
+            -project LogWeight.xcodeproj \
+            -scheme LogWeightWatch \
+            -destination 'generic/platform=watchOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO
+
+  mac-build:
+    name: macOS build (LogWeightMac scheme)
+    runs-on: macos-14
+    needs: core-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build for macOS
+        run: |
+          xcodebuild build \
+            -project LogWeight.xcodeproj \
+            -scheme LogWeightMac \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO

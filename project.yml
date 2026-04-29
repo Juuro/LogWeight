@@ -3,6 +3,8 @@ options:
   bundleIdPrefix: de.juuronina
   deploymentTarget:
     iOS: "17.0"
+    watchOS: "10.0"
+    macOS: "14.0"
   developmentLanguage: en
   createIntermediateGroups: true
 
@@ -22,6 +24,107 @@ packages:
     path: Packages/LogWeightCore
 
 targets:
+  LogWeightMac:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: App/macOS
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/LogWeightMac.entitlements"
+          - "Resources/PrivacyInfo.xcprivacy"
+          - "Resources/Assets.xcassets"
+      - path: App/Shared
+    resources:
+      - path: App/macOS/Resources/PrivacyInfo.xcprivacy
+      - path: App/macOS/Resources/Assets.xcassets
+    info:
+      path: App/macOS/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: LogWeight
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSUIElement: true
+        NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
+        NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight.mac
+        CODE_SIGN_ENTITLEMENTS: App/macOS/Resources/LogWeightMac.entitlements
+        INFOPLIST_FILE: App/macOS/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ENABLE_APP_SANDBOX: YES
+    dependencies:
+      - package: LogWeightCore
+        product: LogWeightCore
+
+  LogWeightWatchWidget:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: App/WatchWidget
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/LogWeightWatchWidget.entitlements"
+          - "Resources/PrivacyInfo.xcprivacy"
+    resources:
+      - path: App/WatchWidget/Resources/PrivacyInfo.xcprivacy
+    info:
+      path: App/WatchWidget/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: LogWeight
+        NSHealthShareUsageDescription: LogWeight reads your latest weight from Apple Health to show it on your watch face. Nothing leaves your device.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight.watchkitapp.widget
+        CODE_SIGN_ENTITLEMENTS: App/WatchWidget/Resources/LogWeightWatchWidget.entitlements
+        INFOPLIST_FILE: App/WatchWidget/Resources/Info.plist
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+    dependencies:
+      - package: LogWeightCore
+        product: LogWeightCore
+
+  LogWeightWatchApp:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: App/Watch
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/LogWeightWatch.entitlements"
+          - "Resources/PrivacyInfo.xcprivacy"
+      - path: App/Shared
+        excludes:
+          - "Views/SettingsView.swift"
+    resources:
+      - path: App/Watch/Resources/PrivacyInfo.xcprivacy
+    info:
+      path: App/Watch/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: LogWeight
+        NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
+        NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: de.juuronina.logweight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight.watchkitapp
+        CODE_SIGN_ENTITLEMENTS: App/Watch/Resources/LogWeightWatch.entitlements
+        INFOPLIST_FILE: App/Watch/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+    dependencies:
+      - package: LogWeightCore
+        product: LogWeightCore
+      - target: LogWeightWatchWidget
+        embed: true
+
   LogWeight:
     type: application
     platform: iOS
@@ -32,6 +135,7 @@ targets:
           - "Resources/Info.plist"
           - "Resources/LogWeight.entitlements"
           - "Resources/PrivacyInfo.xcprivacy"
+      - path: App/Shared
     resources:
       - path: App/iOS/Resources/PrivacyInfo.xcprivacy
     info:
@@ -65,6 +169,8 @@ targets:
     dependencies:
       - package: LogWeightCore
         product: LogWeightCore
+      - target: LogWeightWatchApp
+        embed: true
 
   LogWeightUITests:
     type: bundle.ui-testing
@@ -91,6 +197,37 @@ schemes:
       config: Debug
       targets:
         - LogWeightUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  LogWeightWatch:
+    build:
+      targets:
+        LogWeightWatchApp: all
+        LogWeightWatchWidget: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  LogWeightMac:
+    build:
+      targets:
+        LogWeightMac: all
+    run:
+      config: Debug
+    test:
+      config: Debug
     profile:
       config: Release
     analyze:
