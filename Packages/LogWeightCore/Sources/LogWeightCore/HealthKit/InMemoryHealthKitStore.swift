@@ -59,6 +59,19 @@ public actor InMemoryHealthKitStore: HealthKitStore {
         return Array(sorted.prefix(max(0, limit)))
     }
 
+    public func delete(_ weight: Weight) async throws {
+        if case .queryFails(let code) = failureMode {
+            throw HealthKitError.deleteFailed(reasonCode: code)
+        }
+        guard let index = samples.firstIndex(of: weight) else {
+            throw HealthKitError.deleteFailed(reasonCode: -1)
+        }
+        samples.remove(at: index)
+        for continuation in continuations {
+            continuation.yield(())
+        }
+    }
+
     public nonisolated func observeChanges() -> AsyncStream<Void> {
         let (stream, continuation) = AsyncStream.makeStream(of: Void.self)
         Task {

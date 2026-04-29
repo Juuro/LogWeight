@@ -19,6 +19,7 @@ public enum HealthKitError: Error, Sendable, Equatable {
     case authorizationDenied
     case saveFailed(reasonCode: Int)
     case queryFailed(reasonCode: Int)
+    case deleteFailed(reasonCode: Int)
 }
 
 /// Abstraction over HealthKit body-mass read/write.
@@ -60,6 +61,11 @@ public protocol HealthKitStore: Sendable {
 
     /// Reads the `limit` most-recent body-mass samples, newest first.
     func recentWeights(limit: Int) async throws -> [Weight]
+
+    /// Deletes a previously read weight sample.
+    ///
+    /// Callers should pass an item returned by `recentWeights(limit:)`.
+    func delete(_ weight: Weight) async throws
 
     /// Yields a `Void` element each time the body-mass record set changes. See
     /// the protocol-level "Implementation contract" comment above for required

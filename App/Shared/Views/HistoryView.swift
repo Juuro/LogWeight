@@ -13,6 +13,8 @@ struct HistoryView: View {
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @State private var weights: [Weight] = []
     @State private var loadError: String?
+    @State private var deleteError: String?
+    @State private var isDeleting = false
     @Environment(\.dismiss) private var dismiss
 
     private var displayUnit: WeightUnit {
@@ -80,6 +82,14 @@ struct HistoryView: View {
             }
         } else {
             List {
+                if let deleteError = deleteError {
+                    Section {
+                        Text(deleteError)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                    }
+                }
 #if !os(watchOS)
                 Section {
                     chartSection
@@ -87,7 +97,7 @@ struct HistoryView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
 #endif
                 Section {
-                    ForEach(weights, id: \.recordedAt) { weight in
+                    ForEach(weights, id: \.self) { weight in
                         HStack {
                             Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
                                 .font(.body.monospacedDigit())
@@ -98,11 +108,15 @@ struct HistoryView: View {
                         }
                         .privacySensitive()
                     }
+                    .onDelete { offsets in
+                        Task { await delete(at: offsets) }
+                    }
                 } header: {
                     Text("Recent entries")
                 }
             }
             .listStyle(.plain)
+            .disabled(isDeleting)
         }
     }
 
@@ -146,10 +160,32 @@ struct HistoryView: View {
             let result = try await store.recentWeights(limit: 50)
             weights = result
             loadError = nil
+            deleteError = nil
         } catch HealthKitError.queryFailed(let code) {
             loadError = "HealthKit query failed (code \(code))."
         } catch {
             loadError = "Unexpected error reading from Apple Health."
+        }
+    }
+
+    private func delete(at offsets: IndexSet) async {
+        isDeleting = true
+        defer { isDeleting = false }
+
+        var toDelete: [Weight] = []
+        for index in offsets where weights.indices.contains(index) {
+            toDelete.append(weights[index])
+        }
+
+        do {
+            for weight in toDelete {
+                try await store.delete(weight)
+            }
+            await load()
+        } catch HealthKitError.deleteFailed(let code) {
+            deleteError = "Couldn't delete entry (code \(code))."
+        } catch {
+            deleteError = "Unexpected error deleting entry."
         }
     }
 }

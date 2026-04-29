@@ -97,6 +97,65 @@ public final class HKHealthStoreAdapter: HealthKitStore {
         }
     }
 
+    public func delete(_ weight: Weight) async throws {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw HealthKitError.healthDataUnavailable
+        }
+
+        let start = weight.recordedAt.addingTimeInterval(-1)
+        let end = weight.recordedAt.addingTimeInterval(1)
+        let datePredicate = HKQuery.predicateForSamples(
+            withStart: start,
+            end: end,
+            options: []
+        )
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        let matchingSample = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<HKQuantitySample?, Error>) in
+            let query = HKSampleQuery(
+                sampleType: bodyMassType,
+                predicate: datePredicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error as? HKError {
+                    continuation.resume(throwing: HealthKitError.queryFailed(reasonCode: error.code.rawValue))
+                    return
+                }
+                if let error = error {
+                    continuation.resume(throwing: HealthKitError.queryFailed(reasonCode: (error as NSError).code))
+                    return
+                }
+
+                let target = weight.valueInKilograms
+                let sample = (samples ?? [])
+                    .compactMap { $0 as? HKQuantitySample }
+                    .filter { quantitySample in
+                        let value = quantitySample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
+                        return abs(value - target) < 0.0005
+                    }
+                    .min(by: { lhs, rhs in
+                        abs(lhs.endDate.timeIntervalSince(weight.recordedAt))
+                        < abs(rhs.endDate.timeIntervalSince(weight.recordedAt))
+                    })
+                continuation.resume(returning: sample)
+            }
+            healthStore.execute(query)
+        }
+
+        guard let matchingSample else {
+            throw HealthKitError.deleteFailed(reasonCode: -1)
+        }
+
+        do {
+            try await healthStore.delete(matchingSample)
+        } catch let error as HKError {
+            throw HealthKitError.deleteFailed(reasonCode: error.code.rawValue)
+        } catch {
+            throw HealthKitError.deleteFailed(reasonCode: (error as NSError).code)
+        }
+    }
+
     public func observeChanges() -> AsyncStream<Void> {
         // Implementation contract: see HealthKitStore protocol comments.
         // We hold the query in a Task-scoped reference so onTermination can stop it.

@@ -118,4 +118,26 @@ final class InMemoryHealthKitStoreTests: XCTestCase {
 
         XCTAssertEqual(receivedAfterCancel, 0)
     }
+
+    func testDeleteRemovesEntry() async throws {
+        let store = InMemoryHealthKitStore()
+        let weight = Weight(valueInKilograms: 80.0, recordedAt: referenceDate)
+        try await store.save(weight)
+
+        try await store.delete(weight)
+        let result = try await store.recentWeights(limit: 10)
+        XCTAssertTrue(result.isEmpty)
+    }
+
+    func testDeleteThrowsForMissingEntry() async {
+        let store = InMemoryHealthKitStore()
+        do {
+            try await store.delete(Weight(valueInKilograms: 80.0, recordedAt: referenceDate))
+            XCTFail("Expected delete to throw")
+        } catch HealthKitError.deleteFailed {
+            // expected
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
 }
