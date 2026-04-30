@@ -519,7 +519,9 @@ private struct HistoryWeightEditSheet: View {
                 }
             }
             .navigationTitle("Edit entry")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
