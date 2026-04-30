@@ -1,11 +1,11 @@
 import XCTest
 @testable import LogWeightCore
 
-@MainActor
 final class EntryStateTests: XCTestCase {
 
     private let referenceDate = Date(timeIntervalSince1970: 1_700_000_000)
 
+    @MainActor
     func testInitialState() {
         let state = EntryState(initialValueInKilograms: 75.0)
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
@@ -13,6 +13,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertNil(state.lastSavedWeight)
     }
 
+    @MainActor
     func testIncrementAndDecrementUseConfiguredStep() {
         let state = EntryState(initialValueInKilograms: 75.0, stepIncrementInKilograms: 0.1)
         state.increment()
@@ -22,6 +23,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.displayValueInKilograms, 74.9, accuracy: 0.001)
     }
 
+    @MainActor
     func testIncrementClampsAtUpperBound() {
         let state = EntryState(initialValueInKilograms: 499.95, stepIncrementInKilograms: 0.1)
         state.increment()
@@ -30,12 +32,14 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.displayValueInKilograms, 500.0, accuracy: 0.001)
     }
 
+    @MainActor
     func testDecrementClampsAtLowerBound() {
         let state = EntryState(initialValueInKilograms: 1.0, stepIncrementInKilograms: 0.1)
         state.decrement()
         XCTAssertEqual(state.displayValueInKilograms, 1.0, accuracy: 0.001)
     }
 
+    @MainActor
     func testCommitHappyPathTransitionsToSaved() async {
         let state = EntryState(initialValueInKilograms: 80.0)
         let store = InMemoryHealthKitStore()
@@ -48,6 +52,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.lastSavedWeight?.valueInKilograms, 80.0)
     }
 
+    @MainActor
     func testCommitFailedSavePropagatesReasonCode() async {
         let state = EntryState(initialValueInKilograms: 80.0)
         let store = InMemoryHealthKitStore(failureMode: .saveFails(reasonCode: 42))
@@ -56,6 +61,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertNil(state.lastSavedWeight)
     }
 
+    @MainActor
     func testCommitFailsWhenRequestAuthorizationDenied() async {
         let state = EntryState(initialValueInKilograms: 80.0)
         let store = InMemoryHealthKitStore(
@@ -67,6 +73,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertNil(state.lastSavedWeight)
     }
 
+    @MainActor
     func testLoadLastWeightPreFillsValue() async {
         let store = InMemoryHealthKitStore(samples: [
             Weight(valueInKilograms: 78.5, recordedAt: referenceDate)
@@ -77,6 +84,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.lastSavedWeight?.valueInKilograms, 78.5)
     }
 
+    @MainActor
     func testLoadLastWeightSilentlyNoOpsOnEmptyStore() async {
         let store = InMemoryHealthKitStore()
         let state = EntryState(initialValueInKilograms: 75.0)
@@ -84,6 +92,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
     }
 
+    @MainActor
     func testResetReturnsToIdle() async {
         let state = EntryState(initialValueInKilograms: 80.0)
         let store = InMemoryHealthKitStore()
