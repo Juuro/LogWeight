@@ -163,7 +163,7 @@ struct HistoryView: View {
 #endif
                     }
                     .onDelete { offsets in
-                        Task { await delete(at: offsets) }
+                        Task { @MainActor in await delete(at: offsets) }
                     }
                 } header: {
                     Text("Recent entries")
@@ -420,7 +420,7 @@ private struct HistoryWeightEditSheet: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { await commit() }
+                        Task { @MainActor in await commit() }
                     } label: {
                         Image(systemName: "checkmark")
                     }
@@ -474,7 +474,7 @@ private struct HistoryWeightEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Task { await commit() }
+                        Task { @MainActor in await commit() }
                     }
                     .disabled(isSaving)
                 }

@@ -42,7 +42,7 @@ struct MacMenuBarEntryView: View {
                 .multilineTextAlignment(.trailing)
                 .monospacedDigit()
                 .onSubmit {
-                    Task { await commitFromField() }
+                    Task { @MainActor in await commitFromField() }
                 }
                 .accessibilityIdentifier("mac.entry.weight")
 
@@ -66,7 +66,7 @@ struct MacMenuBarEntryView: View {
                 Spacer(minLength: 8)
 
                 Button("Save") {
-                    Task { await commitFromField() }
+                    Task { @MainActor in await commitFromField() }
                 }
                 .disabled(state.saveStatus == .saving)
             }
