@@ -13,8 +13,10 @@ struct HistoryView: View {
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @State private var weights: [Weight] = []
     @State private var loadError: String?
-    @State private var deleteError: String?
+    @State private var mutationError: String?
     @State private var isDeleting = false
+    @State private var editingContext: EditingContext?
+    @State private var isSavingEdit = false
     @Environment(\.dismiss) private var dismiss
 
     private var displayUnit: WeightUnit {
@@ -51,10 +53,41 @@ struct HistoryView: View {
                     }
 #endif
                 }
+                .sheet(item: $editingContext, onDismiss: {
+                    mutationError = nil
+                }) { context in
+                    HistoryWeightEditSheet(
+                        original: context.original,
+                        displayUnit: displayUnit,
+                        formatter: formatter,
+                        isSaving: $isSavingEdit,
+                        store: store,
+                        onSave: {
+                            mutationError = nil
+                            await load()
+                            editingContext = nil
+                        },
+                        onDismiss: {
+                            editingContext = nil
+                        },
+                        onError: { message in
+                            mutationError = message
+                        }
+                    )
+#if os(macOS)
+                    .frame(minWidth: 320, minHeight: 260)
+#endif
+                }
                 .task {
                     await load()
                 }
         }
+    }
+
+    /// Stable identity per edit session for `sheet(item:)`.
+    private struct EditingContext: Identifiable {
+        let id = UUID()
+        let original: Weight
     }
 
     @ViewBuilder
@@ -82,9 +115,9 @@ struct HistoryView: View {
             }
         } else {
             List {
-                if let deleteError = deleteError {
+                if let mutationError = mutationError {
                     Section {
-                        Text(deleteError)
+                        Text(mutationError)
                             .font(.callout)
                             .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
@@ -107,6 +140,27 @@ struct HistoryView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .privacySensitive()
+#if os(iOS)
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button {
+                                editingContext = EditingContext(original: weight)
+                                mutationError = nil
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
+#endif
+#if os(macOS) || os(watchOS)
+                        .contextMenu {
+                            Button {
+                                editingContext = EditingContext(original: weight)
+                                mutationError = nil
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                        }
+#endif
                     }
                     .onDelete { offsets in
                         Task { await delete(at: offsets) }
@@ -116,7 +170,7 @@ struct HistoryView: View {
                 }
             }
             .listStyle(.plain)
-            .disabled(isDeleting)
+            .disabled(isDeleting || isSavingEdit)
         }
     }
 
@@ -125,7 +179,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Trend")
                 .font(.headline)
-            Chart(weights.sorted(by: { $0.recordedAt < $1.recordedAt }), id: \.recordedAt) { weight in
+            Chart(weights.sorted(by: { $0.recordedAt < $1.recordedAt }), id: \.self) { weight in
                 LineMark(
                     x: .value("Date", weight.recordedAt),
                     y: .value("Weight", displayValue(for: weight))
@@ -160,7 +214,7 @@ struct HistoryView: View {
             let result = try await store.recentWeights(limit: 50)
             weights = result
             loadError = nil
-            deleteError = nil
+            mutationError = nil
         } catch HealthKitError.queryFailed(let code) {
             loadError = "HealthKit query failed (code \(code))."
         } catch {
@@ -183,9 +237,160 @@ struct HistoryView: View {
             }
             await load()
         } catch HealthKitError.deleteFailed(let code) {
-            deleteError = "Couldn't delete entry (code \(code))."
+            mutationError = "Couldn't delete entry (code \(code))."
         } catch {
-            deleteError = "Unexpected error deleting entry."
+            mutationError = "Unexpected error deleting entry."
+        }
+    }
+}
+
+/// Form to edit weight and date/time for a single history row.
+private struct HistoryWeightEditSheet: View {
+
+    let original: Weight
+    let displayUnit: WeightUnit
+    let formatter: WeightFormatter
+    @Binding var isSaving: Bool
+    let store: HealthKitStore
+
+    /// Called after a successful persist and reload; caller dismisses sheet.
+    var onSave: () async -> Void
+    var onDismiss: () -> Void
+    /// Surface errors without clearing the sheet.
+    var onError: (String) -> Void
+
+    @State private var editedText: String
+    @State private var editedDate: Date
+    @State private var validationMessage: String?
+    @FocusState private var valueFieldFocused: Bool
+
+    /// Body weight bounds (matches `EntryState` clamp semantics).
+    private static func clampToBodyRangeKilograms(_ kg: Double) -> Double {
+        max(1.0, min(500.0, kg))
+    }
+
+    init(
+        original: Weight,
+        displayUnit: WeightUnit,
+        formatter: WeightFormatter,
+        isSaving: Binding<Bool>,
+        store: HealthKitStore,
+        onSave: @escaping () async -> Void,
+        onDismiss: @escaping () -> Void,
+        onError: @escaping (String) -> Void
+    ) {
+        self.original = original
+        self.displayUnit = displayUnit
+        self.formatter = formatter
+        self._isSaving = isSaving
+        self.store = store
+        self.onSave = onSave
+        self.onDismiss = onDismiss
+        self.onError = onError
+
+        let initialFormatted = formatter.format(kilograms: original.valueInKilograms, in: displayUnit)
+        self._editedText = State(initialValue: initialFormatted)
+        self._editedDate = State(initialValue: original.recordedAt)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Weight", text: $editedText)
+#if os(iOS)
+                        .keyboardType(.decimalPad)
+#endif
+                        .focused($valueFieldFocused)
+                        .privacySensitive()
+                } footer: {
+                    Text("Use your locale’s decimal separator (\(Locale.current.decimalSeparator ?? ".")). Values are saved in \(displayUnit.shortDisplayName).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Date & time") {
+                    DatePicker(
+                        "Recorded at",
+                        selection: $editedDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .privacySensitive()
+                }
+
+                if let validationMessage {
+                    Section {
+                        Text(validationMessage)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Edit entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task { await commit() }
+                    }
+                    .disabled(isSaving)
+                }
+#if os(iOS)
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        valueFieldFocused = false
+                    }
+                }
+#endif
+            }
+            .disabled(isSaving)
+        }
+#if os(macOS)
+        .frame(minWidth: 320, idealWidth: 400, minHeight: 240, idealHeight: 320)
+#endif
+    }
+
+    private func commit() async {
+        validationMessage = nil
+        let cleaned = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let parsedKg = formatter.parseToKilograms(cleaned, unit: displayUnit) else {
+            validationMessage = "Couldn’t read that weight. Check the number format."
+            return
+        }
+
+        let clampedKg = Self.clampToBodyRangeKilograms(parsedKg)
+        if abs(parsedKg - clampedKg) > 0.000_000_1 {
+            validationMessage = "Weight must be between 1 and 500 kg."
+            return
+        }
+
+        let updated = Weight(valueInKilograms: clampedKg, recordedAt: editedDate)
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            try await store.requestAuthorization()
+            try await store.replace(old: original, new: updated)
+            await onSave()
+        } catch HealthKitError.authorizationDenied {
+            onError("Health access denied. Allow LogWeight in Settings → Privacy & Security → Health.")
+        } catch HealthKitError.healthDataUnavailable {
+            onError("Health data isn’t available on this device.")
+        } catch HealthKitError.replaceFailed(let code) {
+            onError("Couldn't save edit (code \(code)).")
+        } catch HealthKitError.queryFailed(let code) {
+            onError("Couldn't read entries (code \(code)).")
+        } catch {
+            onError("Unexpected error saving edit.")
         }
     }
 }
