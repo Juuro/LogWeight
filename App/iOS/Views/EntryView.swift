@@ -91,12 +91,10 @@ struct EntryView: View {
             .onChange(of: state.saveStatus) { _, new in
                 guard case .savedAt = new else { return }
                 clearSavedStatusTask?.cancel()
-                clearSavedStatusTask = Task {
+                clearSavedStatusTask = Task { @MainActor in
                     try? await Task.sleep(for: .seconds(3))
                     guard !Task.isCancelled else { return }
-                    await MainActor.run {
-                        state.reset()
-                    }
+                    state.reset()
                 }
             }
             .onDisappear {
@@ -187,7 +185,7 @@ struct EntryView: View {
 
     private var saveButton: some View {
         Button {
-            Task {
+            Task { @MainActor in
                 await state.commit(store: store)
             }
         } label: {

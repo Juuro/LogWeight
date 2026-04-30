@@ -119,12 +119,10 @@ struct WatchEntryView: View {
                 }
                 if case .savedAt = new {
                     clearSavedStatusTask?.cancel()
-                    clearSavedStatusTask = Task {
+                    clearSavedStatusTask = Task { @MainActor in
                         try? await Task.sleep(for: .seconds(3))
                         guard !Task.isCancelled else { return }
-                        await MainActor.run {
-                            state.reset()
-                        }
+                        state.reset()
                     }
                 }
             }
@@ -149,7 +147,7 @@ struct WatchEntryView: View {
 
     private var primaryActionButton: some View {
         Button {
-            Task {
+            Task { @MainActor in
                 await state.commit(store: store)
             }
         } label: {

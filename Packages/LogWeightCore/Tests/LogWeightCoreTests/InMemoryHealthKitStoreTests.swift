@@ -104,10 +104,16 @@ final class InMemoryHealthKitStoreTests: XCTestCase {
         let store = InMemoryHealthKitStore()
         let stream = store.observeChanges()
 
-        var receivedAfterCancel = 0
+        actor YieldCounter {
+            private(set) var value = 0
+            func increment() { value += 1 }
+            func currentValue() -> Int { value }
+        }
+        let counter = YieldCounter()
+
         let consumer = Task {
             for await _ in stream {
-                receivedAfterCancel += 1
+                await counter.increment()
             }
         }
         consumer.cancel()
@@ -116,6 +122,7 @@ final class InMemoryHealthKitStoreTests: XCTestCase {
         try await store.save(Weight(valueInKilograms: 80.0, recordedAt: referenceDate))
         try await Task.sleep(nanoseconds: 50_000_000)
 
+        let receivedAfterCancel = await counter.currentValue()
         XCTAssertEqual(receivedAfterCancel, 0)
     }
 

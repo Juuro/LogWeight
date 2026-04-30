@@ -163,7 +163,7 @@ struct HistoryView: View {
 #endif
                     }
                     .onDelete { offsets in
-                        Task { await delete(at: offsets) }
+                        Task { @MainActor in await delete(at: offsets) }
                     }
                 } header: {
                     Text("Recent entries")
@@ -176,15 +176,16 @@ struct HistoryView: View {
 
 #if !os(watchOS)
     private var chartSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let sortedWeights = weights.sorted(by: { $0.recordedAt < $1.recordedAt })
+        return VStack(alignment: .leading, spacing: 8) {
             Text("Trend")
                 .font(.headline)
-            Chart(weights.sorted(by: { $0.recordedAt < $1.recordedAt }), id: \.self) { weight in
+            Chart(sortedWeights, id: \.self) { weight in
                 LineMark(
                     x: .value("Date", weight.recordedAt),
                     y: .value("Weight", displayValue(for: weight))
                 )
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
                 .foregroundStyle(.teal)
 
                 PointMark(
@@ -193,6 +194,7 @@ struct HistoryView: View {
                 )
                 .foregroundStyle(.teal)
             }
+            .chartYScale(domain: chartYDomain)
             .chartYAxis {
                 AxisMarks(position: .leading)
             }
@@ -206,6 +208,25 @@ struct HistoryView: View {
         Measurement(value: weight.valueInKilograms, unit: UnitMass.kilograms)
             .converted(to: displayUnit.unitMass)
             .value
+    }
+
+    /// Dynamic chart domain anchored around the user's current weight range.
+    /// Keeps all points visible while avoiding a zero-based axis that flattens trends.
+    private var chartYDomain: ClosedRange<Double> {
+        let values = weights.map(displayValue(for:))
+        guard let minimum = values.min(), let maximum = values.max() else {
+            return 0.0...1.0
+        }
+
+        let span = maximum - minimum
+        let minimumVisibleSpan = 1.0
+        let padding = max(span * 0.25, 0.4)
+
+        let lowerBound = min(minimum, minimum - padding)
+        let adjustedUpper = maximum + padding
+        let upperBound = max(adjustedUpper, lowerBound + minimumVisibleSpan)
+
+        return lowerBound...upperBound
     }
 #endif
 
@@ -266,10 +287,6 @@ private struct HistoryWeightEditSheet: View {
     @State private var selectedMonth: Int
     @State private var selectedYear: Int
     @State private var validationMessage: String?
-#if os(iOS)
-    @FocusState private var valueFieldFocused: Bool
-#endif
-
     /// Body weight bounds (matches `EntryState` clamp semantics).
     private static func clampToBodyRangeKilograms(_ kg: Double) -> Double {
         max(1.0, min(500.0, kg))
@@ -420,7 +437,7 @@ private struct HistoryWeightEditSheet: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { await commit() }
+                        Task { @MainActor in await commit() }
                     } label: {
                         Image(systemName: "checkmark")
                     }
@@ -432,13 +449,93 @@ private struct HistoryWeightEditSheet: View {
         }
 #else
         NavigationStack {
+#if os(iOS)
+            VStack(spacing: 20) {
+                VStack(spacing: 10) {
+                    Text(formatter.format(kilograms: editedKilograms, in: displayUnit))
+                        .font(.system(size: 42, weight: .semibold, design: .rounded))
+                        .fontWeight(.semibold)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .privacySensitive()
+
+                    HStack(spacing: 16) {
+                        Button {
+                            editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms - 0.1)
+                        } label: {
+                            Image(systemName: "minus")
+                                .font(.title)
+                                .frame(width: 88, height: 88)
+                                .background(Color(uiColor: .secondarySystemBackground), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Decrease weight")
+
+                        Button {
+                            editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms + 0.1)
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title)
+                                .frame(width: 88, height: 88)
+                                .background(Color(uiColor: .secondarySystemBackground), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Increase weight")
+                    }
+
+                    Text("Use − / + to adjust weight in 0.1 \(displayUnit.shortDisplayName) steps.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 24)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recorded at")
+                        .font(.headline)
+                    DatePicker(
+                        "",
+                        selection: $editedDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.wheel)
+                    .privacySensitive()
+                }
+                .frame(maxWidth: .infinity)
+
+                if let validationMessage {
+                    Text(validationMessage)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal)
+            .navigationTitle("Edit entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        onDismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task { @MainActor in await commit() }
+                    }
+                    .disabled(isSaving)
+                }
+            }
+            .disabled(isSaving)
+#else
             Form {
                 Section {
                     TextField("Weight", text: $editedText)
-#if os(iOS)
-                        .keyboardType(.decimalPad)
-                        .focused($valueFieldFocused)
-#endif
                         .privacySensitive()
                 } footer: {
                     Text("Use your locale’s decimal separator (\(Locale.current.decimalSeparator ?? ".")). Values are saved in \(displayUnit.shortDisplayName).")
@@ -464,7 +561,9 @@ private struct HistoryWeightEditSheet: View {
                 }
             }
             .navigationTitle("Edit entry")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+#endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -474,20 +573,13 @@ private struct HistoryWeightEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Task { await commit() }
+                        Task { @MainActor in await commit() }
                     }
                     .disabled(isSaving)
                 }
-#if os(iOS)
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        valueFieldFocused = false
-                    }
-                }
-#endif
             }
             .disabled(isSaving)
+#endif
         }
 #if os(macOS)
         .frame(minWidth: 320, idealWidth: 400, minHeight: 240, idealHeight: 320)
@@ -554,7 +646,7 @@ private struct HistoryWeightEditSheet: View {
 
     private func commit() async {
         validationMessage = nil
-#if os(watchOS)
+#if os(watchOS) || os(iOS)
         let clampedKg = Self.clampToBodyRangeKilograms(editedKilograms)
         let updated = Weight(valueInKilograms: clampedKg, recordedAt: editedDate)
 #else

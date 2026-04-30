@@ -90,12 +90,13 @@ public actor InMemoryHealthKitStore: HealthKitStore {
 
     public nonisolated func observeChanges() -> AsyncStream<Void> {
         let (stream, continuation) = AsyncStream.makeStream(of: Void.self)
+        let store = self
         Task {
-            await self.register(continuation: continuation)
+            await store.register(continuation: continuation)
         }
-        continuation.onTermination = { @Sendable [weak self] _ in
+        continuation.onTermination = { @Sendable _ in
             Task {
-                await self?.unregister(continuation: continuation)
+                await store.unregister(continuation: continuation)
             }
         }
         return stream
