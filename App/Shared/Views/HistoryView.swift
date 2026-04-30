@@ -449,53 +449,98 @@ private struct HistoryWeightEditSheet: View {
         }
 #else
         NavigationStack {
-            Form {
-                Section {
 #if os(iOS)
-                    VStack(spacing: 10) {
-                        Text(formatter.format(kilograms: editedKilograms, in: displayUnit))
-                            .font(.system(size: 34, weight: .semibold, design: .rounded))
-                            .fontWeight(.semibold)
-                            .minimumScaleFactor(0.7)
-                            .lineLimit(1)
-                            .privacySensitive()
-
-                        HStack(spacing: 16) {
-                            Button {
-                                editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms - 0.1)
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.title3)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .buttonStyle(.bordered)
-                            .accessibilityLabel("Decrease weight")
-
-                            Button {
-                                editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms + 0.1)
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.title3)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .buttonStyle(.bordered)
-                            .accessibilityLabel("Increase weight")
-                        }
-                    }
-#else
-                    TextField("Weight", text: $editedText)
+            VStack(spacing: 20) {
+                VStack(spacing: 10) {
+                    Text(formatter.format(kilograms: editedKilograms, in: displayUnit))
+                        .font(.system(size: 42, weight: .semibold, design: .rounded))
+                        .fontWeight(.semibold)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
                         .privacySensitive()
-#endif
-                } footer: {
-#if os(iOS)
+
+                    HStack(spacing: 16) {
+                        Button {
+                            editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms - 0.1)
+                        } label: {
+                            Image(systemName: "minus")
+                                .font(.title)
+                                .frame(width: 88, height: 88)
+                                .background(Color(uiColor: .secondarySystemBackground), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Decrease weight")
+
+                        Button {
+                            editedKilograms = Self.clampToBodyRangeKilograms(editedKilograms + 0.1)
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title)
+                                .frame(width: 88, height: 88)
+                                .background(Color(uiColor: .secondarySystemBackground), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Increase weight")
+                    }
+
                     Text("Use − / + to adjust weight in 0.1 \(displayUnit.shortDisplayName) steps.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 24)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recorded at")
+                        .font(.headline)
+                    DatePicker(
+                        "",
+                        selection: $editedDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.wheel)
+                    .privacySensitive()
+                }
+                .frame(maxWidth: .infinity)
+
+                if let validationMessage {
+                    Text(validationMessage)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal)
+            .navigationTitle("Edit entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        onDismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task { @MainActor in await commit() }
+                    }
+                    .disabled(isSaving)
+                }
+            }
+            .disabled(isSaving)
 #else
+            Form {
+                Section {
+                    TextField("Weight", text: $editedText)
+                        .privacySensitive()
+                } footer: {
                     Text("Use your locale’s decimal separator (\(Locale.current.decimalSeparator ?? ".")). Values are saved in \(displayUnit.shortDisplayName).")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-#endif
                 }
 
                 Section("Date & time") {
@@ -504,9 +549,6 @@ private struct HistoryWeightEditSheet: View {
                         selection: $editedDate,
                         displayedComponents: [.date, .hourAndMinute]
                     )
-#if os(iOS)
-                    .datePickerStyle(.wheel)
-#endif
                     .privacySensitive()
                 }
 
@@ -537,6 +579,7 @@ private struct HistoryWeightEditSheet: View {
                 }
             }
             .disabled(isSaving)
+#endif
         }
 #if os(macOS)
         .frame(minWidth: 320, idealWidth: 400, minHeight: 240, idealHeight: 320)
