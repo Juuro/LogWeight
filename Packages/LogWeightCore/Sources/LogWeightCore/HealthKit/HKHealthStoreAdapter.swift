@@ -102,6 +102,35 @@ public final class HKHealthStoreAdapter: HealthKitStore {
             throw HealthKitError.healthDataUnavailable
         }
 
+        guard let matchingSample = try await fetchMatchingQuantitySample(for: weight) else {
+            throw HealthKitError.deleteFailed(reasonCode: -1)
+        }
+
+        try await hkDelete(sample: matchingSample, mapFailure: HealthKitError.deleteFailed(reasonCode:))
+    }
+
+    public func replace(old: Weight, new: Weight) async throws {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw HealthKitError.healthDataUnavailable
+        }
+        guard let oldSample = try await fetchMatchingQuantitySample(for: old) else {
+            throw HealthKitError.replaceFailed(reasonCode: -1)
+        }
+        do {
+            try await save(new)
+        } catch HealthKitError.saveFailed(let code) {
+            throw HealthKitError.replaceFailed(reasonCode: code)
+        } catch HealthKitError.healthDataUnavailable {
+            throw HealthKitError.healthDataUnavailable
+        } catch {
+            throw HealthKitError.replaceFailed(reasonCode: -1)
+        }
+
+        try await hkDelete(sample: oldSample, mapFailure: HealthKitError.replaceFailed(reasonCode:))
+    }
+
+    /// Resolves a persisted `HKQuantitySample` matching a `Weight` from `recentWeights`.
+    private func fetchMatchingQuantitySample(for weight: Weight) async throws -> HKQuantitySample? {
         let start = weight.recordedAt.addingTimeInterval(-1)
         let end = weight.recordedAt.addingTimeInterval(1)
         let datePredicate = HKQuery.predicateForSamples(
@@ -111,7 +140,7 @@ public final class HKHealthStoreAdapter: HealthKitStore {
         )
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
 
-        let matchingSample = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<HKQuantitySample?, Error>) in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<HKQuantitySample?, Error>) in
             let query = HKSampleQuery(
                 sampleType: bodyMassType,
                 predicate: datePredicate,
@@ -142,17 +171,15 @@ public final class HKHealthStoreAdapter: HealthKitStore {
             }
             healthStore.execute(query)
         }
+    }
 
-        guard let matchingSample else {
-            throw HealthKitError.deleteFailed(reasonCode: -1)
-        }
-
+    private func hkDelete(sample matchingSample: HKQuantitySample, mapFailure: (Int) -> HealthKitError) async throws {
         do {
             try await healthStore.delete(matchingSample)
         } catch let error as HKError {
-            throw HealthKitError.deleteFailed(reasonCode: error.code.rawValue)
+            throw mapFailure(error.code.rawValue)
         } catch {
-            throw HealthKitError.deleteFailed(reasonCode: (error as NSError).code)
+            throw mapFailure((error as NSError).code)
         }
     }
 

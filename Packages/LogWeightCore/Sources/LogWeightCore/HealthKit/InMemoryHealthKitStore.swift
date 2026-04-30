@@ -72,6 +72,22 @@ public actor InMemoryHealthKitStore: HealthKitStore {
         }
     }
 
+    public func replace(old: Weight, new: Weight) async throws {
+        guard let index = samples.firstIndex(of: old) else {
+            throw HealthKitError.replaceFailed(reasonCode: -1)
+        }
+        if case .queryFails(let code) = failureMode {
+            throw HealthKitError.replaceFailed(reasonCode: code)
+        }
+        if case .saveFails(let code) = failureMode {
+            throw HealthKitError.replaceFailed(reasonCode: code)
+        }
+        samples[index] = new
+        for continuation in continuations {
+            continuation.yield(())
+        }
+    }
+
     public nonisolated func observeChanges() -> AsyncStream<Void> {
         let (stream, continuation) = AsyncStream.makeStream(of: Void.self)
         Task {

@@ -20,6 +20,8 @@ public enum HealthKitError: Error, Sendable, Equatable {
     case saveFailed(reasonCode: Int)
     case queryFailed(reasonCode: Int)
     case deleteFailed(reasonCode: Int)
+    /// Failed to replace an existing entry (e.g. could not locate old sample or write failed mid-replace).
+    case replaceFailed(reasonCode: Int)
 }
 
 /// Abstraction over HealthKit body-mass read/write.
@@ -66,6 +68,12 @@ public protocol HealthKitStore: Sendable {
     ///
     /// Callers should pass an item returned by `recentWeights(limit:)`.
     func delete(_ weight: Weight) async throws
+
+    /// Replaces an existing sample with updated weight and timestamp.
+    ///
+    /// Implementations MUST resolve `old` to the same persisted record callers see from
+    /// `recentWeights(limit:)`, typically by matching date and value near that row.
+    func replace(old: Weight, new: Weight) async throws
 
     /// Yields a `Void` element each time the body-mass record set changes. See
     /// the protocol-level "Implementation contract" comment above for required

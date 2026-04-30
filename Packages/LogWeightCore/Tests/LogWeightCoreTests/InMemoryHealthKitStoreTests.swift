@@ -140,4 +140,57 @@ final class InMemoryHealthKitStoreTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
     }
+
+    func testReplaceUpdatesEntry() async throws {
+        let store = InMemoryHealthKitStore()
+        let old = Weight(valueInKilograms: 80.0, recordedAt: referenceDate)
+        try await store.save(old)
+        let new = Weight(valueInKilograms: 78.5, recordedAt: referenceDate.addingTimeInterval(3_600))
+        try await store.replace(old: old, new: new)
+        let result = try await store.recentWeights(limit: 10)
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result.first, new)
+    }
+
+    func testReplaceThrowsWhenOldMissing() async {
+        let store = InMemoryHealthKitStore()
+        let old = Weight(valueInKilograms: 80.0, recordedAt: referenceDate)
+        let new = Weight(valueInKilograms: 78.0, recordedAt: referenceDate)
+        do {
+            try await store.replace(old: old, new: new)
+            XCTFail("Expected replace to throw")
+        } catch HealthKitError.replaceFailed {
+            // expected
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func testReplaceFailsWhenQueryFailsFailureMode() async {
+        let old = Weight(valueInKilograms: 80.0, recordedAt: referenceDate)
+        let new = Weight(valueInKilograms: 78.0, recordedAt: referenceDate)
+        let store = InMemoryHealthKitStore(samples: [old], failureMode: .queryFails(reasonCode: 11))
+        do {
+            try await store.replace(old: old, new: new)
+            XCTFail("Expected replace to throw")
+        } catch HealthKitError.replaceFailed(let code) {
+            XCTAssertEqual(code, 11)
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func testReplaceFailsWhenSaveFailsFailureMode() async {
+        let old = Weight(valueInKilograms: 80.0, recordedAt: referenceDate)
+        let new = Weight(valueInKilograms: 78.0, recordedAt: referenceDate)
+        let store = InMemoryHealthKitStore(samples: [old], failureMode: .saveFails(reasonCode: 9))
+        do {
+            try await store.replace(old: old, new: new)
+            XCTFail("Expected replace to throw")
+        } catch HealthKitError.replaceFailed(let code) {
+            XCTAssertEqual(code, 9)
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
 }
