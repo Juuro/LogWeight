@@ -15,6 +15,7 @@ struct WatchEntryView: View {
 
     @State private var showHistory = false
     @State private var showSettings = false
+    @State private var clearSavedStatusTask: Task<Void, Never>?
 
     private var displayUnit: WeightUnit {
         WeightUnit(rawValue: unitPreferenceRaw) ?? .kilograms
@@ -34,13 +35,16 @@ struct WatchEntryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                Spacer(minLength: 2)
+            VStack(spacing: 10) {
+                Spacer(minLength: 4)
                 Text(formatter.format(kilograms: state.displayValueInKilograms, in: displayUnit))
-                    .font(.system(.title, design: .rounded))
+                    .font(.system(size: 34, weight: .semibold, design: .rounded))
                     .fontWeight(.semibold)
+                    .monospacedDigit()
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
+                    .frame(height: 40)
+                    .padding(.top, 6)
                     .focusable()
                     .digitalCrownRotation(
                         crownKilograms,
@@ -76,21 +80,8 @@ struct WatchEntryView: View {
                     .accessibilityLabel("Increase weight")
                 }
 
-                statusLine
-
-                Button {
-                    Task {
-                        await state.commit(store: store)
-                    }
-                } label: {
-                    Text("Save")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(state.saveStatus == .saving)
-                .padding(.top, 2)
-                Spacer(minLength: 2)
+                primaryActionButton
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 8)
             // On 42mm screens an inline nav title can overlap main content.
@@ -126,6 +117,19 @@ struct WatchEntryView: View {
                     WKInterfaceDevice.current().play(.success)
                     WidgetCenter.shared.reloadAllTimelines()
                 }
+                if case .savedAt = new {
+                    clearSavedStatusTask?.cancel()
+                    clearSavedStatusTask = Task {
+                        try? await Task.sleep(for: .seconds(3))
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            state.reset()
+                        }
+                    }
+                }
+            }
+            .onDisappear {
+                clearSavedStatusTask?.cancel()
             }
         }
     }
@@ -143,28 +147,42 @@ struct WatchEntryView: View {
         return "Save failed. Check Health permissions."
     }
 
-    @ViewBuilder
-    private var statusLine: some View {
-        // Keep a constant reserved height so save-state transitions don't reflow
-        // the watch layout and cause a visible jump.
-        Group {
+    private var primaryActionButton: some View {
+        Button {
+            Task {
+                await state.commit(store: store)
+            }
+        } label: {
+            Group {
+                if state.saveStatus == .saving {
+                    Text("Saving…")
+                } else if case .savedAt = state.saveStatus {
+                    Label("Saved", systemImage: "checkmark")
+                } else {
+                    Text("Save")
+                }
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity, minHeight: 40)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(state.saveStatus != .idle && !isFailedState)
+        .padding(.top, 2)
+        .overlay(alignment: .bottom) {
             if case .failed(let code) = state.saveStatus {
                 Text(saveFailureMessage(code: code))
                     .font(.caption2)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 4)
-            } else if case .savedAt = state.saveStatus {
-                Text("Saved")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(" ")
-                    .font(.caption)
-                    .hidden()
+                    .offset(y: 16)
             }
         }
-        .frame(height: 22, alignment: .center)
+    }
+
+    private var isFailedState: Bool {
+        if case .failed = state.saveStatus { return true }
+        return false
     }
 }
 

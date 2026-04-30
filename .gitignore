@@ -19,6 +19,7 @@ Package.resolved
 
 # JMAT internal state (planning artefacts live in docs/jmat-reports/)
 .claude/
+.cursor/
 
 # Editor / OS noise
 *.swp

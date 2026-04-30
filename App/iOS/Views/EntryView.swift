@@ -24,6 +24,7 @@ struct EntryView: View {
     @State private var showSettings = false
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
+    @State private var clearSavedStatusTask: Task<Void, Never>?
     @FocusState private var valueFieldFocused: Bool
 
     private var displayUnit: WeightUnit {
@@ -87,6 +88,20 @@ struct EntryView: View {
                 if hapticsEnabled, case .savedAt = new { return true }
                 return false
             }
+            .onChange(of: state.saveStatus) { _, new in
+                guard case .savedAt = new else { return }
+                clearSavedStatusTask?.cancel()
+                clearSavedStatusTask = Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        state.reset()
+                    }
+                }
+            }
+            .onDisappear {
+                clearSavedStatusTask?.cancel()
+            }
         }
     }
 
@@ -148,21 +163,26 @@ struct EntryView: View {
 
     @ViewBuilder
     private var statusLine: some View {
-        switch state.saveStatus {
-        case .idle, .saving:
-            EmptyView()
-        case .savedAt:
-            Text("Saved to Apple Health")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .accessibilityIdentifier("entry.status.saved")
-        case .failed(let code):
-            Text(saveFailureMessage(code: code))
-                .font(.callout)
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.center)
-                .accessibilityIdentifier("entry.status.failed")
+        Group {
+            switch state.saveStatus {
+            case .idle, .saving:
+                Text(" ")
+                    .font(.callout)
+                    .hidden()
+            case .savedAt:
+                Text("Saved to Apple Health")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("entry.status.saved")
+            case .failed(let code):
+                Text(saveFailureMessage(code: code))
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("entry.status.failed")
+            }
         }
+        .frame(minHeight: 22, alignment: .center)
     }
 
     private var saveButton: some View {

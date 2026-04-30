@@ -22,6 +22,13 @@ struct WatchSettingsView: View {
                 Section("Feedback") {
                     Toggle("Haptics on save", isOn: $hapticsEnabled)
                 }
+                Section("About") {
+                    Text("Made with 🩷🩵 by Juuronina GbR.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
             }
             .navigationTitle("Settings")
             .toolbar {

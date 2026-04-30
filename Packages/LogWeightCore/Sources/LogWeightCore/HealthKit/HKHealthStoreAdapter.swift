@@ -47,6 +47,35 @@ public final class HKHealthStoreAdapter: HealthKitStore {
     }
 
     public func save(_ weight: Weight) async throws {
+        try await saveWithTimestampRetry(weight)
+    }
+
+    /// Writes a body-mass sample and retries with tiny timestamp nudges when
+    /// HealthKit rejects with invalid-argument collisions (code 3).
+    private func saveWithTimestampRetry(_ weight: Weight) async throws {
+        do {
+            try await saveOnce(weight)
+            return
+        } catch HealthKitError.saveFailed(let code) where code == HKError.Code.errorInvalidArgument.rawValue {
+            // Retry with slight second offsets to avoid same-instant collisions.
+            for secondOffset in 1...5 {
+                let shifted = Weight(
+                    valueInKilograms: weight.valueInKilograms,
+                    recordedAt: weight.recordedAt.addingTimeInterval(TimeInterval(secondOffset))
+                )
+                do {
+                    try await saveOnce(shifted)
+                    return
+                } catch HealthKitError.saveFailed(let retryCode) where retryCode == HKError.Code.errorInvalidArgument.rawValue {
+                    continue
+                }
+            }
+            throw HealthKitError.saveFailed(reasonCode: HKError.Code.errorInvalidArgument.rawValue)
+        }
+    }
+
+    /// Single-attempt sample write mapped into `HealthKitError`.
+    private func saveOnce(_ weight: Weight) async throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw HealthKitError.healthDataUnavailable
         }
@@ -113,20 +142,43 @@ public final class HKHealthStoreAdapter: HealthKitStore {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw HealthKitError.healthDataUnavailable
         }
+        // No-op edits (same value and timestamp) should succeed silently.
+        guard old != new else {
+            return
+        }
         guard let oldSample = try await fetchMatchingQuantitySample(for: old) else {
             throw HealthKitError.replaceFailed(reasonCode: -1)
         }
         do {
+            try await hkDelete(sample: oldSample, mapFailure: HealthKitError.replaceFailed(reasonCode:))
+        } catch HealthKitError.replaceFailed(let deleteCode) where deleteCode == HKError.Code.errorInvalidArgument.rawValue {
+            // Some samples can be non-replaceable in-place on device (e.g. source/ownership constraints).
+            // Fall back to writing the edited value so the user's change is not lost.
+            do {
+                try await save(new)
+                return
+            } catch HealthKitError.saveFailed(let code) {
+                throw HealthKitError.replaceFailed(reasonCode: code)
+            } catch HealthKitError.healthDataUnavailable {
+                throw HealthKitError.healthDataUnavailable
+            } catch {
+                throw HealthKitError.replaceFailed(reasonCode: -1)
+            }
+        }
+        do {
             try await save(new)
         } catch HealthKitError.saveFailed(let code) {
+            // Best-effort rollback so replace remains lossless when possible.
+            try? await save(old)
             throw HealthKitError.replaceFailed(reasonCode: code)
         } catch HealthKitError.healthDataUnavailable {
+            // Best-effort rollback for completeness.
+            try? await save(old)
             throw HealthKitError.healthDataUnavailable
         } catch {
+            try? await save(old)
             throw HealthKitError.replaceFailed(reasonCode: -1)
         }
-
-        try await hkDelete(sample: oldSample, mapFailure: HealthKitError.replaceFailed(reasonCode:))
     }
 
     /// Resolves a persisted `HKQuantitySample` matching a `Weight` from `recentWeights`.

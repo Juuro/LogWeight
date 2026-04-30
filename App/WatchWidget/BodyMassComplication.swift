@@ -39,7 +39,7 @@ struct BodyMassTimelineProvider: TimelineProvider {
         completion(BodyMassEntry(date: Date(), displayText: "—"))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<BodyMassEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<BodyMassEntry>) -> Void) {
         Task {
             let entry = await Self.loadEntry()
             // Refresh periodically; saves also call `WidgetCenter.reloadAllTimelines()` from the watch app.

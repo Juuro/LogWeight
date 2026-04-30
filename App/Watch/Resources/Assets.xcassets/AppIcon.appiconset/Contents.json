@@ -117,14 +117,6 @@
       "size" : "1024x1024"
     },
     {
-      "filename" : "Watch-70.png",
-      "idiom" : "watch",
-      "role" : "notificationCenter",
-      "scale" : "2x",
-      "size" : "35x35",
-      "subtype" : "49mm"
-    },
-    {
       "filename" : "Watch-234.png",
       "idiom" : "watch",
       "role" : "quickLook",

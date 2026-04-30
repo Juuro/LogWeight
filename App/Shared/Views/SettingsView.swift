@@ -45,6 +45,12 @@ struct SettingsView: View {
                     Text("LogWeight saves only to Apple Health on this device. Nothing leaves your device.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+
+                Text("Made with 🩷🩵 by Juuronina GbR.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
             .navigationTitle("Settings")
