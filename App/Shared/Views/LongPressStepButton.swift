@@ -27,13 +27,17 @@ struct LongPressStepButton<Label: View>: View {
                 DragGesture(minimumDistance: 0)
                     .updating($isHolding) { _, state, _ in state = true }
                     .onChanged { _ in
-                        guard longPressTask == nil else { return }
+                        // Allow a new task only when there is no active (non-cancelled) task.
+                        if let existing = longPressTask, !existing.isCancelled {
+                            return
+                        }
                         longPressTask = Task { @MainActor in
                             action()
                             try? await Task.sleep(for: .seconds(0.4))
                             guard !Task.isCancelled else { return }
                             let repeatStart = Date()
-                            while !Task.isCancelled {
+                            while true {
+                                guard !Task.isCancelled else { return }
                                 action()
                                 let elapsed = Date().timeIntervalSince(repeatStart)
                                 let interval: TimeInterval = elapsed > 2.0 ? 0.07 : 0.2
