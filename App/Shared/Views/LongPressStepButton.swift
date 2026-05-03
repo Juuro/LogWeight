@@ -13,7 +13,26 @@ import SwiftUI
 /// `DragGesture(minimumDistance: 0)` which detects the moment a finger or
 /// mouse button goes down. A `@GestureState` flag ensures the repeat task is
 /// cancelled even when the gesture fails rather than ends normally.
+///
+/// **Accessibility note**: VoiceOver and Switch Control users activate the button
+/// once per interaction (single `action` call), which is standard behaviour for
+/// increment / decrement controls. Long-press acceleration is a touch / pointer
+/// feature and does not apply to assistive-technology activation.
 struct LongPressStepButton<Label: View>: View {
+
+    // MARK: - Timing constants
+
+    /// Delay between the initial press and the start of auto-repeat.
+    private static let initialDelay: TimeInterval = 0.4
+    /// Auto-repeat interval during the slow phase.
+    private static let slowInterval: TimeInterval = 0.2
+    /// How long the slow phase lasts before acceleration kicks in.
+    private static let accelerationThreshold: TimeInterval = 2.0
+    /// Auto-repeat interval after acceleration.
+    private static let fastInterval: TimeInterval = 0.07
+
+    // MARK: -
+
     let action: () -> Void
     @ViewBuilder var label: () -> Label
 
@@ -33,14 +52,16 @@ struct LongPressStepButton<Label: View>: View {
                         }
                         longPressTask = Task { @MainActor in
                             action()
-                            try? await Task.sleep(for: .seconds(0.4))
+                            try? await Task.sleep(for: .seconds(Self.initialDelay))
                             guard !Task.isCancelled else { return }
                             let repeatStart = Date()
                             while true {
                                 guard !Task.isCancelled else { return }
                                 action()
                                 let elapsed = Date().timeIntervalSince(repeatStart)
-                                let interval: TimeInterval = elapsed > 2.0 ? 0.07 : 0.2
+                                let interval = elapsed > Self.accelerationThreshold
+                                    ? Self.fastInterval
+                                    : Self.slowInterval
                                 try? await Task.sleep(for: .seconds(interval))
                             }
                         }
