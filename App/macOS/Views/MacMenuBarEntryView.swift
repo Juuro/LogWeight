@@ -47,18 +47,12 @@ struct MacMenuBarEntryView: View {
                 .accessibilityIdentifier("mac.entry.weight")
 
             HStack(spacing: 12) {
-                Button {
-                    state.decrement()
-                    syncTextFromState()
-                } label: {
+                LongPressStepButton(action: { state.decrement(); syncTextFromState() }) {
                     Image(systemName: "minus")
                         .frame(minWidth: 44, minHeight: 32)
                 }
 
-                Button {
-                    state.increment()
-                    syncTextFromState()
-                } label: {
+                LongPressStepButton(action: { state.increment(); syncTextFromState() }) {
                     Image(systemName: "plus")
                         .frame(minWidth: 44, minHeight: 32)
                 }

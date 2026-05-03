@@ -133,27 +133,21 @@ struct EntryView: View {
 
     private var stepperRow: some View {
         HStack(spacing: 24) {
-            Button {
-                state.decrement()
-            } label: {
+            LongPressStepButton(action: state.decrement) {
                 Image(systemName: "minus")
                     .font(.title)
                     .frame(width: 88, height: 88)
                     .background(Color(uiColor: .secondarySystemBackground), in: Circle())
             }
-            .buttonStyle(.plain)
             .accessibilityLabel("Decrease weight")
             .accessibilityIdentifier("entry.stepper.minus")
 
-            Button {
-                state.increment()
-            } label: {
+            LongPressStepButton(action: state.increment) {
                 Image(systemName: "plus")
                     .font(.title)
                     .frame(width: 88, height: 88)
                     .background(Color(uiColor: .secondarySystemBackground), in: Circle())
             }
-            .buttonStyle(.plain)
             .accessibilityLabel("Increase weight")
             .accessibilityIdentifier("entry.stepper.plus")
         }

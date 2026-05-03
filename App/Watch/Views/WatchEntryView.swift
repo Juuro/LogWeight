@@ -59,24 +59,20 @@ struct WatchEntryView: View {
                     .accessibilityLabel("Weight")
 
                 HStack(spacing: 16) {
-                    Button {
-                        state.decrement()
-                    } label: {
+                    LongPressStepButton(action: state.decrement) {
                         Image(systemName: "minus")
                             .font(.title3)
                             .frame(width: 44, height: 44)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
-                    .buttonStyle(.bordered)
                     .accessibilityLabel("Decrease weight")
 
-                    Button {
-                        state.increment()
-                    } label: {
+                    LongPressStepButton(action: state.increment) {
                         Image(systemName: "plus")
                             .font(.title3)
                             .frame(width: 44, height: 44)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
-                    .buttonStyle(.bordered)
                     .accessibilityLabel("Increase weight")
                 }
 
