@@ -56,6 +56,8 @@ struct LongPressStepButton<Label: View>: View {
                         if let existing = longPressTask, !existing.isCancelled {
                             return
                         }
+                        // Cancel and replace any stale (already-cancelled) task.
+                        longPressTask?.cancel()
                         longPressTask = Task { @MainActor in
                             // The initial action fires unconditionally so that every
                             // press-down (including a quick tap that is immediately
@@ -65,8 +67,7 @@ struct LongPressStepButton<Label: View>: View {
                             try? await Task.sleep(for: .seconds(Self.initialDelay))
                             guard !Task.isCancelled else { return }
                             let repeatStart = Date()
-                            while true {
-                                guard !Task.isCancelled else { return }
+                            while !Task.isCancelled {
                                 action()
                                 let elapsed = Date().timeIntervalSince(repeatStart)
                                 let interval = elapsed > Self.accelerationThreshold
