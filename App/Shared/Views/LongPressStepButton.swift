@@ -59,16 +59,15 @@ struct LongPressStepButton<Label: View>: View {
                             try? await Task.sleep(for: .seconds(Self.initialDelay))
                             guard !Task.isCancelled else { return }
                             let repeatStart = Date()
-                            var accelerated = false
+                            var interval = Self.slowInterval
                             while !Task.isCancelled {
                                 action()
-                                if !accelerated,
+                                try? await Task.sleep(for: .seconds(interval))
+                                // Switch to fast interval once; no further Date calls needed.
+                                if interval == Self.slowInterval,
                                    Date().timeIntervalSince(repeatStart) > Self.accelerationThreshold {
-                                    accelerated = true
+                                    interval = Self.fastInterval
                                 }
-                                try? await Task.sleep(
-                                    for: .seconds(accelerated ? Self.fastInterval : Self.slowInterval)
-                                )
                             }
                         }
                     }

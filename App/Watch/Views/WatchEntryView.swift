@@ -59,9 +59,10 @@ struct WatchEntryView: View {
                     .accessibilityLabel("Weight")
 
                 HStack(spacing: 16) {
-                    // `.thinMaterial` approximates the `.bordered` ButtonStyle look;
-                    // LongPressStepButton cannot use a Button wrapper and still handle
-                    // the DragGesture required for long-press acceleration.
+                    // `.thinMaterial` approximates the `.bordered` ButtonStyle look.
+                    // A Button wrapper cannot be used here because DragGesture (needed
+                    // for long-press acceleration) would conflict with Button's own tap
+                    // gesture recogniser, causing the action to fire twice on each press.
                     LongPressStepButton(action: state.decrement) {
                         Image(systemName: "minus")
                             .font(.title3)
