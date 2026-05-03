@@ -18,6 +18,12 @@ import SwiftUI
 /// once per interaction (single `action` call), which is standard behaviour for
 /// increment / decrement controls. Long-press acceleration is a touch / pointer
 /// feature and does not apply to assistive-technology activation.
+///
+/// Callers should apply `.accessibilityLabel` and `.accessibilityIdentifier`
+/// directly on `LongPressStepButton` — in SwiftUI, custom `View` structs are
+/// transparent accessibility boundaries, so those modifiers reach the same
+/// underlying element as the `.accessibilityAddTraits` / `.accessibilityAction`
+/// modifiers set internally by this component.
 struct LongPressStepButton<Label: View>: View {
 
     // MARK: - Timing constants
@@ -51,6 +57,10 @@ struct LongPressStepButton<Label: View>: View {
                             return
                         }
                         longPressTask = Task { @MainActor in
+                            // The initial action fires unconditionally so that every
+                            // press-down (including a quick tap that is immediately
+                            // cancelled) registers at least one step. Cancellation is
+                            // checked only before each *repeat* step in the loop below.
                             action()
                             try? await Task.sleep(for: .seconds(Self.initialDelay))
                             guard !Task.isCancelled else { return }
