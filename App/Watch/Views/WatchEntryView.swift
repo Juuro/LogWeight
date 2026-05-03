@@ -59,6 +59,9 @@ struct WatchEntryView: View {
                     .accessibilityLabel("Weight")
 
                 HStack(spacing: 16) {
+                    // `.thinMaterial` approximates the `.bordered` ButtonStyle look;
+                    // LongPressStepButton cannot use a Button wrapper and still handle
+                    // the DragGesture required for long-press acceleration.
                     LongPressStepButton(action: state.decrement) {
                         Image(systemName: "minus")
                             .font(.title3)
