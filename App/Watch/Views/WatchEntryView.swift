@@ -57,6 +57,9 @@ struct WatchEntryView: View {
                     )
                     .privacySensitive()
                     .accessibilityLabel("Weight")
+                    .onTapGesture(count: 2) {
+                        state.restoreDisplayToLastLoggedWeight()
+                    }
 
                 HStack(spacing: 16) {
                     // `.thinMaterial` approximates the `.bordered` ButtonStyle look.

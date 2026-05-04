@@ -5,7 +5,7 @@ import LogWeightCore
 /// Stepper-primary entry surface.
 ///
 /// Layout (top to bottom):
-/// - Big SF Rounded numeric value (tappable → opens decimal pad)
+/// - Big SF Rounded numeric value (tap → opens decimal pad after a short delay; second tap quickly restores last logged weight)
 /// - Prominent − / + stepper buttons (44pt, long-press accelerates via SwiftUI Stepper)
 /// - Save button bottom-trailing in safe area, disabled while keyboard is up
 ///
@@ -25,7 +25,11 @@ struct EntryView: View {
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
+    @State private var pendingOpenEditorWork: DispatchWorkItem?
     @FocusState private var valueFieldFocused: Bool
+
+    /// Delay before one tap opens the decimal pad; second tap within this window restores last logged weight (UIKit-style double-tap vs single-tap tradeoff).
+    private static let singleTapEditDelaySeconds: TimeInterval = 0.28
 
     private var displayUnit: WeightUnit {
         WeightUnit(rawValue: unitPreferenceRaw) ?? .kilograms
@@ -99,6 +103,8 @@ struct EntryView: View {
             }
             .onDisappear {
                 clearSavedStatusTask?.cancel()
+                pendingOpenEditorWork?.cancel()
+                pendingOpenEditorWork = nil
             }
         }
     }
@@ -115,19 +121,23 @@ struct EntryView: View {
                 .accessibilityLabel("Weight value")
                 .accessibilityIdentifier("entry.value.textfield")
         } else {
-            Button {
-                typedValue = String(format: "%.1f", displayValue.value(in: displayUnit, formatter: formatter))
-                valueFieldFocused = true
-            } label: {
-                Text(formatter.format(kilograms: displayValue, in: displayUnit))
-                    .font(.system(size: 72, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("entry.value.display")
-            .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to edit."))
+            Text(formatter.format(kilograms: displayValue, in: displayUnit))
+                .font(.system(size: 72, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    handleWeightDisplayTap(currentKilograms: displayValue)
+                }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("entry.value.display")
+                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to edit."))
+                .accessibilityHint("Double tap quickly to restore the last logged weight. Use the Restore action in the VoiceOver rotor for the same.")
+                .accessibilityAction(named: Text("Restore last logged weight")) {
+                    state.restoreDisplayToLastLoggedWeight()
+                }
         }
     }
 
@@ -221,6 +231,22 @@ struct EntryView: View {
         if let kg = formatter.parseToKilograms(typedValue, unit: displayUnit) {
             state.setValue(kg, unit: .kilograms)
         }
+    }
+
+    private func handleWeightDisplayTap(currentKilograms: Double) {
+        if let work = pendingOpenEditorWork {
+            work.cancel()
+            pendingOpenEditorWork = nil
+            state.restoreDisplayToLastLoggedWeight()
+            return
+        }
+        let work = DispatchWorkItem {
+            typedValue = String(format: "%.1f", currentKilograms.value(in: displayUnit, formatter: formatter))
+            valueFieldFocused = true
+            pendingOpenEditorWork = nil
+        }
+        pendingOpenEditorWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.singleTapEditDelaySeconds, execute: work)
     }
 }
 

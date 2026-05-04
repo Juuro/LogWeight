@@ -100,4 +100,35 @@ final class EntryStateTests: XCTestCase {
         state.reset()
         XCTAssertEqual(state.saveStatus, .idle)
     }
+
+    @MainActor
+    func testRestoreDisplayNoOpsWhenNoLastSaved() {
+        let state = EntryState(initialValueInKilograms: 80.0)
+        state.increment()
+        state.restoreDisplayToLastLoggedWeight()
+        XCTAssertEqual(state.displayValueInKilograms, 80.1, accuracy: 0.001)
+    }
+
+    @MainActor
+    func testRestoreDisplayAfterLoadLastWeight() async {
+        let store = InMemoryHealthKitStore(samples: [
+            Weight(valueInKilograms: 78.5, recordedAt: referenceDate)
+        ])
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        state.increment()
+        state.restoreDisplayToLastLoggedWeight()
+        XCTAssertEqual(state.displayValueInKilograms, 78.5, accuracy: 0.001)
+    }
+
+    @MainActor
+    func testRestoreDisplayAfterCommit() async {
+        let state = EntryState(initialValueInKilograms: 80.0)
+        let store = InMemoryHealthKitStore()
+        await state.commit(store: store, now: referenceDate)
+        state.increment()
+        state.increment()
+        state.restoreDisplayToLastLoggedWeight()
+        XCTAssertEqual(state.displayValueInKilograms, 80.0, accuracy: 0.001)
+    }
 }

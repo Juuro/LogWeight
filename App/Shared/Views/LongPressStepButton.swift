@@ -1,12 +1,13 @@
 import SwiftUI
+import LogWeightCore
 
 /// A button that fires `action` immediately on press, then auto-repeats at an
 /// accelerating rate while the user holds the control down.
 ///
-/// Timing contract:
+/// Timing contract (see `LongPressRepeatPolicy.stepButtonDefault` in `LogWeightCore`):
 /// - **t = 0**: first `action` fires as soon as the press is detected.
 /// - **t = 0.4 s**: first auto-repeat step fires; subsequent steps every **0.2 s**.
-/// - **After 2 s of repeating**: interval drops to **0.07 s** (≈ 14 steps / s).
+/// - **After 2 s of repeating**: interval drops to **0.04 s** (≈ 25 steps / s).
 /// - **Release**: all repeating stops immediately.
 ///
 /// Works on iOS (touch), watchOS (touch), and macOS (mouse hold) via
@@ -25,19 +26,6 @@ import SwiftUI
 /// modifiers set internally by this component.
 struct LongPressStepButton<Label: View>: View {
 
-    // MARK: - Timing constants
-
-    /// Delay between the initial press and the start of auto-repeat.
-    private static let initialDelay: TimeInterval = 0.4
-    /// Auto-repeat interval during the slow phase.
-    private static let slowInterval: TimeInterval = 0.2
-    /// How long the slow phase lasts before acceleration kicks in.
-    private static let accelerationThreshold: TimeInterval = 2.0
-    /// Auto-repeat interval after acceleration.
-    private static let fastInterval: TimeInterval = 0.07
-
-    // MARK: -
-
     let action: () -> Void
     @ViewBuilder var label: () -> Label
 
@@ -51,23 +39,11 @@ struct LongPressStepButton<Label: View>: View {
                     .onChanged { _ in
                         guard longPressTask == nil else { return }
                         longPressTask = Task { @MainActor in
-                            // The initial action fires unconditionally so that every
-                            // press-down (including a quick tap that is immediately
-                            // cancelled) registers at least one step. Cancellation is
-                            // checked only before each *repeat* step in the loop below.
-                            action()
-                            try? await Task.sleep(for: .seconds(Self.initialDelay))
-                            guard !Task.isCancelled else { return }
-                            let repeatStart = Date()
-                            var interval = Self.slowInterval
-                            while !Task.isCancelled {
+                            await runLongPressRepeatLoop(
+                                policy: .stepButtonDefault,
+                                clock: SystemLongPressClock()
+                            ) {
                                 action()
-                                try? await Task.sleep(for: .seconds(interval))
-                                // Switch to fast interval once; no further Date calls needed.
-                                if interval == Self.slowInterval,
-                                   Date().timeIntervalSince(repeatStart) > Self.accelerationThreshold {
-                                    interval = Self.fastInterval
-                                }
                             }
                         }
                     }
