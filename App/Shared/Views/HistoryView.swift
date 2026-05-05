@@ -17,6 +17,9 @@ struct HistoryView: View {
     @State private var isDeleting = false
     @State private var editingContext: EditingContext?
     @State private var isSavingEdit = false
+#if !os(watchOS)
+    @State private var selectedRange: ChartRange = .oneMonth
+#endif
     @Environment(\.dismiss) private var dismiss
 
     private var displayUnit: WeightUnit {
@@ -175,31 +178,87 @@ struct HistoryView: View {
     }
 
 #if !os(watchOS)
+    private enum ChartRange: String, CaseIterable {
+        case oneWeek
+        case oneMonth
+        case threeMonths
+        case sixMonths
+        case oneYear
+        case all
+
+        var label: String {
+            switch self {
+            case .oneWeek: "1W"
+            case .oneMonth: "1M"
+            case .threeMonths: "3M"
+            case .sixMonths: "6M"
+            case .oneYear: "1Y"
+            case .all: "All"
+            }
+        }
+
+        func cutoffDate(referenceDate: Date, calendar: Calendar = .current) -> Date? {
+            switch self {
+            case .oneWeek:
+                calendar.date(byAdding: .day, value: -7, to: referenceDate)
+            case .oneMonth:
+                calendar.date(byAdding: .month, value: -1, to: referenceDate)
+            case .threeMonths:
+                calendar.date(byAdding: .month, value: -3, to: referenceDate)
+            case .sixMonths:
+                calendar.date(byAdding: .month, value: -6, to: referenceDate)
+            case .oneYear:
+                calendar.date(byAdding: .year, value: -1, to: referenceDate)
+            case .all:
+                nil
+            }
+        }
+    }
+
+    private var filteredChartWeights: [Weight] {
+        let sorted = weights.sorted(by: { $0.recordedAt < $1.recordedAt })
+        guard let cutoff = selectedRange.cutoffDate(referenceDate: Date()) else {
+            return sorted
+        }
+        return sorted.filter { $0.recordedAt >= cutoff }
+    }
+
     private var chartSection: some View {
-        let sortedWeights = weights.sorted(by: { $0.recordedAt < $1.recordedAt })
         return VStack(alignment: .leading, spacing: 8) {
             Text("Trend")
                 .font(.headline)
-            Chart(sortedWeights, id: \.self) { weight in
-                LineMark(
-                    x: .value("Date", weight.recordedAt),
-                    y: .value("Weight", displayValue(for: weight))
-                )
-                .interpolationMethod(.monotone)
-                .foregroundStyle(.teal)
+            Picker("Range", selection: $selectedRange) {
+                ForEach(ChartRange.allCases, id: \.self) { range in
+                    Text(range.label).tag(range)
+                }
+            }
+            .pickerStyle(.segmented)
 
-                PointMark(
-                    x: .value("Date", weight.recordedAt),
-                    y: .value("Weight", displayValue(for: weight))
-                )
-                .foregroundStyle(.teal)
+            if filteredChartWeights.isEmpty {
+                ContentUnavailableView("No data in selected range", systemImage: "chart.xyaxis.line")
+                    .frame(height: 180)
+            } else {
+                Chart(filteredChartWeights, id: \.self) { weight in
+                    LineMark(
+                        x: .value("Date", weight.recordedAt),
+                        y: .value("Weight", displayValue(for: weight))
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(.teal)
+
+                    PointMark(
+                        x: .value("Date", weight.recordedAt),
+                        y: .value("Weight", displayValue(for: weight))
+                    )
+                    .foregroundStyle(.teal)
+                }
+                .chartYScale(domain: chartYDomain)
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .frame(height: 180)
+                .accessibilityIdentifier("history.chart")
             }
-            .chartYScale(domain: chartYDomain)
-            .chartYAxis {
-                AxisMarks(position: .leading)
-            }
-            .frame(height: 180)
-            .accessibilityIdentifier("history.chart")
         }
         .padding(.vertical, 4)
     }
@@ -213,7 +272,7 @@ struct HistoryView: View {
     /// Dynamic chart domain anchored around the user's current weight range.
     /// Keeps all points visible while avoiding a zero-based axis that flattens trends.
     private var chartYDomain: ClosedRange<Double> {
-        let values = weights.map(displayValue(for:))
+        let values = filteredChartWeights.map(displayValue(for:))
         guard let minimum = values.min(), let maximum = values.max() else {
             return 0.0...1.0
         }
@@ -232,7 +291,7 @@ struct HistoryView: View {
 
     private func load() async {
         do {
-            let result = try await store.recentWeights(limit: 50)
+            let result = try await store.recentWeights(limit: 5_000)
             weights = result
             loadError = nil
             mutationError = nil
