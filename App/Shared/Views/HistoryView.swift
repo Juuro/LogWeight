@@ -242,73 +242,68 @@ struct HistoryView: View {
                 ContentUnavailableView("No data in selected range", systemImage: "chart.xyaxis.line")
                     .frame(height: 180)
             } else {
-                GeometryReader { geometry in
-                    VStack(spacing: 0) {
-                        ZStack(alignment: .top) {
-                            Chart(filteredChartWeights, id: \.self) { weight in
-                                LineMark(
-                                    x: .value("Date", weight.recordedAt),
-                                    y: .value("Weight", displayValue(for: weight))
-                                )
-                                .interpolationMethod(.monotone)
-                                .foregroundStyle(.teal)
+                Chart(filteredChartWeights, id: \.self) { weight in
+                    LineMark(
+                        x: .value("Date", weight.recordedAt),
+                        y: .value("Weight", displayValue(for: weight))
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(.teal)
 
-                                PointMark(
-                                    x: .value("Date", weight.recordedAt),
-                                    y: .value("Weight", displayValue(for: weight))
-                                )
-                                .foregroundStyle(.teal)
-                                .symbolSize(isClosestToHoveredDate(weight) ? 100 : 50)
-                                .opacity(isClosestToHoveredDate(weight) ? 1 : 0.6)
+                    PointMark(
+                        x: .value("Date", weight.recordedAt),
+                        y: .value("Weight", displayValue(for: weight))
+                    )
+                    .foregroundStyle(.teal)
+                    .symbolSize(isClosestToHoveredDate(weight) ? 100 : 50)
+                    .opacity(isClosestToHoveredDate(weight) ? 1 : 0.6)
 
-                                if let hoveredXDate = hoveredXDate {
-                                    RuleMark(x: .value("Hover", hoveredXDate))
-                                        .foregroundStyle(.gray.opacity(0.3))
-                                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
-                                }
-                            }
-                            .chartYScale(domain: chartYDomain)
-                            .chartYAxis {
-                                AxisMarks(position: .leading)
-                            }
+                    if let hoveredXDate = hoveredXDate {
+                        RuleMark(x: .value("Hover", hoveredXDate))
+                            .foregroundStyle(.gray.opacity(0.3))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                    }
+                }
+                .chartYScale(domain: chartYDomain)
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
+                        let plotFrame = geo[proxy.plotFrame]
+
+                        Rectangle()
+                            .fill(.clear)
                             .contentShape(Rectangle())
                             .gesture(
                                 DragGesture(minimumDistance: 0)
                                     .onChanged { value in
-                                        let xPosition = value.location.x
-                                        let chartWidth = geometry.size.width
-                                        let progress = max(0, min(1, xPosition / chartWidth))
-
-                                        guard let minDate = filteredChartWeights.first?.recordedAt,
-                                              let maxDate = filteredChartWeights.last?.recordedAt else {
-                                            return
-                                        }
-
-                                        let timeInterval = maxDate.timeIntervalSince(minDate)
-                                        let hoverDate = minDate.addingTimeInterval(timeInterval * progress)
-                                        hoveredXDate = hoverDate
+                                        let xInPlot = value.location.x - plotFrame.minX
+                                        hoveredXDate = proxy.value(atX: xInPlot, as: Date.self)
                                     }
                                     .onEnded { _ in
                                         hoveredXDate = nil
                                     }
                             )
 
-                            if let hoveredXDate = hoveredXDate,
-                               let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights) {
-                                ChartHoverOverlay(
-                                    weight: closest,
-                                    displayUnit: displayUnit,
-                                    formatter: formatter,
-                                    dateFormatter: dateFormatter
-                                )
-                                .offset(y: -100)
-                            }
+                        if let hoveredXDate = hoveredXDate,
+                           let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights),
+                           let xInPlot = proxy.position(forX: closest.recordedAt) {
+                            let tooltipHalfWidth: CGFloat = 64
+                            let screenX = (plotFrame.minX + xInPlot)
+                                .clamped(to: tooltipHalfWidth...(geo.size.width - tooltipHalfWidth))
+                            ChartHoverOverlay(
+                                weight: closest,
+                                displayUnit: displayUnit,
+                                formatter: formatter,
+                                dateFormatter: dateFormatter
+                            )
+                            .position(x: screenX, y: plotFrame.minY + 28)
                         }
-                        .frame(height: 180)
-                        .accessibilityIdentifier("history.chart")
                     }
                 }
                 .frame(height: 180)
+                .accessibilityIdentifier("history.chart")
             }
         }
         .padding(.vertical, 4)
@@ -836,10 +831,9 @@ private struct ChartHoverOverlay: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color(uiColor: .secondarySystemBackground))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .foregroundStyle(.teal)
-        .cornerRadius(12)
-        .shadow(radius: 4)
+        .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
     }
 }
 #endif
