@@ -19,6 +19,7 @@ struct HistoryView: View {
     @State private var isSavingEdit = false
 #if !os(watchOS)
     @State private var selectedRange: ChartRange = .oneMonth
+    @State private var hoveredXDate: Date?
 #endif
     @Environment(\.dismiss) private var dismiss
 
@@ -233,31 +234,81 @@ struct HistoryView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .onChange(of: selectedRange) { _, _ in
+                hoveredXDate = nil
+            }
 
             if filteredChartWeights.isEmpty {
                 ContentUnavailableView("No data in selected range", systemImage: "chart.xyaxis.line")
                     .frame(height: 180)
             } else {
-                Chart(filteredChartWeights, id: \.self) { weight in
-                    LineMark(
-                        x: .value("Date", weight.recordedAt),
-                        y: .value("Weight", displayValue(for: weight))
-                    )
-                    .interpolationMethod(.monotone)
-                    .foregroundStyle(.teal)
+                GeometryReader { geometry in
+                    VStack(spacing: 0) {
+                        ZStack(alignment: .top) {
+                            Chart(filteredChartWeights, id: \.self) { weight in
+                                LineMark(
+                                    x: .value("Date", weight.recordedAt),
+                                    y: .value("Weight", displayValue(for: weight))
+                                )
+                                .interpolationMethod(.monotone)
+                                .foregroundStyle(.teal)
 
-                    PointMark(
-                        x: .value("Date", weight.recordedAt),
-                        y: .value("Weight", displayValue(for: weight))
-                    )
-                    .foregroundStyle(.teal)
-                }
-                .chartYScale(domain: chartYDomain)
-                .chartYAxis {
-                    AxisMarks(position: .leading)
+                                PointMark(
+                                    x: .value("Date", weight.recordedAt),
+                                    y: .value("Weight", displayValue(for: weight))
+                                )
+                                .foregroundStyle(.teal)
+                                .symbolSize(isClosestToHoveredDate(weight) ? 100 : 50)
+                                .opacity(isClosestToHoveredDate(weight) ? 1 : 0.6)
+
+                                if let hoveredXDate = hoveredXDate {
+                                    RuleMark(x: .value("Hover", hoveredXDate))
+                                        .foregroundStyle(.gray.opacity(0.3))
+                                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                                }
+                            }
+                            .chartYScale(domain: chartYDomain)
+                            .chartYAxis {
+                                AxisMarks(position: .leading)
+                            }
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        let xPosition = value.location.x
+                                        let chartWidth = geometry.size.width
+                                        let progress = max(0, min(1, xPosition / chartWidth))
+
+                                        guard let minDate = filteredChartWeights.first?.recordedAt,
+                                              let maxDate = filteredChartWeights.last?.recordedAt else {
+                                            return
+                                        }
+
+                                        let timeInterval = maxDate.timeIntervalSince(minDate)
+                                        let hoverDate = minDate.addingTimeInterval(timeInterval * progress)
+                                        hoveredXDate = hoverDate
+                                    }
+                                    .onEnded { _ in
+                                        hoveredXDate = nil
+                                    }
+                            )
+
+                            if let hoveredXDate = hoveredXDate,
+                               let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights) {
+                                ChartHoverOverlay(
+                                    weight: closest,
+                                    displayUnit: displayUnit,
+                                    formatter: formatter,
+                                    dateFormatter: dateFormatter
+                                )
+                                .offset(y: -100)
+                            }
+                        }
+                        .frame(height: 180)
+                        .accessibilityIdentifier("history.chart")
+                    }
                 }
                 .frame(height: 180)
-                .accessibilityIdentifier("history.chart")
             }
         }
         .padding(.vertical, 4)
@@ -267,6 +318,18 @@ struct HistoryView: View {
         Measurement(value: weight.valueInKilograms, unit: UnitMass.kilograms)
             .converted(to: displayUnit.unitMass)
             .value
+    }
+
+    private func findClosestWeight(to date: Date, in weights: [Weight]) -> Weight? {
+        weights.min { a, b in
+            abs(a.recordedAt.timeIntervalSince(date)) < abs(b.recordedAt.timeIntervalSince(date))
+        }
+    }
+
+    private func isClosestToHoveredDate(_ weight: Weight) -> Bool {
+        guard let hoveredXDate = hoveredXDate else { return false }
+        guard let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights) else { return false }
+        return weight.recordedAt == closest.recordedAt
     }
 
     /// Dynamic chart domain anchored around the user's current weight range.
@@ -753,6 +816,33 @@ private struct HistoryWeightEditSheet: View {
         }
     }
 }
+
+#if !os(watchOS)
+private struct ChartHoverOverlay: View {
+    let weight: Weight
+    let displayUnit: WeightUnit
+    let formatter: WeightFormatter
+    let dateFormatter: DateFormatter
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
+                .font(.system(.body, design: .rounded).monospacedDigit())
+                .fontWeight(.semibold)
+                .privacySensitive()
+            Text(dateFormatter.string(from: weight.recordedAt))
+                .font(.caption2)
+                .privacySensitive()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(uiColor: .secondarySystemBackground))
+        .foregroundStyle(.teal)
+        .cornerRadius(12)
+        .shadow(radius: 4)
+    }
+}
+#endif
 
 #if DEBUG
 #Preview("History") {
