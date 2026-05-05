@@ -7,6 +7,16 @@ import Charts
 /// HealthKit history (source of truth). Shared by iOS, watchOS, and macOS.
 /// Phase 4: iOS/iPadOS/macOS get a trend chart above the list.
 struct HistoryView: View {
+    private class Cache {
+        static let formatter = WeightFormatter(locale: .current, fractionDigits: 1)
+        static let dateFormatter: DateFormatter = {
+            let f = DateFormatter()
+            f.dateStyle = .medium
+            f.timeStyle = .short
+            f.locale = .current
+            return f
+        }()
+    }
 
     let store: HealthKitStore
 
@@ -20,6 +30,7 @@ struct HistoryView: View {
 #if !os(watchOS)
     @State private var selectedRange: ChartRange = .oneMonth
     @State private var hoveredXDate: Date?
+    @State private var hoveredWeight: Weight?
 #endif
     @Environment(\.dismiss) private var dismiss
 
@@ -28,15 +39,11 @@ struct HistoryView: View {
     }
 
     private var formatter: WeightFormatter {
-        WeightFormatter(locale: .current, fractionDigits: 1)
+        Cache.formatter
     }
 
     private var dateFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .short
-        f.locale = .current
-        return f
+        Cache.dateFormatter
     }
 
     var body: some View {
@@ -236,6 +243,7 @@ struct HistoryView: View {
             .pickerStyle(.segmented)
             .onChange(of: selectedRange) { _, _ in
                 hoveredXDate = nil
+                hoveredWeight = nil
             }
 
             if filteredChartWeights.isEmpty {
@@ -255,8 +263,8 @@ struct HistoryView: View {
                         y: .value("Weight", displayValue(for: weight))
                     )
                     .foregroundStyle(.teal)
-                    .symbolSize(isClosestToHoveredDate(weight) ? 100 : 50)
-                    .opacity(isClosestToHoveredDate(weight) ? 1 : 0.6)
+                    .symbolSize(hoveredWeight?.recordedAt == weight.recordedAt ? 100 : 50)
+                    .opacity(hoveredWeight?.recordedAt == weight.recordedAt ? 1 : 0.6)
 
                     if let hoveredXDate = hoveredXDate {
                         RuleMark(x: .value("Hover", hoveredXDate))
@@ -270,35 +278,40 @@ struct HistoryView: View {
                 }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
-                        let plotFrame = geo[proxy.plotFrame]
+                        if let plotFrame = proxy.plotFrame {
+                            let frame = geo[plotFrame]
 
-                        Rectangle()
-                            .fill(.clear)
-                            .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { value in
-                                        let xInPlot = value.location.x - plotFrame.minX
-                                        hoveredXDate = proxy.value(atX: xInPlot, as: Date.self)
-                                    }
-                                    .onEnded { _ in
-                                        hoveredXDate = nil
-                                    }
-                            )
+                            Rectangle()
+                                .fill(.clear)
+                                .contentShape(Rectangle())
+                                .gesture(
+                                    DragGesture(minimumDistance: 8)
+                                        .onChanged { value in
+                                            let xInPlot = value.location.x - frame.minX
+                                            if let hoverDate = proxy.value(atX: xInPlot, as: Date.self) {
+                                                hoveredXDate = hoverDate
+                                                hoveredWeight = findClosestWeight(to: hoverDate, in: filteredChartWeights)
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            hoveredXDate = nil
+                                            hoveredWeight = nil
+                                        }
+                                )
 
-                        if let hoveredXDate = hoveredXDate,
-                           let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights),
-                           let xInPlot = proxy.position(forX: closest.recordedAt) {
-                            let tooltipHalfWidth: CGFloat = 64
-                            let screenX = (plotFrame.minX + xInPlot)
-                                .clamped(to: tooltipHalfWidth...(geo.size.width - tooltipHalfWidth))
-                            ChartHoverOverlay(
-                                weight: closest,
-                                displayUnit: displayUnit,
-                                formatter: formatter,
-                                dateFormatter: dateFormatter
-                            )
-                            .position(x: screenX, y: plotFrame.minY + 28)
+                            if let hoveredXDate = hoveredXDate,
+                               let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights),
+                               let xInPlot = proxy.position(forX: closest.recordedAt) {
+                                let tooltipHalfWidth: CGFloat = 64
+                                let screenX = min(max(frame.minX + xInPlot, tooltipHalfWidth), geo.size.width - tooltipHalfWidth)
+                                ChartHoverOverlay(
+                                    weight: closest,
+                                    displayUnit: displayUnit,
+                                    formatter: formatter,
+                                    dateFormatter: dateFormatter
+                                )
+                                .position(x: screenX, y: frame.minY + 28)
+                            }
                         }
                     }
                 }
@@ -319,12 +332,6 @@ struct HistoryView: View {
         weights.min { a, b in
             abs(a.recordedAt.timeIntervalSince(date)) < abs(b.recordedAt.timeIntervalSince(date))
         }
-    }
-
-    private func isClosestToHoveredDate(_ weight: Weight) -> Bool {
-        guard let hoveredXDate = hoveredXDate else { return false }
-        guard let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights) else { return false }
-        return weight.recordedAt == closest.recordedAt
     }
 
     /// Dynamic chart domain anchored around the user's current weight range.
