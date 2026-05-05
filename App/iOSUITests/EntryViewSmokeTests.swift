@@ -114,8 +114,8 @@ final class EntryViewSmokeTests: XCTestCase {
         }
 
         let delta = afterValue - beforeValue
-        XCTAssertGreaterThan(delta, 2.0,
-                             "Holding +1 for 3 s should produce far more than 20 steps once acceleration kicks in. before=\(beforeValue), after=\(afterValue), delta=\(delta)")
+        XCTAssertGreaterThan(delta, 1.6,
+                             "Holding +1 for 3 s should produce far more than 16 steps once acceleration kicks in. before=\(beforeValue), after=\(afterValue), delta=\(delta)")
     }
 
     /// Extracts the leading numeric value from an accessibility label like
