@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command=$(jq -r '.tool_input.command // empty'); if [[ \"$command\" == git*commit* ]]; then if ! echo \"$command\" | grep -qE 'git commit.*-m.*\\\"?(feat|fix|refactor|test|docs|chore|style|perf)(\\([^)]+\\))?:'; then echo '{\"continue\": false, \"stopReason\": \"Commit message must follow Conventional Commits format: <type>(<scope>): <subject>\\n\\nValid types: feat, fix, refactor, test, docs, chore, style, perf\\n\\nExample: feat(entry-view): implement double-tap to restore last weight\"}'; exit 0; fi; fi; echo '{\"continue\": true}'",
+            "if": "Bash(git commit *)"
+          }
+        ]
+      }
+    ]
+  }
+}

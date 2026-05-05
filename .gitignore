@@ -18,7 +18,8 @@ LogWeight.xcodeproj/
 Package.resolved
 
 # JMAT internal state (planning artefacts live in docs/jmat-reports/)
-.claude/
+.claude/*
+!.claude/settings.json
 .cursor/
 
 # Editor / OS noise

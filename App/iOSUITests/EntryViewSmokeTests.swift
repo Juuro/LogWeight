@@ -40,12 +40,14 @@ final class EntryViewSmokeTests: XCTestCase {
     /// Verifies that tapping the value display enters edit mode and returns to
     /// a save-ready state after dismissing the software keyboard toolbar (when present).
     func testKeyboardOpenDisablesSaveAndDoneReEnablesIt() throws {
-        let valueDisplay = app.buttons["entry.value.display"]
+        // Value is a styled Text with button accessibility traits, not always exposed as `XCUIElementTypeButton`.
+        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
         XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
         valueDisplay.tap()
 
         let done = app.buttons["entry.keyboard.done"]
-        if done.waitForExistence(timeout: 2) {
+        // Single tap waits ~280ms before focusing the field (double-tap vs edit discrimination).
+        if done.waitForExistence(timeout: 3) {
             done.tap()
         } else {
             // Some simulator setups attach a hardware keyboard and skip the
@@ -82,6 +84,52 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.segmentedControls["settings.unit"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.descendants(matching: .any)["settings.prefill"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.switches["settings.haptics"].waitForExistence(timeout: 2))
+    }
+
+    /// Long-press auto-repeat smoke test: holding the +1 stepper for 3 s must
+    /// produce many more increments than a single tap and must clearly
+    /// exceed the slow-phase-only bound — proof that the gesture is wired to
+    /// the engine and that acceleration kicks in. Exact fire count varies
+    /// with simulator scheduling, so the delta bound is intentionally loose
+    /// (>2.0 in display units ≈ at least 20 increments of 0.1 kg ≈ 0.44 lb).
+    func testStepperLongPressAcceleratesIncrement() throws {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+        // `entry.value.display` is a styled Text with `.accessibilityAddTraits(.isButton)`,
+        // not a real Button — match by accessibility id across element types
+        // (same pattern as testKeyboardOpenDisablesSaveAndDoneReEnablesIt).
+        let display = app.descendants(matching: .any)["entry.value.display"]
+        XCTAssertTrue(display.waitForExistence(timeout: 2))
+
+        guard let beforeValue = Self.parseDisplayValue(display.label) else {
+            XCTFail("Could not parse before-value from display label: '\(display.label)'")
+            return
+        }
+
+        plus.press(forDuration: 3.0)
+
+        guard let afterValue = Self.parseDisplayValue(display.label) else {
+            XCTFail("Could not parse after-value from display label: '\(display.label)'")
+            return
+        }
+
+        let delta = afterValue - beforeValue
+        XCTAssertGreaterThan(delta, 1.6,
+                             "Holding +1 for 3 s should produce far more than 16 steps once acceleration kicks in. before=\(beforeValue), after=\(afterValue), delta=\(delta)")
+    }
+
+    /// Extracts the leading numeric value from an accessibility label like
+    /// `"Weight 75.0 kg. Tap to edit."`. Tolerant to a comma decimal so the
+    /// test does not depend on the simulator's locale.
+    private static func parseDisplayValue(_ label: String) -> Double? {
+        guard let regex = try? NSRegularExpression(pattern: #"\d+(?:[.,]\d+)?"#) else { return nil }
+        let nsLabel = label as NSString
+        let range = NSRange(location: 0, length: nsLabel.length)
+        guard let match = regex.firstMatch(in: label, range: range) else { return nil }
+        let numericString = nsLabel
+            .substring(with: match.range)
+            .replacingOccurrences(of: ",", with: ".")
+        return Double(numericString)
     }
 
     /// Accessibility regression guard: very large Dynamic Type should keep core

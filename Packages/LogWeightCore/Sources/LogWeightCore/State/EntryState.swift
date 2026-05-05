@@ -90,6 +90,13 @@ public final class EntryState {
         saveStatus = .idle
     }
 
+    /// Sets the displayed weight to `lastSavedWeight` (from `loadLastWeight` or the last successful `commit`).
+    /// Silently no-ops when nothing has been loaded or saved yet in this session.
+    public func restoreDisplayToLastLoggedWeight() {
+        guard let weight = lastSavedWeight else { return }
+        setValue(weight.valueInKilograms, unit: .kilograms)
+    }
+
     private func clamp(_ value: Double) -> Double {
         // Body weight bounds: 1 kg .. 500 kg. Defensive only — UI prevents this anyway.
         max(1.0, min(500.0, value))

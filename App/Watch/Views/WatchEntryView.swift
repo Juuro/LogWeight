@@ -57,26 +57,29 @@ struct WatchEntryView: View {
                     )
                     .privacySensitive()
                     .accessibilityLabel("Weight")
+                    .onTapGesture(count: 2) {
+                        state.restoreDisplayToLastLoggedWeight()
+                    }
 
                 HStack(spacing: 16) {
-                    Button {
-                        state.decrement()
-                    } label: {
+                    // `.thinMaterial` approximates the `.bordered` ButtonStyle look.
+                    // A Button wrapper cannot be used here because DragGesture (needed
+                    // for long-press acceleration) would conflict with Button's own tap
+                    // gesture recogniser, causing the action to fire twice on each press.
+                    LongPressStepButton(action: state.decrement) {
                         Image(systemName: "minus")
                             .font(.title3)
                             .frame(width: 44, height: 44)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
-                    .buttonStyle(.bordered)
                     .accessibilityLabel("Decrease weight")
 
-                    Button {
-                        state.increment()
-                    } label: {
+                    LongPressStepButton(action: state.increment) {
                         Image(systemName: "plus")
                             .font(.title3)
                             .frame(width: 44, height: 44)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
-                    .buttonStyle(.bordered)
                     .accessibilityLabel("Increase weight")
                 }
 
