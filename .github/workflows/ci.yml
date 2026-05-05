@@ -52,7 +52,7 @@ jobs:
           xcodebuild build \
             -project LogWeight.xcodeproj \
             -scheme LogWeight \
-            -destination 'platform=iOS Simulator,name=iPad (10th generation),OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPad (10th generation)' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -61,7 +61,7 @@ jobs:
           xcodebuild test \
             -project LogWeight.xcodeproj \
             -scheme LogWeight \
-            -destination 'platform=iOS Simulator,name=iPad (10th generation),OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPad (10th generation)' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
