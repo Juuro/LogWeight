@@ -289,8 +289,11 @@ struct HistoryView: View {
                                         .onChanged { value in
                                             let xInPlot = value.location.x - frame.minX
                                             if let hoverDate = proxy.value(atX: xInPlot, as: Date.self) {
-                                                hoveredXDate = hoverDate
-                                                hoveredWeight = findClosestWeight(to: hoverDate, in: filteredChartWeights)
+                                                let closest = WeightNearestFinder.closest(to: hoverDate, in: filteredChartWeights)
+                                                // Snap hover state to an existing sample so chart domain
+                                                // never expands beyond the selected range while scrubbing.
+                                                hoveredXDate = closest?.recordedAt
+                                                hoveredWeight = closest
                                             }
                                         }
                                         .onEnded { _ in
@@ -300,7 +303,7 @@ struct HistoryView: View {
                                 )
 
                             if let hoveredXDate = hoveredXDate,
-                               let closest = findClosestWeight(to: hoveredXDate, in: filteredChartWeights),
+                               let closest = WeightNearestFinder.closest(to: hoveredXDate, in: filteredChartWeights),
                                let xInPlot = proxy.position(forX: closest.recordedAt) {
                                 let tooltipHalfWidth: CGFloat = 64
                                 let screenX = min(max(frame.minX + xInPlot, tooltipHalfWidth), geo.size.width - tooltipHalfWidth)
@@ -326,12 +329,6 @@ struct HistoryView: View {
         Measurement(value: weight.valueInKilograms, unit: UnitMass.kilograms)
             .converted(to: displayUnit.unitMass)
             .value
-    }
-
-    private func findClosestWeight(to date: Date, in weights: [Weight]) -> Weight? {
-        weights.min { a, b in
-            abs(a.recordedAt.timeIntervalSince(date)) < abs(b.recordedAt.timeIntervalSince(date))
-        }
     }
 
     /// Dynamic chart domain anchored around the user's current weight range.
@@ -836,6 +833,7 @@ private struct ChartHoverOverlay: View {
                 .font(.caption2)
                 .privacySensitive()
         }
+        .privacySensitive()
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))

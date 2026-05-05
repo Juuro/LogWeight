@@ -75,6 +75,7 @@ final class EntryViewSmokeTests: XCTestCase {
                       "History chart should be visible on iOS")
     }
 
+
     /// Phase 4: settings controls should remain reachable for accessibility/testing.
     func testSettingsSheetExposesCoreControls() throws {
         let settings = app.buttons["entry.settings"]
@@ -130,6 +131,22 @@ final class EntryViewSmokeTests: XCTestCase {
             .substring(with: match.range)
             .replacingOccurrences(of: ",", with: ".")
         return Double(numericString)
+    }
+
+    private func openHistoryWithSingleSavedWeight() -> XCUIElement {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+        plus.tap()
+        app.buttons["entry.save"].tap()
+        XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+
+        let history = app.buttons["entry.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 2))
+        history.tap()
+
+        let chart = app.descendants(matching: .any)["history.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 2))
+        return chart
     }
 
     /// Accessibility regression guard: very large Dynamic Type should keep core
