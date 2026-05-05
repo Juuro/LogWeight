@@ -149,7 +149,7 @@ targets:
         NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
         NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
         UILaunchScreen:
-          UIColorName: ""
+          UIColorName: "LaunchBackground"
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:

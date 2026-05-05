@@ -9,7 +9,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app = XCUIApplication()
         // Inject the in-memory store so this test does NOT require HealthKit
         // entitlements / a real device. See LogWeightApp.makeStore().
-        app.launchArguments = ["--use-in-memory-store"]
+        app.launchArguments = ["--use-in-memory-store", "--skip-splash"]
         app.launch()
     }
 
@@ -156,6 +156,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = [
             "--use-in-memory-store",
+            "--skip-splash",
             "-UIPreferredContentSizeCategoryName",
             "UICTContentSizeCategoryAccessibilityXXXL"
         ]
@@ -171,5 +172,23 @@ final class EntryViewSmokeTests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+    }
+
+    /// Splash appears on launch and transitions into the entry screen.
+    func testSplashShowsOnLaunchAndTransitionsToEntry() throws {
+        app.terminate()
+
+        let splashRun = XCUIApplication()
+        splashRun.launchArguments = ["--use-in-memory-store", "--hold-splash"]
+        splashRun.launch()
+
+        let splash = splashRun.descendants(matching: .any)["splash.overlay"]
+        XCTAssertTrue(splash.waitForExistence(timeout: 1.5), "Splash should appear immediately on launch")
+
+        // Ensure tap-to-continue works and reveals the entry screen.
+        splash.tap()
+        XCTAssertFalse(splash.waitForExistence(timeout: 1.8), "Splash should dismiss when tapped")
+        XCTAssertTrue(splashRun.buttons["entry.stepper.plus"].waitForExistence(timeout: 2),
+                      "Entry screen should be available normally")
     }
 }
