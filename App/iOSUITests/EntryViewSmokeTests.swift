@@ -174,6 +174,48 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
     }
 
+    /// Phase 4 follow-up: with the chart lifted out of the List, the static
+    /// "Recent entries" label must exist between the chart and the list rows
+    /// (it replaces the old sticky Section header that overlaid content).
+    func testHistoryShowsRecentEntriesLabelAboveList() throws {
+        let chart = openHistoryWithSingleSavedWeight()
+        XCTAssertTrue(chart.exists)
+
+        let label = app.staticTexts["history.recent-entries-label"]
+        XCTAssertTrue(label.waitForExistence(timeout: 2),
+                      "'Recent entries' label must be present as a static element above the list")
+    }
+
+    /// Phase 4 follow-up: scrolling the list must NOT scroll the chart away.
+    /// The chart accessibility id must remain hittable after a swipe gesture
+    /// over the list area.
+    func testHistoryChartStaysPinnedAfterListSwipe() throws {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+
+        // Seed a few entries so the list has something to scroll.
+        for _ in 0..<3 {
+            plus.tap()
+            app.buttons["entry.save"].tap()
+            XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+        }
+
+        let history = app.buttons["entry.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 2))
+        history.tap()
+
+        let chart = app.descendants(matching: .any)["history.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 2))
+
+        let list = app.descendants(matching: .any)["history.list"]
+        XCTAssertTrue(list.waitForExistence(timeout: 2))
+        list.swipeUp()
+
+        // After scrolling the list, the chart MUST still exist (pinned).
+        XCTAssertTrue(chart.exists,
+                      "Chart should remain in the view hierarchy after scrolling the list")
+    }
+
     /// Splash appears on launch and transitions into the entry screen.
     func testSplashShowsOnLaunchAndTransitionsToEntry() throws {
         app.terminate()

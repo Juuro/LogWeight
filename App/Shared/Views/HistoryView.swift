@@ -31,6 +31,10 @@ struct HistoryView: View {
     @State private var selectedRange: ChartRange = .oneMonth
     @State private var hoveredXDate: Date?
     @State private var hoveredWeight: Weight?
+    /// Per-row frame in the global coordinate space, refreshed by `HistoryRowFramesKey`.
+    @State private var rowFrames: [Weight: CGRect] = [:]
+    /// Outer list frame in the global coordinate space, refreshed by `HistoryListFrameKey`.
+    @State private var listFrame: CGRect = .zero
 #endif
     @Environment(\.dismiss) private var dismiss
 
@@ -125,65 +129,123 @@ struct HistoryView: View {
                     .foregroundStyle(.secondary)
             }
         } else {
-            List {
-                if let mutationError = mutationError {
-                    Section {
-                        Text(mutationError)
-                            .font(.callout)
-                            .foregroundStyle(.red)
-                            .multilineTextAlignment(.center)
-                    }
-                }
+            VStack(spacing: 0) {
 #if !os(watchOS)
-                Section {
-                    chartSection
+                chartSection
+                    .padding(.horizontal)
+#endif
+
+                HStack {
+                    Text("Recent entries")
+                        .font(.headline)
+                        .accessibilityIdentifier("history.recent-entries-label")
+                    Spacer()
                 }
-                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-#endif
-                Section {
-                    ForEach(weights, id: \.self) { weight in
-                        HStack {
-                            Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
-                                .font(.body.monospacedDigit())
-                            Spacer()
-                            Text(dateFormatter.string(from: weight.recordedAt))
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+
+                List {
+                    if let mutationError = mutationError {
+                        Section {
+                            Text(mutationError)
                                 .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.red)
+                                .multilineTextAlignment(.center)
+                                .accessibilityIdentifier("history.mutation-error")
                         }
-                        .privacySensitive()
-#if os(iOS) || os(watchOS)
-                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                            Button {
-                                editingContext = EditingContext(original: weight)
-                                mutationError = nil
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            .tint(.blue)
-                        }
-#endif
-#if os(macOS)
-                        .contextMenu {
-                            Button {
-                                editingContext = EditingContext(original: weight)
-                                mutationError = nil
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                        }
-#endif
+                    }
+                    ForEach(weights, id: \.self) { weight in
+                        historyRow(for: weight)
                     }
                     .onDelete { offsets in
                         Task { @MainActor in await delete(at: offsets) }
                     }
-                } header: {
-                    Text("Recent entries")
                 }
+                .listStyle(.plain)
+                .accessibilityIdentifier("history.list")
+#if !os(watchOS)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear
+                            .preference(key: HistoryListFrameKey.self, value: proxy.frame(in: .global))
+                    }
+                )
+                .onPreferenceChange(HistoryRowFramesKey.self) { frames in
+                    rowFrames = frames
+                }
+                .onPreferenceChange(HistoryListFrameKey.self) { frame in
+                    listFrame = frame
+                }
+#endif
             }
-            .listStyle(.plain)
             .disabled(isDeleting || isSavingEdit)
         }
     }
+
+    /// Single row body shared across iOS, watchOS and macOS. The visibility
+    /// `GeometryReader` and highlight modifiers are only attached on the
+    /// non-watchOS platforms (watchOS has no chart to sync with).
+    @ViewBuilder
+    private func historyRow(for weight: Weight) -> some View {
+        HStack {
+            Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
+                .font(.body.monospacedDigit())
+            Spacer()
+            Text(dateFormatter.string(from: weight.recordedAt))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .privacySensitive()
+#if !os(watchOS)
+        .listRowBackground(rowHighlightBackground(for: weight))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(listHighlightedWeight == weight ? .isSelected : [])
+        .accessibilityValue(listHighlightedWeight == weight ? "Selected" : "")
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(
+                        key: HistoryRowFramesKey.self,
+                        value: [weight: proxy.frame(in: .global)]
+                    )
+            }
+        )
+#endif
+#if os(iOS) || os(watchOS)
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                editingContext = EditingContext(original: weight)
+                mutationError = nil
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
+#endif
+#if os(macOS)
+        .contextMenu {
+            Button {
+                editingContext = EditingContext(original: weight)
+                mutationError = nil
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+        }
+#endif
+    }
+
+#if !os(watchOS)
+    @ViewBuilder
+    private func rowHighlightBackground(for weight: Weight) -> some View {
+        if listHighlightedWeight == weight {
+            Color.yellow.opacity(0.20)
+                .accessibilityIdentifier("history.row.highlighted")
+        } else {
+            Color.clear
+        }
+    }
+#endif
 
 #if !os(watchOS)
     private enum ChartRange: String, CaseIterable {
@@ -231,6 +293,42 @@ struct HistoryView: View {
         return sorted.filter { $0.recordedAt >= cutoff }
     }
 
+    /// Newest weight whose row is fully inside the visible list area.
+    /// Returns `nil` until both `rowFrames` and `listFrame` have been populated
+    /// by their preference keys (so the very first render does not flag a row
+    /// before the list bounds are known). Filters by `weights.contains` so a
+    /// row that was visible just before a delete cannot persist as a ghost.
+    private var topVisibleWeight: Weight? {
+        guard listFrame != .zero else { return nil }
+        let listTop = listFrame.minY
+        let listBottom = listFrame.maxY
+        let knownWeights = Set(weights)
+        let visible = rowFrames.compactMap { (weight, frame) -> Weight? in
+            guard knownWeights.contains(weight) else { return nil }
+            return (frame.minY >= listTop && frame.maxY <= listBottom) ? weight : nil
+        }
+        return visible.max(by: { $0.recordedAt < $1.recordedAt })
+    }
+
+    /// Drag-driven `hoveredWeight` (crosshair) wins over scroll-driven
+    /// `topVisibleWeight` so an active drag is never overridden by a passive
+    /// scroll position.
+    private var listHighlightedWeight: Weight? {
+        hoveredWeight ?? topVisibleWeight
+    }
+
+    /// Same as `listHighlightedWeight`, but `nil` when the candidate's date
+    /// falls outside the selected chart range — keeps the row highlighted in
+    /// the list while leaving the chart point in its default style.
+    private var chartHighlightedWeight: Weight? {
+        guard let candidate = listHighlightedWeight else { return nil }
+        if let cutoff = selectedRange.cutoffDate(referenceDate: Date()),
+           candidate.recordedAt < cutoff {
+            return nil
+        }
+        return candidate
+    }
+
     private var chartSection: some View {
         return VStack(alignment: .leading, spacing: 8) {
             Text("Trend")
@@ -262,9 +360,17 @@ struct HistoryView: View {
                         x: .value("Date", weight.recordedAt),
                         y: .value("Weight", displayValue(for: weight))
                     )
-                    .foregroundStyle(.teal)
-                    .symbolSize(hoveredWeight?.recordedAt == weight.recordedAt ? 100 : 50)
-                    .opacity(hoveredWeight?.recordedAt == weight.recordedAt ? 1 : 0.6)
+                    .foregroundStyle(chartHighlightedWeight == weight ? Color.yellow : .teal)
+                    .symbolSize(
+                        chartHighlightedWeight == weight
+                            ? 140
+                            : (hoveredWeight?.recordedAt == weight.recordedAt ? 100 : 50)
+                    )
+                    .opacity(
+                        chartHighlightedWeight == weight
+                            ? 1
+                            : (hoveredWeight?.recordedAt == weight.recordedAt ? 1 : 0.6)
+                    )
 
                     if let hoveredXDate = hoveredXDate {
                         RuleMark(x: .value("Hover", hoveredXDate))
@@ -817,6 +923,26 @@ private struct HistoryWeightEditSheet: View {
 }
 
 #if !os(watchOS)
+/// Per-row frame published from each list row's `.background(GeometryReader)` so
+/// `HistoryView` can compute which row is fully visible without depending on
+/// `.onGeometryChange` (whose iOS 17 availability is ambiguous and whose
+/// closed-over state is not reactively re-evaluated).
+private struct HistoryRowFramesKey: PreferenceKey {
+    static let defaultValue: [Weight: CGRect] = [:]
+    static func reduce(value: inout [Weight: CGRect], nextValue: () -> [Weight: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+/// Outer list bounds in the global coordinate space. Compared against the
+/// per-row frames above to decide which rows are 100%-visible.
+private struct HistoryListFrameKey: PreferenceKey {
+    static let defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
 private struct ChartHoverOverlay: View {
     let weight: Weight
     let displayUnit: WeightUnit
