@@ -145,16 +145,18 @@ struct HistoryView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 4)
 
+                if let mutationError = mutationError {
+                    Text(mutationError)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.bottom, 4)
+                        .accessibilityIdentifier("history.mutation-error")
+                }
+
+#if os(watchOS)
                 List {
-                    if let mutationError = mutationError {
-                        Section {
-                            Text(mutationError)
-                                .font(.callout)
-                                .foregroundStyle(.red)
-                                .multilineTextAlignment(.center)
-                                .accessibilityIdentifier("history.mutation-error")
-                        }
-                    }
                     ForEach(weights, id: \.self) { weight in
                         historyRow(for: weight)
                     }
@@ -164,18 +166,26 @@ struct HistoryView: View {
                 }
                 .listStyle(.plain)
                 .accessibilityIdentifier("history.list")
-#if !os(watchOS)
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear
-                            .preference(key: HistoryListFrameKey.self, value: proxy.frame(in: .global))
+#else
+                // ScrollView + LazyVStack instead of List: SwiftUI's List on
+                // iOS/macOS bridges to UIKit cells and does NOT propagate scroll
+                // geometry to SwiftUI's `.onGeometryChange`, so the
+                // topmost-row-while-scrolling highlight cannot be driven from a
+                // List. ScrollView keeps SwiftUI in charge of layout.
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(weights, id: \.self) { weight in
+                            historyRow(for: weight)
+                            Divider()
+                                .padding(.leading)
+                        }
                     }
-                )
-                .onPreferenceChange(HistoryRowFramesKey.self) { frames in
-                    rowFrames = frames
                 }
-                .onPreferenceChange(HistoryListFrameKey.self) { frame in
-                    listFrame = frame
+                .accessibilityIdentifier("history.list")
+                .onGeometryChange(for: CGRect.self) { proxy in
+                    proxy.frame(in: .global)
+                } action: { newFrame in
+                    listFrame = newFrame
                 }
 #endif
             }
@@ -183,12 +193,13 @@ struct HistoryView: View {
         }
     }
 
-    /// Single row body shared across iOS, watchOS and macOS. The visibility
-    /// `GeometryReader` and highlight modifiers are only attached on the
-    /// non-watchOS platforms (watchOS has no chart to sync with).
+    /// Single row body shared across iOS, watchOS and macOS. On iOS/macOS the
+    /// row is rendered inside a ScrollView+LazyVStack and tracks its global
+    /// frame for the topmost-fully-visible highlight. On watchOS it stays
+    /// inside a List with native swipeActions for editing.
     @ViewBuilder
     private func historyRow(for weight: Weight) -> some View {
-        HStack {
+        let rowContent = HStack {
             Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
                 .font(.body.monospacedDigit())
             Spacer()
@@ -197,49 +208,70 @@ struct HistoryView: View {
                 .foregroundStyle(.secondary)
         }
         .privacySensitive()
-#if !os(watchOS)
-        .listRowBackground(rowHighlightBackground(for: weight))
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(listHighlightedWeight == weight ? .isSelected : [])
-        .accessibilityValue(listHighlightedWeight == weight ? "Selected" : "")
-        .background(
-            GeometryReader { proxy in
-                Color.clear
-                    .preference(
-                        key: HistoryRowFramesKey.self,
-                        value: [weight: proxy.frame(in: .global)]
-                    )
+
+#if os(watchOS)
+        rowContent
+            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                Button {
+                    editingContext = EditingContext(original: weight)
+                    mutationError = nil
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .tint(.blue)
             }
-        )
-#endif
-#if os(iOS) || os(watchOS)
-        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-            Button {
+#else
+        rowContent
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .background(rowHighlightBackground(for: weight))
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(listHighlightedWeight == weight ? .isSelected : [])
+            .accessibilityValue(listHighlightedWeight == weight ? "Selected" : "")
+            // Track this row's global frame so HistoryView can compute which
+            // row is 100% visible. .onGeometryChange fires during ScrollView
+            // scroll because LazyVStack stays inside the SwiftUI layout system.
+            .onGeometryChange(for: CGRect.self) { proxy in
+                proxy.frame(in: .global)
+            } action: { newFrame in
+                rowFrames[weight] = newFrame
+            }
+            .onDisappear {
+                rowFrames[weight] = nil
+            }
+            .onTapGesture {
                 editingContext = EditingContext(original: weight)
                 mutationError = nil
-            } label: {
-                Label("Edit", systemImage: "pencil")
             }
-            .tint(.blue)
-        }
-#endif
-#if os(macOS)
-        .contextMenu {
-            Button {
-                editingContext = EditingContext(original: weight)
-                mutationError = nil
-            } label: {
-                Label("Edit", systemImage: "pencil")
+            .contextMenu {
+                Button {
+                    editingContext = EditingContext(original: weight)
+                    mutationError = nil
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                Button(role: .destructive) {
+                    Task { @MainActor in await delete(weight) }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
             }
-        }
 #endif
     }
 
 #if !os(watchOS)
+    /// Shared highlight tint for the topmost-fully-visible row and its matching
+    /// chart point. Same colour in both places so the relationship is obvious;
+    /// opacity 0.35 stays distinct from the chart's teal line and reads clearly
+    /// on light and dark backgrounds.
+    private static let highlightTint = Color.yellow.opacity(0.35)
+
     @ViewBuilder
     private func rowHighlightBackground(for weight: Weight) -> some View {
         if listHighlightedWeight == weight {
-            Color.yellow.opacity(0.20)
+            Self.highlightTint
                 .accessibilityIdentifier("history.row.highlighted")
         } else {
             Color.clear
@@ -361,6 +393,9 @@ struct HistoryView: View {
                         y: .value("Weight", displayValue(for: weight))
                     )
                     .foregroundStyle(chartHighlightedWeight == weight ? Color.yellow : .teal)
+                    // Note: chart point uses full-opacity yellow so it stands out
+                    // against the line; the row uses Self.highlightTint (yellow .35)
+                    // so the tint reads on the row's lighter background.
                     .symbolSize(
                         chartHighlightedWeight == weight
                             ? 140
@@ -490,6 +525,24 @@ struct HistoryView: View {
             mutationError = "Unexpected error deleting entry."
         }
     }
+
+#if !os(watchOS)
+    /// Single-weight delete for the iOS/macOS context menu. watchOS still
+    /// deletes via List's `.onDelete(IndexSet)` path above.
+    private func delete(_ weight: Weight) async {
+        isDeleting = true
+        defer { isDeleting = false }
+
+        do {
+            try await store.delete(weight)
+            await load()
+        } catch HealthKitError.deleteFailed(let code) {
+            mutationError = "Couldn't delete entry (code \(code))."
+        } catch {
+            mutationError = "Unexpected error deleting entry."
+        }
+    }
+#endif
 }
 
 /// Form to edit weight and date/time for a single history row.
@@ -923,26 +976,6 @@ private struct HistoryWeightEditSheet: View {
 }
 
 #if !os(watchOS)
-/// Per-row frame published from each list row's `.background(GeometryReader)` so
-/// `HistoryView` can compute which row is fully visible without depending on
-/// `.onGeometryChange` (whose iOS 17 availability is ambiguous and whose
-/// closed-over state is not reactively re-evaluated).
-private struct HistoryRowFramesKey: PreferenceKey {
-    static let defaultValue: [Weight: CGRect] = [:]
-    static func reduce(value: inout [Weight: CGRect], nextValue: () -> [Weight: CGRect]) {
-        value.merge(nextValue()) { _, new in new }
-    }
-}
-
-/// Outer list bounds in the global coordinate space. Compared against the
-/// per-row frames above to decide which rows are 100%-visible.
-private struct HistoryListFrameKey: PreferenceKey {
-    static let defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
 private struct ChartHoverOverlay: View {
     let weight: Weight
     let displayUnit: WeightUnit
