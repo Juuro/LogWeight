@@ -31,12 +31,14 @@ Pin the HistoryView trend chart at the top so it never scrolls away. Only the li
 
 ### Adoption Tracking
 
-| Specialist | Adopted | Rejected | Notes |
-|---|---|---|---|
-| architect | 6 | 1 | Layout, tracking, state shape, precedence, a11y traits, header positioning. Chart-loop overlay extraction deferred. |
-| quality-engineer | 5 | 2 | Test invariants + a11y identifiers. Pure-helper extraction rejected; 18-test suite reduced to 3. |
-| pragmatist | 4 | 1 | Skip-list adopted. Teal colour rejected (ambiguous with chart line). |
-| resilience-performance | 4 | 1 | State separation, Reduce Motion gate, no-animation default. Chart-loop overlay deferred. |
+
+| Specialist             | Adopted | Rejected | Notes                                                                                                               |
+| ---------------------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| architect              | 6       | 1        | Layout, tracking, state shape, precedence, a11y traits, header positioning. Chart-loop overlay extraction deferred. |
+| quality-engineer       | 5       | 2        | Test invariants + a11y identifiers. Pure-helper extraction rejected; 18-test suite reduced to 3.                    |
+| pragmatist             | 4       | 1        | Skip-list adopted. Teal colour rejected (ambiguous with chart line).                                                |
+| resilience-performance | 4       | 1        | State separation, Reduce Motion gate, no-animation default. Chart-loop overlay deferred.                            |
+
 
 ## Devil's Advocate
 
@@ -49,6 +51,7 @@ Pin the HistoryView trend chart at the top so it never scrolls away. Only the li
 3. **DA-3 HIGH — watchOS Section header still sticky.** The current `Section { … } header: { Text("Recent entries") }` is shared across all platforms; the plan's restructure was scoped to non-watchOS. **Fix:** apply layout restructure on ALL platforms; chart-only code stays `#if !os(watchOS)`.
 
 **Other DA fixes applied:**
+
 - DA-4 HIGH — Use `.global` coordinate space (not `.named`) to avoid macOS NSTableView ambiguity.
 - DA-5 HIGH — Filter `topVisibleWeight` by `weights.contains` to eliminate ghost weights after delete.
 - DA-6 MEDIUM — Indirectly fixed by DA-2 (no longer empty on first render).
@@ -60,15 +63,17 @@ Pin the HistoryView trend chart at the top so it never scrolls away. Only the li
 
 ### Key changes to HistoryView.swift
 
-| Section | Change |
-|---|---|
-| File-scope (private, `#if !os(watchOS)`) | Add `RowFramePreferenceKey: PreferenceKey` (`[Weight: CGRect]`) and `ListFrameKey: PreferenceKey` (`CGRect`). |
-| `@State` (`#if !os(watchOS)`) | Add `rowFrames: [Weight: CGRect]`, `listFrame: CGRect`. |
-| Computed (`#if !os(watchOS)`) | `topVisibleWeight` (filters by weights.contains; max recordedAt of visible rows). `listHighlightedWeight = hoveredWeight ?? topVisibleWeight`. `chartHighlightedWeight = listHighlightedWeight if its date >= selectedRange.cutoff`. |
-| `content` else-branch | Replace with `VStack(spacing: 0) { #if !os(watchOS) chartSection #endif; "Recent entries" label; List { mutationError + ForEach(rows) }.background(GeometryReader for ListFrameKey on non-watchOS) }`. Drop the List Section header on every platform. |
-| Row body | Extract `historyRow(for:)`. Apply `.background(GeometryReader publishing RowFramePreferenceKey)` on non-watchOS. Apply `.listRowBackground(yellow if highlighted)`, `.accessibilityAddTraits(.isSelected)`, `.accessibilityValue("Selected")`, `.onDisappear { rowFrames[weight] = nil }` on non-watchOS. Preserve swipeActions and contextMenu. |
-| Chart `PointMark` | Conditional `.foregroundStyle(yellow if chartHighlightedWeight == weight else .teal)` and `.symbolSize(140 if highlighted else existing logic)`. |
-| `onPreferenceChange` handlers | Update `rowFrames` and `listFrame` from the two preference keys. |
+
+| Section                                  | Change                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| File-scope (private, `#if !os(watchOS)`) | Add `RowFramePreferenceKey: PreferenceKey` (`[Weight: CGRect]`) and `ListFrameKey: PreferenceKey` (`CGRect`).                                                                                                                                                                                                                                    |
+| `@State` (`#if !os(watchOS)`)            | Add `rowFrames: [Weight: CGRect]`, `listFrame: CGRect`.                                                                                                                                                                                                                                                                                          |
+| Computed (`#if !os(watchOS)`)            | `topVisibleWeight` (filters by weights.contains; max recordedAt of visible rows). `listHighlightedWeight = hoveredWeight ?? topVisibleWeight`. `chartHighlightedWeight = listHighlightedWeight if its date >= selectedRange.cutoff`.                                                                                                             |
+| `content` else-branch                    | Replace with `VStack(spacing: 0) { #if !os(watchOS) chartSection #endif; "Recent entries" label; List { mutationError + ForEach(rows) }.background(GeometryReader for ListFrameKey on non-watchOS) }`. Drop the List Section header on every platform.                                                                                           |
+| Row body                                 | Extract `historyRow(for:)`. Apply `.background(GeometryReader publishing RowFramePreferenceKey)` on non-watchOS. Apply `.listRowBackground(yellow if highlighted)`, `.accessibilityAddTraits(.isSelected)`, `.accessibilityValue("Selected")`, `.onDisappear { rowFrames[weight] = nil }` on non-watchOS. Preserve swipeActions and contextMenu. |
+| Chart `PointMark`                        | Conditional `.foregroundStyle(yellow if chartHighlightedWeight == weight else .teal)` and `.symbolSize(140 if highlighted else existing logic)`.                                                                                                                                                                                                 |
+| `onPreferenceChange` handlers            | Update `rowFrames` and `listFrame` from the two preference keys.                                                                                                                                                                                                                                                                                 |
+
 
 ### Implementation order
 
@@ -91,6 +96,7 @@ Pin the HistoryView trend chart at the top so it never scrolls away. Only the li
 **Critical:** No PII in logs — SecurityLog API enforces structurally; `.privacySensitive()` preserved everywhere.
 
 **High:**
+
 - Separation of Concerns — view-private helpers; no Core API expansion.
 - Testing — 3 new XCUITest cases cover the riskiest invariants; 2 existing regression tests preserved.
 - Naming — `topVisibleWeight`, `listHighlightedWeight`, `chartHighlightedWeight`, `historyRow`, `RowFramePreferenceKey` all self-documenting.
@@ -100,13 +106,16 @@ Pin the HistoryView trend chart at the top so it never scrolls away. Only the li
 
 ## Risks (after DA fixes)
 
-| ID | Severity | Description | Mitigation |
-|---|---|---|---|
-| R-PERF | MEDIUM | Per-row GeometryReader fires preferences during scroll. ~50 visible rows × 120 Hz ProMotion ≈ 6k updates/sec. | PreferenceKey diffs by Equatable; onPreferenceChange fires only on aggregate change. Profile during QA. Fallback: coalesce via DispatchQueue.main.async or reintroduce Bool transform with explicit re-emission on listFrame change. |
-| R-MEM | LOW | `rowFrames` retains entries for rows whose `.onDisappear` may not fire (UITableView reuse quirks). | Steady-state bounded by visible + dequeued cells. Not a leak concern. |
-| R-CONTRAST | LOW | `Color.yellow.opacity(0.20)` WCAG AA contrast in dark mode requires verification. | Manual QA with Accessibility Inspector. If insufficient, bump to 0.30 or use explicit light/dark variants. |
+
+| ID         | Severity | Description                                                                                                   | Mitigation                                                                                                                                                                                                                           |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-PERF     | MEDIUM   | Per-row GeometryReader fires preferences during scroll. ~50 visible rows × 120 Hz ProMotion ≈ 6k updates/sec. | PreferenceKey diffs by Equatable; onPreferenceChange fires only on aggregate change. Profile during QA. Fallback: coalesce via DispatchQueue.main.async or reintroduce Bool transform with explicit re-emission on listFrame change. |
+| R-MEM      | LOW      | `rowFrames` retains entries for rows whose `.onDisappear` may not fire (UITableView reuse quirks).            | Steady-state bounded by visible + dequeued cells. Not a leak concern.                                                                                                                                                                |
+| R-CONTRAST | LOW      | `Color.yellow.opacity(0.20)` WCAG AA contrast in dark mode requires verification.                             | Manual QA with Accessibility Inspector. If insufficient, bump to 0.30 or use explicit light/dark variants.                                                                                                                           |
+
 
 ## Open Questions for User
 
 1. **Highlight colour confirmation** — `Color.yellow.opacity(0.20)` (system-adaptive yellow). Confirm or pick a different colour?
 2. **UI tests** — include in this commit or follow-up?
+

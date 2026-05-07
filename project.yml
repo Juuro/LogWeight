@@ -186,6 +186,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightUITests
         TEST_TARGET_NAME: LogWeight
 
+  LogWeightScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App/iOSScreenshots
+    dependencies:
+      - target: LogWeight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightScreenshots
+        TEST_TARGET_NAME: LogWeight
+
 schemes:
   LogWeight:
     build:
@@ -229,6 +242,24 @@ schemes:
       config: Debug
     test:
       config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  LogWeightScreenshots:
+    build:
+      targets:
+        LogWeight: all
+        LogWeightScreenshots: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LogWeightScreenshots
     profile:
       config: Release
     analyze:

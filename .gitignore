@@ -22,6 +22,10 @@ Package.resolved
 !.claude/settings.json
 .cursor/
 
+# AI screenshot capture — ephemeral outputs, never committed
+Docs/ai-screenshots/
+tmp/
+
 # Editor / OS noise
 *.swp
 *~

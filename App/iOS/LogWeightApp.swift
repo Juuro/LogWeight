@@ -57,11 +57,25 @@ struct LogWeightApp: App {
 
     /// Picks the production `HKHealthStoreAdapter` unless the launch arguments
     /// request the in-memory store (used by `EntryViewSmokeTests`).
+    ///
+    /// When `--use-in-memory-store` is paired with `--seed=<rawValue>` (e.g.
+    /// `--seed=linearTrend30Days`), the in-memory store is preloaded with the
+    /// matching `ScreenshotFixture` so AI-driven screenshot tests can capture
+    /// deterministic states.
     private static func makeStore() -> HealthKitStore {
-        if CommandLine.arguments.contains("--use-in-memory-store") {
-            return InMemoryHealthKitStore()
+        guard CommandLine.arguments.contains("--use-in-memory-store") else {
+            return HKHealthStoreAdapter()
         }
-        return HKHealthStoreAdapter()
+        let fixtureSamples = parseSeedFixture(from: CommandLine.arguments)?.samples() ?? []
+        return InMemoryHealthKitStore(samples: fixtureSamples)
+    }
+
+    private static func parseSeedFixture(from arguments: [String]) -> ScreenshotFixture? {
+        let prefix = "--seed="
+        guard let raw = arguments.first(where: { $0.hasPrefix(prefix) })?.dropFirst(prefix.count) else {
+            return nil
+        }
+        return ScreenshotFixture(rawValue: String(raw))
     }
 
     @MainActor
