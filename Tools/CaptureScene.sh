@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# CaptureScene.sh — AI-driven simulator screenshot capture for LogWeight.
+# CaptureScene.sh — AI-driven simulator screenshot capture for iOS projects.
 #
 # Usage:
 #   Tools/CaptureScene.sh --scene entry-default
 #   Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone 16 Pro"
 #   Tools/CaptureScene.sh --all
 #
-# Each named scene maps to a test method in the LogWeightScreenshots target.
+# Project-specific config (XCODEPROJ, SCREENSHOT_SCHEME, scene_to_test, ALL_SCENES)
+# lives in Tools/screenshot-scenes.sh alongside this script.
+#
+# Each named scene maps to a test method in the screenshot XCUITest target.
 # The script runs that single test, exports PNG attachments from the resulting
 # .xcresult bundle, and copies them to Docs/ai-screenshots/.
 # Absolute paths of produced PNGs are printed to stdout so the AI can Read them.
@@ -16,8 +19,19 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT="$ROOT_DIR/LogWeight.xcodeproj"
-SCHEME="LogWeightScreenshots"
+
+# --- Load project-specific configuration ---
+CONFIG_FILE="$(dirname "${BASH_SOURCE[0]}")/screenshot-scenes.sh"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "Missing config: $CONFIG_FILE" >&2
+  echo "Create Tools/screenshot-scenes.sh with XCODEPROJ, SCREENSHOT_SCHEME, scene_to_test(), and ALL_SCENES." >&2
+  exit 1
+fi
+# shellcheck source=Tools/screenshot-scenes.sh
+source "$CONFIG_FILE"
+
+PROJECT="${XCODEPROJ}"
+SCHEME="${SCREENSHOT_SCHEME}"
 RESULT_BUNDLE="$ROOT_DIR/tmp/ai-screenshots-run.xcresult"
 ATTACH_TMP="$ROOT_DIR/tmp/ai-screenshots-attachments"
 OUT_DIR="$ROOT_DIR/Docs/ai-screenshots"
@@ -40,37 +54,9 @@ if [[ "$RUN_ALL" == false && -z "$SCENE" ]]; then
   echo "Usage: Tools/CaptureScene.sh --scene <name> | --all [--device <simulator name>]" >&2
   echo "" >&2
   echo "Available scenes:" >&2
-  echo "  entry-default           entry-after-plus-ten    entry-keyboard-up" >&2
-  echo "  entry-xxxl-dynamic-type" >&2
-  echo "  history-empty           history-with-chart-30d  history-90d-plateau" >&2
-  echo "  history-chart-crosshair" >&2
-  echo "  settings-default        settings-lbs-unit" >&2
+  printf "  %s\n" "${ALL_SCENES[@]}" >&2
   exit 1
 fi
-
-# --- Scene → test identifier mapping ---
-# Format: TargetName/ClassName/methodName
-scene_to_test() {
-  case "$1" in
-    entry-default)             echo "LogWeightScreenshots/EntryScreenshots/test_entry_default" ;;
-    entry-after-plus-ten)      echo "LogWeightScreenshots/EntryScreenshots/test_entry_after_plus_ten" ;;
-    entry-keyboard-up)         echo "LogWeightScreenshots/EntryScreenshots/test_entry_keyboard_up" ;;
-    entry-xxxl-dynamic-type)   echo "LogWeightScreenshots/EntryScreenshots/test_entry_xxxl_dynamic_type" ;;
-    history-empty)             echo "LogWeightScreenshots/HistoryScreenshots/test_history_empty" ;;
-    history-with-chart-30d)    echo "LogWeightScreenshots/HistoryScreenshots/test_history_with_chart_30d" ;;
-    history-90d-plateau)       echo "LogWeightScreenshots/HistoryScreenshots/test_history_90d_plateau" ;;
-    history-chart-crosshair)   echo "LogWeightScreenshots/HistoryScreenshots/test_history_chart_crosshair" ;;
-    history-list-scrolled)     echo "LogWeightScreenshots/HistoryScreenshots/test_history_list_scrolled" ;;
-    history-list-small-scroll) echo "LogWeightScreenshots/HistoryScreenshots/test_history_list_small_scroll" ;;
-    settings-default)          echo "LogWeightScreenshots/SettingsScreenshots/test_settings_default" ;;
-    settings-lbs-unit)         echo "LogWeightScreenshots/SettingsScreenshots/test_settings_lbs_unit" ;;
-    *)
-      echo "Unknown scene: $1" >&2
-      echo "Run Tools/CaptureScene.sh with no arguments to see available scenes." >&2
-      exit 1
-      ;;
-  esac
-}
 
 # --- Simulator boot ---
 boot_if_needed() {

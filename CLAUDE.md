@@ -22,7 +22,7 @@ focused on non-obvious conventions.
 ## Architectural Conventions
 
 - Shared business logic belongs in `Packages/LogWeightCore`.
-- UI stays platform-local under `App/iOS`, `App/Watch`, `App/macOS`, with
+- UI stays platform-local under `App/iOS`, `App/Watch`, with
   shared SwiftUI views in `App/Shared`.
 - Use MV style with `@Observable` state objects near features.
   Do not create a separate ViewModel layer unless explicitly requested.
@@ -36,7 +36,7 @@ focused on non-obvious conventions.
 - Entry flow is stepper-first; keyboard entry is secondary.
 - On iOS, Save must remain disabled while keyboard is presented to avoid
   occlusion-related mistakes.
-- History chart is additive on iOS/iPadOS/macOS; watchOS remains list-only.
+- History chart is additive on iOS/iPadOS; watchOS remains list-only.
   Do not regress list readability or auditability.
 
 ## Build and Validation Commands
@@ -51,9 +51,8 @@ cd Packages/LogWeightCore && swift test
 # iOS build + UI tests
 xcodebuild test -scheme LogWeight -destination 'platform=iOS Simulator,name=iPhone 15'
 
-# Platform compile checks
+# Platform compile check
 xcodebuild build -scheme LogWeightWatch -destination 'generic/platform=watchOS Simulator' CODE_SIGNING_ALLOWED=NO
-xcodebuild build -scheme LogWeightMac -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
 
 ## Screenshot Workflow (UI Changes)

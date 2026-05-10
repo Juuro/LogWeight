@@ -139,7 +139,7 @@ struct WatchEntryView: View {
         if code == HKError.Code.errorAuthorizationDenied.rawValue {
             return "Allow Body Mass in Watch → Settings → Health → Apps."
         }
-        if code == HKError.Code.errorHealthDataUnavailable.rawValue {
+        if code == HKError.Code.errorHealthDataUnavailable.rawValue || code == -2 {
             return "Health data unavailable on this Watch."
         }
         if code == -3 {

@@ -4,8 +4,8 @@ import LogWeightCore
 import Charts
 #endif
 
-/// HealthKit history (source of truth). Shared by iOS, watchOS, and macOS.
-/// Phase 4: iOS/iPadOS/macOS get a trend chart above the list.
+/// HealthKit history (source of truth). Shared by iOS and watchOS.
+/// iOS/iPadOS get a trend chart above the list; watchOS remains list-only.
 struct HistoryView: View {
     private class Cache {
         static let formatter = WeightFormatter(locale: .current, fractionDigits: 1)
@@ -27,6 +27,7 @@ struct HistoryView: View {
     @State private var isDeleting = false
     @State private var editingContext: EditingContext?
     @State private var isSavingEdit = false
+    @State private var showCannotDeleteAlert = false
 #if !os(watchOS)
     @State private var selectedRange: ChartRange = .oneMonth
     @State private var hoveredXDate: Date?
@@ -58,15 +59,9 @@ struct HistoryView: View {
                 .navigationBarTitleDisplayMode(.inline)
 #endif
                 .toolbar {
-#if os(macOS)
-                    ToolbarItem(placement: .automatic) {
-                        Button("Close") { dismiss() }
-                    }
-#else
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Done") { dismiss() }
                     }
-#endif
                 }
                 .sheet(item: $editingContext, onDismiss: {
                     mutationError = nil
@@ -89,12 +84,19 @@ struct HistoryView: View {
                             mutationError = message
                         }
                     )
-#if os(macOS)
-                    .frame(minWidth: 320, minHeight: 260)
-#endif
                 }
                 .task {
                     await load()
+                }
+                .alert("Cannot Delete Entry", isPresented: $showCannotDeleteAlert) {
+#if !os(watchOS)
+                    Button("Open Apple Health") {
+                        UIApplication.shared.open(URL(string: "x-apple-health://")!)
+                    }
+#endif
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("This entry was added in Apple Health. Open the Health app to delete it from Body Mass data.")
                 }
         }
     }
@@ -325,6 +327,18 @@ struct HistoryView: View {
         return sorted.filter { $0.recordedAt >= cutoff }
     }
 
+    private var chartXDomain: ClosedRange<Date> {
+        let end = Date()
+        if let start = selectedRange.cutoffDate(referenceDate: end) {
+            return start...end
+        }
+        let sorted = filteredChartWeights
+        guard let first = sorted.first else {
+            return end.addingTimeInterval(-86_400)...end
+        }
+        return first.recordedAt...end
+    }
+
     /// Newest weight whose row is fully inside the visible list area.
     /// Returns `nil` until both `rowFrames` and `listFrame` have been populated
     /// by their preference keys (so the very first render does not flag a row
@@ -413,6 +427,7 @@ struct HistoryView: View {
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
                     }
                 }
+                .chartXScale(domain: chartXDomain)
                 .chartYScale(domain: chartYDomain)
                 .chartYAxis {
                     AxisMarks(position: .leading)
@@ -519,6 +534,8 @@ struct HistoryView: View {
                 try await store.delete(weight)
             }
             await load()
+        } catch HealthKitError.deleteNotPermitted {
+            showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
             mutationError = "Couldn't delete entry (code \(code))."
         } catch {
@@ -536,6 +553,8 @@ struct HistoryView: View {
         do {
             try await store.delete(weight)
             await load()
+        } catch HealthKitError.deleteNotPermitted {
+            showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
             mutationError = "Couldn't delete entry (code \(code))."
         } catch {
@@ -861,9 +880,6 @@ private struct HistoryWeightEditSheet: View {
             .disabled(isSaving)
 #endif
         }
-#if os(macOS)
-        .frame(minWidth: 320, idealWidth: 400, minHeight: 240, idealHeight: 320)
-#endif
 #endif
     }
 

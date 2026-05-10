@@ -5,7 +5,6 @@ options:
   deploymentTarget:
     iOS: "17.0"
     watchOS: "10.0"
-    macOS: "14.0"
   developmentLanguage: en
   createIntermediateGroups: true
 
@@ -17,7 +16,7 @@ settings:
     GENERATE_INFOPLIST_FILE: NO
     DEVELOPMENT_TEAM: "A8L9TRSZCR"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.1.1"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
 
 packages:
@@ -25,42 +24,6 @@ packages:
     path: Packages/LogWeightCore
 
 targets:
-  LogWeightMac:
-    type: application
-    platform: macOS
-    deploymentTarget: "14.0"
-    sources:
-      - path: App/macOS
-        excludes:
-          - "Resources/Info.plist"
-          - "Resources/LogWeightMac.entitlements"
-          - "Resources/PrivacyInfo.xcprivacy"
-          - "Resources/Assets.xcassets"
-      - path: App/Shared
-    resources:
-      - path: App/macOS/Resources/PrivacyInfo.xcprivacy
-      - path: App/macOS/Resources/Assets.xcassets
-    info:
-      path: App/macOS/Resources/Info.plist
-      properties:
-        CFBundleDisplayName: LogWeight
-        CFBundleShortVersionString: "$(MARKETING_VERSION)"
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        LSUIElement: true
-        NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
-        NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight.mac
-        CODE_SIGN_ENTITLEMENTS: App/macOS/Resources/LogWeightMac.entitlements
-        INFOPLIST_FILE: App/macOS/Resources/Info.plist
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
-        ENABLE_APP_SANDBOX: YES
-    dependencies:
-      - package: LogWeightCore
-        product: LogWeightCore
-
   LogWeightWatchWidget:
     type: app-extension
     platform: watchOS
@@ -223,21 +186,6 @@ schemes:
       targets:
         LogWeightWatchApp: all
         LogWeightWatchWidget: all
-    run:
-      config: Debug
-    test:
-      config: Debug
-    profile:
-      config: Release
-    analyze:
-      config: Debug
-    archive:
-      config: Release
-
-  LogWeightMac:
-    build:
-      targets:
-        LogWeightMac: all
     run:
       config: Debug
     test:
