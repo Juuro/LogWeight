@@ -4,20 +4,20 @@ A calmer, faster way to log body weight on Apple devices.
 
 - One-tap entry from your **Apple Watch** (companion app + complication).
 - One-glance latest weight on watchOS via **Smart Stack/complication**.
-- History list + trend chart (iOS/iPadOS/macOS), plus edit/delete from history.
+- History list + trend chart (iOS/iPadOS), plus edit/delete from history.
 - All data lives in **Apple Health on your device**. Nothing leaves your device.
 
-LogWeight is a SwiftUI multiplatform app for iOS, iPadOS, watchOS, and macOS. It is not, and will never be, a separate weight database — the Health app is the source of truth.
+LogWeight is a SwiftUI app for iOS, iPadOS, and watchOS. It is not, and will never be, a separate weight database — the Health app is the source of truth.
 
 ## Status
 
-**Current state:** iOS + watchOS + macOS are active in one repo/project. The macOS target is a menu-bar app (`LSUIElement`) with a `MenuBarExtra` entry window (type weight, **Return** to save), optional **History** window (**⌘N**), and system **Settings** (⌘,). iOS and watchOS use stepper-first entry with long-press acceleration; watchOS also supports Digital Crown input and refreshes its complication after saves.
+**Current state:** iOS + iPadOS + watchOS are active. iOS/iPadOS use stepper-first entry with long-press acceleration and shared history/settings screens. watchOS supports Digital Crown input and refreshes its complication after saves.
 
 | Phase | Status | Goal |
 |---|---|---|
 | **1** | Done | iOS app: stepper-primary entry, plain history list, settings, redaction, Core test suite, CI. |
 | **2** | Done | watchOS app: Digital Crown + steppers + save; `WKInterfaceDevice.play(.success)`; WidgetKit complication reading latest weight from HealthKit; shared `HistoryView`. |
-| **3** | Done | macOS 14+ menu-bar app: sandbox + HealthKit; shared `HistoryView` / `SettingsView`; scheme **LogWeightMac**. |
+| **3** | Done | iPadOS support in the iOS target with the same stepper-first flow and shared `HistoryView` / `SettingsView`. |
 | 4 | In progress | Swift Charts in history, broadened XCUITests, accessibility audit docs, App Store metadata prep. |
 
 ## Non-goals
