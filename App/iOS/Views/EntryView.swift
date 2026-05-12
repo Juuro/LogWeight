@@ -217,7 +217,7 @@ struct EntryView: View {
         if code == HKError.Code.errorAuthorizationDenied.rawValue {
             return "LogWeight can’t write to Apple Health. Open Settings → Health → Data Access & Devices → LogWeight, then turn on Body Mass."
         }
-        if code == HKError.Code.errorHealthDataUnavailable.rawValue {
+        if code == HKError.Code.errorHealthDataUnavailable.rawValue || code == -2 {
             return "Health data isn’t available on this device. LogWeight can’t save here."
         }
         if code == -3 {

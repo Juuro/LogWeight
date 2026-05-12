@@ -58,11 +58,9 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
 #endif
             .toolbar {
-#if !os(macOS)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
-#endif
             }
         }
     }

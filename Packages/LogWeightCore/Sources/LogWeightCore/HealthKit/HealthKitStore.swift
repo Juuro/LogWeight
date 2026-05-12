@@ -20,6 +20,8 @@ public enum HealthKitError: Error, Sendable, Equatable {
     case saveFailed(reasonCode: Int)
     case queryFailed(reasonCode: Int)
     case deleteFailed(reasonCode: Int)
+    /// The sample was created by a different source and cannot be deleted by this app.
+    case deleteNotPermitted
     /// Failed to replace an existing entry (e.g. could not locate old sample or write failed mid-replace).
     case replaceFailed(reasonCode: Int)
 }
