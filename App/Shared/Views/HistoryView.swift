@@ -19,6 +19,7 @@ struct HistoryView: View {
     }
 
     let store: HealthKitStore
+    let showsDoneButton: Bool
 
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @State private var weights: [Weight] = []
@@ -59,8 +60,10 @@ struct HistoryView: View {
                 .navigationBarTitleDisplayMode(.inline)
 #endif
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { dismiss() }
+                    if showsDoneButton {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { dismiss() }
+                        }
                     }
                 }
                 .sheet(item: $editingContext, onDismiss: {
@@ -562,6 +565,13 @@ struct HistoryView: View {
         }
     }
 #endif
+}
+
+extension HistoryView {
+    init(store: HealthKitStore, showsDoneButton: Bool = true) {
+        self.store = store
+        self.showsDoneButton = showsDoneButton
+    }
 }
 
 /// Form to edit weight and date/time for a single history row.

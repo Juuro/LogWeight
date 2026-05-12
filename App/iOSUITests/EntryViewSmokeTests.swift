@@ -66,9 +66,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
-        let history = app.buttons["entry.history"]
-        XCTAssertTrue(history.waitForExistence(timeout: 2))
-        history.tap()
+        openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2),
@@ -133,6 +131,12 @@ final class EntryViewSmokeTests: XCTestCase {
         return Double(numericString)
     }
 
+    private func openHistoryTab() {
+        let historyTab = app.tabBars.buttons["History"]
+        XCTAssertTrue(historyTab.waitForExistence(timeout: 2))
+        historyTab.tap()
+    }
+
     private func openHistoryWithSingleSavedWeight() -> XCUIElement {
         let plus = app.buttons["entry.stepper.plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
@@ -140,9 +144,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
-        let history = app.buttons["entry.history"]
-        XCTAssertTrue(history.waitForExistence(timeout: 2))
-        history.tap()
+        openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2))
@@ -200,9 +202,7 @@ final class EntryViewSmokeTests: XCTestCase {
             XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
         }
 
-        let history = app.buttons["entry.history"]
-        XCTAssertTrue(history.waitForExistence(timeout: 2))
-        history.tap()
+        openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2))

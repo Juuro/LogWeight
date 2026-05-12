@@ -20,7 +20,6 @@ struct EntryView: View {
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @AppStorage(SettingsKey.hapticsEnabled) private var hapticsEnabled: Bool = true
 
-    @State private var showHistory = false
     @State private var showSettings = false
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
@@ -55,15 +54,6 @@ struct EntryView: View {
             .background(Color(uiColor: .systemBackground))
             .privacySensitive()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showHistory = true
-                    } label: {
-                        Image(systemName: "clock")
-                    }
-                    .accessibilityLabel("History")
-                    .accessibilityIdentifier("entry.history")
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -81,9 +71,6 @@ struct EntryView: View {
                     }
                     .accessibilityIdentifier("entry.keyboard.done")
                 }
-            }
-            .sheet(isPresented: $showHistory) {
-                HistoryView(store: store)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()

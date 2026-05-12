@@ -34,7 +34,7 @@ struct LogWeightApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                EntryView(state: entryState, store: healthKitStore)
+                MainTabView(entryState: entryState, store: healthKitStore)
                     .modifier(PrivacyRedactionModifier())
 
                 if showSplash {
