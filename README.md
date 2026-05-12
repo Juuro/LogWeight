@@ -42,8 +42,8 @@ LogWeight/
 │   ├── iOS/                   # iOS app target (embeds Watch app); includes Assets.xcassets / AppIcon
 │   ├── Watch/                 # watchOS companion app; includes Assets.xcassets / AppIcon
 │   ├── WatchWidget/           # watchOS WidgetKit extension (complications)
-│   ├── macOS/                 # macOS menu-bar target (`LogWeightMac` scheme)
 │   ├── Shared/                # SwiftUI shared across platforms (e.g. `HistoryView`, `SettingsView`; watch excludes `SettingsView`)
+│   ├── iOSScreenshots/        # iOS screenshot UI test target sources
 │   └── iOSUITests/
 ├── docs/                      # Architecture, HealthKit availability, Privacy, BuildAndDeploy
 ├── docs/jmat-reports/         # Multi-agent planning report (this commit)
