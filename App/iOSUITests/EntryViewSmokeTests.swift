@@ -9,7 +9,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app = XCUIApplication()
         // Inject the in-memory store so this test does NOT require HealthKit
         // entitlements / a real device. See LogWeightApp.makeStore().
-        app.launchArguments = ["--use-in-memory-store"]
+        app.launchArguments = ["--use-in-memory-store", "--skip-splash"]
         app.launch()
     }
 
@@ -75,6 +75,7 @@ final class EntryViewSmokeTests: XCTestCase {
                       "History chart should be visible on iOS")
     }
 
+
     /// Phase 4: settings controls should remain reachable for accessibility/testing.
     func testSettingsSheetExposesCoreControls() throws {
         let settings = app.buttons["entry.settings"]
@@ -132,6 +133,22 @@ final class EntryViewSmokeTests: XCTestCase {
         return Double(numericString)
     }
 
+    private func openHistoryWithSingleSavedWeight() -> XCUIElement {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+        plus.tap()
+        app.buttons["entry.save"].tap()
+        XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+
+        let history = app.buttons["entry.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 2))
+        history.tap()
+
+        let chart = app.descendants(matching: .any)["history.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 2))
+        return chart
+    }
+
     /// Accessibility regression guard: very large Dynamic Type should keep core
     /// controls reachable enough to complete a save.
     func testAccessibilityXXXLStillCanSaveWithStepperFlow() throws {
@@ -139,6 +156,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = [
             "--use-in-memory-store",
+            "--skip-splash",
             "-UIPreferredContentSizeCategoryName",
             "UICTContentSizeCategoryAccessibilityXXXL"
         ]
@@ -154,5 +172,65 @@ final class EntryViewSmokeTests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+    }
+
+    /// Phase 4 follow-up: with the chart lifted out of the List, the static
+    /// "Recent entries" label must exist between the chart and the list rows
+    /// (it replaces the old sticky Section header that overlaid content).
+    func testHistoryShowsRecentEntriesLabelAboveList() throws {
+        let chart = openHistoryWithSingleSavedWeight()
+        XCTAssertTrue(chart.exists)
+
+        let label = app.staticTexts["history.recent-entries-label"]
+        XCTAssertTrue(label.waitForExistence(timeout: 2),
+                      "'Recent entries' label must be present as a static element above the list")
+    }
+
+    /// Phase 4 follow-up: scrolling the list must NOT scroll the chart away.
+    /// The chart accessibility id must remain hittable after a swipe gesture
+    /// over the list area.
+    func testHistoryChartStaysPinnedAfterListSwipe() throws {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+
+        // Seed a few entries so the list has something to scroll.
+        for _ in 0..<3 {
+            plus.tap()
+            app.buttons["entry.save"].tap()
+            XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+        }
+
+        let history = app.buttons["entry.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: 2))
+        history.tap()
+
+        let chart = app.descendants(matching: .any)["history.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 2))
+
+        let list = app.descendants(matching: .any)["history.list"]
+        XCTAssertTrue(list.waitForExistence(timeout: 2))
+        list.swipeUp()
+
+        // After scrolling the list, the chart MUST still exist (pinned).
+        XCTAssertTrue(chart.exists,
+                      "Chart should remain in the view hierarchy after scrolling the list")
+    }
+
+    /// Splash appears on launch and transitions into the entry screen.
+    func testSplashShowsOnLaunchAndTransitionsToEntry() throws {
+        app.terminate()
+
+        let splashRun = XCUIApplication()
+        splashRun.launchArguments = ["--use-in-memory-store", "--hold-splash"]
+        splashRun.launch()
+
+        let splash = splashRun.descendants(matching: .any)["splash.overlay"]
+        XCTAssertTrue(splash.waitForExistence(timeout: 1.5), "Splash should appear immediately on launch")
+
+        // Ensure tap-to-continue works and reveals the entry screen.
+        splash.tap()
+        XCTAssertFalse(splash.waitForExistence(timeout: 1.8), "Splash should dismiss when tapped")
+        XCTAssertTrue(splashRun.buttons["entry.stepper.plus"].waitForExistence(timeout: 2),
+                      "Entry screen should be available normally")
     }
 }

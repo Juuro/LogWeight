@@ -135,6 +135,11 @@ public final class HKHealthStoreAdapter: HealthKitStore {
             throw HealthKitError.deleteFailed(reasonCode: -1)
         }
 
+        // HealthKit only allows deletion of samples this app created.
+        guard matchingSample.sourceRevision.source.bundleIdentifier == Bundle.main.bundleIdentifier else {
+            throw HealthKitError.deleteNotPermitted
+        }
+
         try await hkDelete(sample: matchingSample, mapFailure: HealthKitError.deleteFailed(reasonCode:))
     }
 
