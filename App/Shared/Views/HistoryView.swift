@@ -40,6 +40,11 @@ struct HistoryView: View {
 #endif
     @Environment(\.dismiss) private var dismiss
 
+    init(store: HealthKitStore, showsDoneButton: Bool = true) {
+        self.store = store
+        self.showsDoneButton = showsDoneButton
+    }
+
     private var displayUnit: WeightUnit {
         WeightUnit(rawValue: unitPreferenceRaw) ?? .kilograms
     }
@@ -565,13 +570,6 @@ struct HistoryView: View {
         }
     }
 #endif
-}
-
-extension HistoryView {
-    init(store: HealthKitStore, showsDoneButton: Bool = true) {
-        self.store = store
-        self.showsDoneButton = showsDoneButton
-    }
 }
 
 /// Form to edit weight and date/time for a single history row.
