@@ -335,6 +335,17 @@ struct HistoryView: View {
         return sorted.filter { $0.recordedAt >= cutoff }
     }
 
+    /// Line series including off-window anchors; points and hover use `filteredChartWeights` only.
+    private var chartLineWeights: [Weight] {
+        let end = chartXDomain.upperBound
+        let start = selectedRange.cutoffDate(referenceDate: end)
+        return WeightChartLineSeries.lineWeights(
+            visible: filteredChartWeights,
+            allWeights: weights,
+            rangeStart: start
+        )
+    }
+
     private var chartXDomain: ClosedRange<Date> {
         let end = Date()
         if let start = selectedRange.cutoffDate(referenceDate: end) {
@@ -402,32 +413,36 @@ struct HistoryView: View {
                 ContentUnavailableView("No data in selected range", systemImage: "chart.xyaxis.line")
                     .frame(height: 180)
             } else {
-                Chart(filteredChartWeights, id: \.self) { weight in
-                    LineMark(
-                        x: .value("Date", weight.recordedAt),
-                        y: .value("Weight", displayValue(for: weight))
-                    )
-                    .interpolationMethod(.monotone)
-                    .foregroundStyle(.teal)
+                Chart {
+                    ForEach(chartLineWeights, id: \.self) { weight in
+                        LineMark(
+                            x: .value("Date", weight.recordedAt),
+                            y: .value("Weight", displayValue(for: weight))
+                        )
+                        .interpolationMethod(.monotone)
+                        .foregroundStyle(.teal)
+                    }
 
-                    PointMark(
-                        x: .value("Date", weight.recordedAt),
-                        y: .value("Weight", displayValue(for: weight))
-                    )
-                    .foregroundStyle(chartHighlightedWeight == weight ? Color.yellow : .teal)
-                    // Note: chart point uses full-opacity yellow so it stands out
-                    // against the line; the row uses Self.highlightTint (yellow .35)
-                    // so the tint reads on the row's lighter background.
-                    .symbolSize(
-                        chartHighlightedWeight == weight
-                            ? 140
-                            : (hoveredWeight?.recordedAt == weight.recordedAt ? 100 : 50)
-                    )
-                    .opacity(
-                        chartHighlightedWeight == weight
-                            ? 1
-                            : (hoveredWeight?.recordedAt == weight.recordedAt ? 1 : 0.6)
-                    )
+                    ForEach(filteredChartWeights, id: \.self) { weight in
+                        PointMark(
+                            x: .value("Date", weight.recordedAt),
+                            y: .value("Weight", displayValue(for: weight))
+                        )
+                        .foregroundStyle(chartHighlightedWeight == weight ? Color.yellow : .teal)
+                        // Note: chart point uses full-opacity yellow so it stands out
+                        // against the line; the row uses Self.highlightTint (yellow .35)
+                        // so the tint reads on the row's lighter background.
+                        .symbolSize(
+                            chartHighlightedWeight == weight
+                                ? 140
+                                : (hoveredWeight?.recordedAt == weight.recordedAt ? 100 : 50)
+                        )
+                        .opacity(
+                            chartHighlightedWeight == weight
+                                ? 1
+                                : (hoveredWeight?.recordedAt == weight.recordedAt ? 1 : 0.6)
+                        )
+                    }
 
                     if let hoveredXDate = hoveredXDate {
                         RuleMark(x: .value("Hover", hoveredXDate))
@@ -498,7 +513,7 @@ struct HistoryView: View {
     /// Dynamic chart domain anchored around the user's current weight range.
     /// Keeps all points visible while avoiding a zero-based axis that flattens trends.
     private var chartYDomain: ClosedRange<Double> {
-        let values = filteredChartWeights.map(displayValue(for:))
+        let values = chartLineWeights.map(displayValue(for:))
         guard let minimum = values.min(), let maximum = values.max() else {
             return 0.0...1.0
         }
