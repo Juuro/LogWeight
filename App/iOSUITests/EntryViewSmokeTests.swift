@@ -2,6 +2,14 @@ import XCTest
 
 final class EntryViewSmokeTests: XCTestCase {
 
+    /// Pin UI language so tab labels and copy match English `Localizable.strings`.
+    static let uiTestLaunchArguments = [
+        "--use-in-memory-store",
+        "--skip-splash",
+        "-AppleLanguages", "(en)",
+        "-AppleLocale", "en_US",
+    ]
+
     private var app: XCUIApplication!
 
     override func setUpWithError() throws {
@@ -9,7 +17,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app = XCUIApplication()
         // Inject the in-memory store so this test does NOT require HealthKit
         // entitlements / a real device. See LogWeightApp.makeStore().
-        app.launchArguments = ["--use-in-memory-store", "--skip-splash"]
+        app.launchArguments = Self.uiTestLaunchArguments
         app.launch()
     }
 
@@ -66,7 +74,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
-        openHistoryTab()
+        app.openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2),
@@ -131,12 +139,6 @@ final class EntryViewSmokeTests: XCTestCase {
         return Double(numericString)
     }
 
-    private func openHistoryTab() {
-        let historyTab = app.tabBars.buttons["History"]
-        XCTAssertTrue(historyTab.waitForExistence(timeout: 2))
-        historyTab.tap()
-    }
-
     private func openHistoryWithSingleSavedWeight() -> XCUIElement {
         let plus = app.buttons["entry.stepper.plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
@@ -144,7 +146,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
-        openHistoryTab()
+        app.openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2))
@@ -156,9 +158,7 @@ final class EntryViewSmokeTests: XCTestCase {
     func testAccessibilityXXXLStillCanSaveWithStepperFlow() throws {
         app.terminate()
         app = XCUIApplication()
-        app.launchArguments = [
-            "--use-in-memory-store",
-            "--skip-splash",
+        app.launchArguments = Self.uiTestLaunchArguments + [
             "-UIPreferredContentSizeCategoryName",
             "UICTContentSizeCategoryAccessibilityXXXL"
         ]
@@ -202,7 +202,7 @@ final class EntryViewSmokeTests: XCTestCase {
             XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
         }
 
-        openHistoryTab()
+        app.openHistoryTab()
 
         let chart = app.descendants(matching: .any)["history.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 2))
@@ -221,7 +221,7 @@ final class EntryViewSmokeTests: XCTestCase {
         app.terminate()
 
         let splashRun = XCUIApplication()
-        splashRun.launchArguments = ["--use-in-memory-store", "--hold-splash"]
+        splashRun.launchArguments = Self.uiTestLaunchArguments.filter { $0 != "--skip-splash" } + ["--hold-splash"]
         splashRun.launch()
 
         let splash = splashRun.descendants(matching: .any)["splash.overlay"]

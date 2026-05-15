@@ -81,8 +81,6 @@ final class HistoryScreenshots: ScreenshotTestCase {
     }
 
     private func openHistoryTab() {
-        let historyTab = app.tabBars.buttons["History"]
-        waitForElement(historyTab, named: "tab.history")
-        historyTab.tap()
+        app.openHistoryTab()
     }
 }

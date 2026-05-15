@@ -18,13 +18,28 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Entry", systemImage: "scalemass")
                 }
+                .accessibilityIdentifier("tab.entry")
                 .tag(Tab.entry)
 
             HistoryView(store: store, showsDoneButton: false)
                 .tabItem {
                     Label("History", systemImage: "clock")
                 }
+                .accessibilityIdentifier("tab.history")
                 .tag(Tab.history)
+        }
+        .modifier(TabBarOnlyOnSupportedPlatforms())
+    }
+}
+
+/// Keeps Entry/History on a bottom tab bar on iPad (iOS 18+ defaults to sidebar).
+/// Matches XCUITest expectations and fits a two-tab utility app.
+private struct TabBarOnlyOnSupportedPlatforms: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.tabViewStyle(.tabBarOnly)
+        } else {
+            content
         }
     }
 }
