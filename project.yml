@@ -24,6 +24,34 @@ packages:
     path: Packages/LogWeightCore
 
 targets:
+  LogWeightWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App/iOSWidget
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/LogWeightWidget.entitlements"
+          - "Resources/PrivacyInfo.xcprivacy"
+    resources:
+      - path: App/iOSWidget/Resources/PrivacyInfo.xcprivacy
+    info:
+      path: App/iOSWidget/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: LogWeight
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight.widget
+        CODE_SIGN_ENTITLEMENTS: App/iOSWidget/Resources/LogWeightWidget.entitlements
+        INFOPLIST_FILE: App/iOSWidget/Resources/Info.plist
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    dependencies:
+      - package: LogWeightCore
+        product: LogWeightCore
+
   LogWeightWatchWidget:
     type: app-extension
     platform: watchOS
@@ -134,6 +162,8 @@ targets:
       - package: LogWeightCore
         product: LogWeightCore
       - target: LogWeightWatchApp
+        embed: true
+      - target: LogWeightWidget
         embed: true
 
   LogWeightUITests:

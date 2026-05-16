@@ -1,5 +1,6 @@
 import SwiftUI
 import HealthKit
+import WidgetKit
 import LogWeightCore
 
 /// Stepper-primary entry surface.
@@ -191,6 +192,13 @@ struct EntryView: View {
         Button {
             Task { @MainActor in
                 await state.commit(store: store)
+                if case .savedAt(let date) = state.saveStatus {
+                    SharedWeightEntryStore.save(
+                        WeightEntry(value: state.displayValueInKilograms, date: date)
+                    )
+                    SharedWeightEntryStore.clearDraftValue()
+                    WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+                }
             }
         } label: {
             Text("Save")
