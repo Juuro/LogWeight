@@ -15,6 +15,7 @@
 <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 <key>NSPrivacyAccessedAPITypeReasons</key>
 <array>
+<!-- CA92.1: app-group defaults for app/widget state sharing. -->
 <string>CA92.1</string>
 </array>
 </dict>

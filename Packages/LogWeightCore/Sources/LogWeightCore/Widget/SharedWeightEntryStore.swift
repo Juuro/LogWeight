@@ -21,6 +21,8 @@ public enum SharedWeightEntryStore {
     private static let entryKey = "widget.lastWeightEntry"
     private static let draftValueKey = "widget.draftWeightValue"
     private static let fallbackWeightInKilograms = 75.0
+    private static let minimumWeightInKilograms = 1.0
+    private static let maximumWeightInKilograms = 500.0
 
     public static func loadEntry(userDefaults: UserDefaults? = nil) -> WeightEntry? {
         guard
@@ -30,7 +32,12 @@ public enum SharedWeightEntryStore {
             return nil
         }
 
-        return try? JSONDecoder().decode(WeightEntry.self, from: data)
+        do {
+            return try JSONDecoder().decode(WeightEntry.self, from: data)
+        } catch {
+            assertionFailure("SharedWeightEntryStore decode failed")
+            return nil
+        }
     }
 
     public static func loadCurrentValue(userDefaults: UserDefaults? = nil) -> Double {
@@ -38,8 +45,8 @@ public enum SharedWeightEntryStore {
             return fallbackWeightInKilograms
         }
 
-        if let draft = defaults.object(forKey: draftValueKey) as? NSNumber {
-            return clamp(draft.doubleValue)
+        if defaults.object(forKey: draftValueKey) != nil {
+            return clamp(defaults.double(forKey: draftValueKey))
         }
 
         if let entry = loadEntry(userDefaults: defaults) {
@@ -72,14 +79,15 @@ public enum SharedWeightEntryStore {
     }
 
     public static func save(_ entry: WeightEntry, userDefaults: UserDefaults? = nil) {
-        guard
-            let defaults = defaults(userDefaults),
-            let data = try? JSONEncoder().encode(entry)
-        else {
+        guard let defaults = defaults(userDefaults) else {
             return
         }
-
-        defaults.set(data, forKey: entryKey)
+        do {
+            let data = try JSONEncoder().encode(entry)
+            defaults.set(data, forKey: entryKey)
+        } catch {
+            assertionFailure("SharedWeightEntryStore encode failed")
+        }
     }
 
     public static func clearDraftValue(userDefaults: UserDefaults? = nil) {
@@ -91,6 +99,6 @@ public enum SharedWeightEntryStore {
     }
 
     private static func clamp(_ value: Double) -> Double {
-        max(1.0, min(500.0, value))
+        max(minimumWeightInKilograms, min(maximumWeightInKilograms, value))
     }
 }

@@ -193,11 +193,7 @@ struct EntryView: View {
             Task { @MainActor in
                 await state.commit(store: store)
                 if case .savedAt(let date) = state.saveStatus {
-                    SharedWeightEntryStore.save(
-                        WeightEntry(value: state.displayValueInKilograms, date: date)
-                    )
-                    SharedWeightEntryStore.clearDraftValue()
-                    WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+                    syncWidgetAfterSuccessfulSave(savedAt: date)
                 }
             }
         } label: {
@@ -255,6 +251,14 @@ struct EntryView: View {
         }
         pendingOpenEditorWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.singleTapEditDelaySeconds, execute: work)
+    }
+
+    private func syncWidgetAfterSuccessfulSave(savedAt: Date) {
+        // Mirror the latest HealthKit save to App Group storage so the iOS widget can render quickly.
+        SharedWeightEntryStore.save(
+            WeightEntry(value: state.displayValueInKilograms, date: savedAt)
+        )
+        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
     }
 }
 

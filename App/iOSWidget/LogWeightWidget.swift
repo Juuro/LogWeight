@@ -62,8 +62,9 @@ struct SaveWeightIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         let value = SharedWeightEntryStore.loadCurrentValue()
-        // Widget intents only update shared widget state; HealthKit writes still happen in the app save flow.
-        // Persist the new latest weight in App Group shared storage.
+        // Persist the new latest value in App Group shared storage for widget state only.
+        // This is an intentional widget-local save path for iOS 17 interactivity;
+        // HealthKit persistence still flows through the app's HealthKitStore adapter path.
         SharedWeightEntryStore.save(WeightEntry(value: value, date: .now))
         SharedWeightEntryStore.clearDraftValue()
         // Trigger a timeline reload so the latest saved value is shown.
