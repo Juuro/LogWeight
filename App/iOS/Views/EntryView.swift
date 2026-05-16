@@ -222,6 +222,9 @@ struct EntryView: View {
 
     private func handleWeightDisplayTap(currentKilograms: Double) {
         if let work = pendingOpenEditorWork {
+            guard state.lastSavedWeight != nil else {
+                return
+            }
             work.cancel()
             pendingOpenEditorWork = nil
             state.restoreDisplayToLastLoggedWeight()

@@ -66,6 +66,21 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(save.isEnabled, "Save must be re-enabled when keyboard is dismissed")
     }
 
+    /// Regression guard: when there is no saved weight yet, quick double-tap on
+    /// the entry value should still open keyboard editing instead of triggering
+    /// restore-last-weight behavior.
+    func testFirstEntryDoubleTapStillOpensKeyboardEditing() throws {
+        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
+        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
+
+        valueDisplay.tap()
+        valueDisplay.tap()
+
+        let valueField = app.textFields["entry.value.textfield"]
+        XCTAssertTrue(valueField.waitForExistence(timeout: 2),
+                      "Double tap should open keyboard editing for first entry")
+    }
+
     /// Phase 4: history now includes a chart on iOS/iPadOS.
     func testHistorySheetShowsTrendChart() throws {
         let plus = app.buttons["entry.stepper.plus"]
