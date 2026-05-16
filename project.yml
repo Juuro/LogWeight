@@ -34,12 +34,15 @@ targets:
           - "Resources/Info.plist"
           - "Resources/LogWeightWidget.entitlements"
           - "Resources/PrivacyInfo.xcprivacy"
+      - path: App/Shared/Widget
     resources:
       - path: App/iOSWidget/Resources/PrivacyInfo.xcprivacy
     info:
       path: App/iOSWidget/Resources/Info.plist
       properties:
         CFBundleDisplayName: LogWeight
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -94,6 +97,7 @@ targets:
       - path: App/Shared
         excludes:
           - "Views/SettingsView.swift"
+          - "Widget/**"
     resources:
       - path: App/Watch/Resources/PrivacyInfo.xcprivacy
     info:

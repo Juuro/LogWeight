@@ -36,6 +36,11 @@ struct LogWeightApp: App {
             ZStack {
                 MainTabView(entryState: entryState, store: healthKitStore)
                     .modifier(PrivacyRedactionModifier())
+                    .onReceive(NotificationCenter.default.publisher(for: .logWeightWidgetDidSave)) { _ in
+                        Task { @MainActor in
+                            await entryState.loadLastWeight(from: healthKitStore)
+                        }
+                    }
 
                 if showSplash {
                     SplashOverlayView(showPreparing: showPreparing) {

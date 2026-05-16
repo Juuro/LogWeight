@@ -95,6 +95,10 @@ struct HistoryView: View {
                 }
                 .task {
                     await load()
+                    for await _ in store.observeChanges() {
+                        guard !Task.isCancelled else { return }
+                        await load()
+                    }
                 }
                 .alert("Cannot Delete Entry", isPresented: $showCannotDeleteAlert) {
 #if !os(watchOS)
@@ -530,6 +534,7 @@ struct HistoryView: View {
     }
 #endif
 
+    @MainActor
     private func load() async {
         do {
             let result = try await store.recentWeights(limit: 5_000)
