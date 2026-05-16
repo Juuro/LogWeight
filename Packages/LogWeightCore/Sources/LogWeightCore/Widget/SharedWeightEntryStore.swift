@@ -15,7 +15,7 @@ public enum LogWeightWidgetConstants {
 }
 
 public enum SharedWeightEntryStore {
-    public static let appGroupIdentifier = "group.dev.logweight"
+    public static let appGroupIdentifier = "group.de.juuronina.logweight"
     public static let defaultStepInKilograms = 0.1
 
     private static let entryKey = "widget.lastWeightEntry"
