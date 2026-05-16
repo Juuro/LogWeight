@@ -16,7 +16,7 @@ settings:
     GENERATE_INFOPLIST_FILE: NO
     DEVELOPMENT_TEAM: "A8L9TRSZCR"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.2.0"
+    MARKETING_VERSION: "0.3.0"
     CURRENT_PROJECT_VERSION: "1"
 
 packages:
@@ -185,6 +185,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: App/iOSScreenshots
+      - path: App/iOSUITests/UITestNavigation.swift
     dependencies:
       - target: LogWeight
     settings:
