@@ -51,6 +51,10 @@ public struct WeightFormatter {
             return nil
         }
         let measurement = Measurement(value: number.doubleValue, unit: unit.unitMass)
-        return measurement.converted(to: .kilograms).value
+        let kilograms = measurement.converted(to: .kilograms).value
+        guard kilograms >= 0 else {
+            return nil
+        }
+        return kilograms
     }
 }
