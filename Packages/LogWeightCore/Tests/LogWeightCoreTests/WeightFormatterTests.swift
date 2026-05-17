@@ -50,4 +50,10 @@ final class WeightFormatterTests: XCTestCase {
         XCTAssertNil(formatter.parseToKilograms("abc", unit: .kilograms))
         XCTAssertNil(formatter.parseToKilograms("", unit: .kilograms))
     }
+
+    func testParseRejectsNegativeValues() {
+        let formatter = WeightFormatter(locale: Locale(identifier: "en_US"))
+        XCTAssertNil(formatter.parseToKilograms("-70.5", unit: .kilograms))
+        XCTAssertNil(formatter.parseToKilograms("-155.4", unit: .pounds))
+    }
 }

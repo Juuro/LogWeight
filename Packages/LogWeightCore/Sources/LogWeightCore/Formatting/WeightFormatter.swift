@@ -35,7 +35,8 @@ public struct WeightFormatter {
     }
 
     /// Parses a user-typed string in the given unit into a kilogram value.
-    /// Returns `nil` if the input cannot be interpreted under the active locale.
+    /// Returns `nil` if the input cannot be interpreted under the active locale,
+    /// or if the parsed value converts to a negative kilogram amount.
     public func parseToKilograms(_ string: String, unit: WeightUnit) -> Double? {
         let formatter = NumberFormatter()
         formatter.locale = locale
@@ -51,6 +52,10 @@ public struct WeightFormatter {
             return nil
         }
         let measurement = Measurement(value: number.doubleValue, unit: unit.unitMass)
-        return measurement.converted(to: .kilograms).value
+        let kilograms = measurement.converted(to: .kilograms).value
+        guard kilograms >= 0 else {
+            return nil
+        }
+        return kilograms
     }
 }
