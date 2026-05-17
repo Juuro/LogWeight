@@ -22,7 +22,11 @@ struct LogWeightWidgetProvider: TimelineProvider {
     }
 
     private func makeEntry() -> LogWeightWidgetEntry {
-        LogWeightWidgetEntry(date: .now, currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue())
+        SharedWeightEntryStore.expireStaleDraftIfNeeded()
+        return LogWeightWidgetEntry(
+            date: .now,
+            currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue()
+        )
     }
 }
 

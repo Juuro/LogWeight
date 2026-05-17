@@ -98,6 +98,7 @@ struct HistoryView: View {
                     for await _ in store.observeChanges() {
                         guard !Task.isCancelled else { return }
                         await load()
+                        await refreshWidgetsAfterHealthKitChange()
                     }
                 }
                 .alert("Cannot Delete Entry", isPresented: $showCannotDeleteAlert) {
@@ -501,6 +502,7 @@ struct HistoryView: View {
                 try await store.delete(weight)
             }
             await load()
+            await refreshWidgetsAfterHealthKitChange()
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
@@ -520,6 +522,7 @@ struct HistoryView: View {
         do {
             try await store.delete(weight)
             await load()
+            await refreshWidgetsAfterHealthKitChange()
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
@@ -529,6 +532,12 @@ struct HistoryView: View {
         }
     }
 #endif
+
+    private func refreshWidgetsAfterHealthKitChange() async {
+#if os(iOS)
+        await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: store)
+#endif
+    }
 }
 
 /// Form to edit weight and date/time for a single history row.

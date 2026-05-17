@@ -1,6 +1,5 @@
 import SwiftUI
 import HealthKit
-import WidgetKit
 import LogWeightCore
 
 /// Stepper-primary entry surface.
@@ -179,8 +178,8 @@ struct EntryView: View {
         Button {
             Task { @MainActor in
                 await state.commit(store: store)
-                if case .savedAt(let date) = state.saveStatus {
-                    syncWidgetAfterSuccessfulSave(savedAt: date)
+                if case .savedAt = state.saveStatus {
+                    syncWidgetAfterSuccessfulSave()
                 }
             }
         } label: {
@@ -240,12 +239,10 @@ struct EntryView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.singleTapEditDelaySeconds, execute: work)
     }
 
-    private func syncWidgetAfterSuccessfulSave(savedAt: Date) {
-        // Mirror the latest HealthKit save to App Group storage so the iOS widget can render quickly.
-        SharedWeightEntryStore.save(
-            WeightEntry(value: state.displayValueInKilograms, date: savedAt)
-        )
-        WidgetCenter.shared.reloadAllTimelines()
+    private func syncWidgetAfterSuccessfulSave() {
+        Task {
+            await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: store)
+        }
     }
 }
 

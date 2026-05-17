@@ -20,7 +20,7 @@ struct IncrementWeightIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         _ = SharedWeightEntryStore.increment(stepInKilograms: stepInKilograms)
-        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+        WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }
 }
@@ -42,7 +42,7 @@ struct DecrementWeightIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         _ = SharedWeightEntryStore.decrement(stepInKilograms: stepInKilograms)
-        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+        WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }
 }
