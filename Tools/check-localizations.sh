@@ -15,6 +15,7 @@ exec python3 - "$RESOURCES" <<'PY'
 import re
 import sys
 from pathlib import Path
+from typing import List, Set
 
 resources = Path(sys.argv[1])
 en_file = resources / "en.lproj" / "Localizable.strings"
@@ -22,10 +23,10 @@ en_file = resources / "en.lproj" / "Localizable.strings"
 KEY_RE = re.compile(r'^"((?:\\.|[^"\\])*)"\s*=')
 
 
-def keys(path):
+def keys(path: Path) -> Set[str]:
     text = path.read_text(encoding="utf-8")
-    found = set()
-    duplicates = []
+    found: Set[str] = set()
+    duplicates: List[str] = []
     for line in text.splitlines():
         match = KEY_RE.match(line)
         if not match:
