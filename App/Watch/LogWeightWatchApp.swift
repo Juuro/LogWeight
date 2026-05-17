@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 import LogWeightCore
 
 @main
@@ -14,6 +15,7 @@ struct LogWeightWatchApp: App {
                     SettingsMigrator.migrateIfNeeded()
                     try? await healthKitStore.requestAuthorization()
                     await entryState.loadLastWeight(from: healthKitStore)
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
         }
     }

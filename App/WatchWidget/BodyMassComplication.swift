@@ -52,11 +52,26 @@ struct BodyMassEntry: TimelineEntry {
 struct BodyMassTimelineProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> BodyMassEntry {
-        BodyMassEntry(date: Date(), display: .empty)
+        BodyMassEntry(date: Date(), display: Self.previewDisplay())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (BodyMassEntry) -> Void) {
-        completion(BodyMassEntry(date: Date(), display: .empty))
+    func getSnapshot(in context: Context, completion: @escaping @Sendable (BodyMassEntry) -> Void) {
+        if context.isPreview {
+            completion(BodyMassEntry(date: Date(), display: Self.previewDisplay()))
+            return
+        }
+        Task {
+            completion(await Self.loadEntry())
+        }
+    }
+
+    /// Sample display used by the complication picker so the slot is never empty.
+    private static func previewDisplay() -> ComplicationWeightDisplay {
+        let unit: WeightUnit = Locale.current.measurementSystem == .metric ? .kilograms : .pounds
+        let sample = unit == .kilograms ? 75.0 : 165.0
+        return makeDisplay(kilograms: unit == .kilograms ? sample : sample / 2.20462,
+                           unit: unit,
+                           locale: .current)
     }
 
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<BodyMassEntry>) -> Void) {
@@ -76,12 +91,12 @@ struct BodyMassTimelineProvider: TimelineProvider {
         guard let weights = try? await store.recentWeights(limit: 1), let w = weights.first else {
             return BodyMassEntry(date: Date(), display: .empty)
         }
-        let unit = preferredUnit()
-        let display = makeDisplay(kilograms: w.valueInKilograms, unit: unit, locale: .current)
+        let unit = Self.preferredUnit()
+        let display = Self.makeDisplay(kilograms: w.valueInKilograms, unit: unit, locale: .current)
         return BodyMassEntry(date: w.recordedAt, display: display)
     }
 
-    private static func preferredUnit() -> WeightUnit {
+    fileprivate static func preferredUnit() -> WeightUnit {
         if let raw = UserDefaults.standard.string(forKey: SettingsKey.unitPreference),
            let unit = WeightUnit(rawValue: raw) {
             return unit
@@ -89,7 +104,7 @@ struct BodyMassTimelineProvider: TimelineProvider {
         return Locale.current.measurementSystem == .metric ? .kilograms : .pounds
     }
 
-    private static func makeDisplay(
+    fileprivate static func makeDisplay(
         kilograms: Double,
         unit: WeightUnit,
         locale: Locale
@@ -145,48 +160,54 @@ struct BodyMassComplicationView: View {
                         .monospacedDigit()
                         .minimumScaleFactor(0.75)
                         .lineLimit(1)
+                        .widgetAccentable(false)
                     Text(entry.display.unitText)
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
-                        .widgetAccentable()
+                        .widgetAccentable(false)
                 }
                 .privacySensitive()
             } else {
-                Image(systemName: "scalemass.fill")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .widgetAccentable()
+                accentWeightIcon(font: .title2)
             }
         }
         .accessibilityLabel(entry.display.fullText)
     }
 
-    /// Corner slots render a small inner glyph; weight curves along the bezel via `widgetLabel`.
+    /// Corner slot (Infograph): accent icon in the inner body, weight curves along the dial via `widgetLabel`.
+    /// Mirrors Apple's WWDC22 `CornerView` sample so the watch face renders both layers.
     private var cornerLayout: some View {
         Image(systemName: "scalemass.fill")
-            .font(.title3)
+            .font(.title.bold())
             .widgetAccentable()
             .widgetLabel {
-                if entry.display.hasData {
-                    Text(entry.display.cornerLabel)
-                        .font(.system(.title, design: .rounded))
-                        .fontWeight(.bold)
-                        .monospacedDigit()
-                } else {
-                    Text("—")
-                        .font(.system(.title, design: .rounded))
-                        .fontWeight(.bold)
-                }
+                cornerCurvedLabel
             }
-            .privacySensitive()
             .accessibilityLabel(entry.display.fullText)
     }
 
+    @ViewBuilder
+    private var cornerCurvedLabel: some View {
+        if entry.display.hasData {
+            Text(entry.display.cornerLabel)
+                .font(.system(.body, design: .rounded))
+                .fontWeight(.semibold)
+                .monospacedDigit()
+                .widgetAccentable(false)
+                .privacySensitive()
+        } else {
+            Text("Body weight")
+                .font(.system(.body, design: .rounded))
+                .fontWeight(.semibold)
+                .widgetAccentable(false)
+        }
+    }
+
     private var inlineLayout: some View {
-        Label {
+        HStack(spacing: 4) {
+            accentWeightIcon(font: .body)
             Text(entry.display.fullText)
-        } icon: {
-            Image(systemName: "scalemass.fill")
+                .widgetAccentable(false)
         }
         .privacySensitive()
         .accessibilityLabel("Weight \(entry.display.fullText)")
@@ -194,10 +215,7 @@ struct BodyMassComplicationView: View {
 
     private var rectangularLayout: some View {
         HStack(spacing: 8) {
-            Image(systemName: "scalemass.fill")
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .widgetAccentable()
+            accentWeightIcon(font: .body.weight(.semibold))
 
             if entry.display.hasData {
                 Text(entry.display.fullText)
@@ -207,14 +225,24 @@ struct BodyMassComplicationView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                     .layoutPriority(1)
+                    .widgetAccentable(false)
                     .privacySensitive()
             } else {
                 Text("No weight yet")
                     .font(.headline)
+                    .widgetAccentable(false)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel(entry.display.fullText)
+    }
+
+    /// Tints with the watch face accent color (e.g. Infograph pink); do not add `foregroundStyle` here.
+    private func accentWeightIcon(font: Font) -> some View {
+        Image(systemName: "scalemass.fill")
+            .font(font)
+            .symbolRenderingMode(.monochrome)
+            .widgetAccentable()
     }
 }
 
