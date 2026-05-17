@@ -83,8 +83,8 @@ struct LogWeightWidgetView: View {
 
                 Button(intent: SaveWeightIntent()) {
                     Text("Save")
-                        .font(.headline)
-                        .frame(minWidth: 84)
+                        .font(.body.weight(.semibold))
+                        .frame(height: 36)
                 }
                 .buttonStyle(.borderedProminent)
             }
