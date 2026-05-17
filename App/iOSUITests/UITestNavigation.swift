@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 extension XCUIApplication {
 
     /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;

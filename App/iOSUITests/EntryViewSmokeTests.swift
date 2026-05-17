@@ -1,9 +1,10 @@
 import XCTest
 
+@MainActor
 final class EntryViewSmokeTests: XCTestCase {
 
     /// Pin UI language so tab labels and copy match English `Localizable.strings`.
-    static let uiTestLaunchArguments = [
+    nonisolated static let uiTestLaunchArguments = [
         "--use-in-memory-store",
         "--skip-splash",
         "-AppleLanguages", "(en)",
@@ -12,7 +13,8 @@ final class EntryViewSmokeTests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         // Inject the in-memory store so this test does NOT require HealthKit
