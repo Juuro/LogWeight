@@ -37,8 +37,7 @@ public struct ReminderCoordinator: Sendable {
     ) async -> ReminderAuthorizationStatus {
         let status = await scheduler.requestAuthorization()
         guard status == .authorized else {
-            var settings = DailyReminderSettings.load(from: defaults)
-            settings.enabled = false
+            let settings = DailyReminderSettings(enabled: false, hour: hour, minute: minute)
             settings.save(to: defaults)
             await scheduler.cancelDailyReminder()
             return status

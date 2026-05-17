@@ -24,8 +24,9 @@ enum WidgetTimelineRefresh {
 
     static func syncEntryStoreAndReloadWidgets(store: HealthKitStore) async {
 #if os(iOS)
-        let latest = try? await store.recentWeights(limit: 1).first
-        SharedWeightEntryStore.syncFromLatestWeight(latest)
+        let weights = (try? await store.recentWeights(limit: WeightTrendCache.entryWidgetSampleLimit)) ?? []
+        SharedWeightEntryStore.syncFromLatestWeight(weights.first)
+        WeightTrendCache.update(from: weights)
         reloadEntryAndChartWidgets()
 #endif
     }

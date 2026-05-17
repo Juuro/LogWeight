@@ -16,6 +16,7 @@ struct SettingsView: View {
 
     @State private var reminderAuthStatus: ReminderAuthorizationStatus = .notDetermined
     @State private var isUpdatingReminder = false
+    @State private var pendingReminderEnabled: Bool?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -121,14 +122,6 @@ struct SettingsView: View {
             .task {
                 reminderAuthStatus = await reminderScheduler.authorizationStatus()
             }
-            .onChange(of: reminderHour) { _, _ in
-                guard reminderEnabled, !isUpdatingReminder else { return }
-                Task { await rescheduleReminderTime() }
-            }
-            .onChange(of: reminderMinute) { _, _ in
-                guard reminderEnabled, !isUpdatingReminder else { return }
-                Task { await rescheduleReminderTime() }
-            }
 #endif
         }
     }
@@ -138,7 +131,6 @@ struct SettingsView: View {
         Binding(
             get: { reminderEnabled },
             set: { newValue in
-                reminderEnabled = newValue
                 Task { await setReminderEnabled(newValue) }
             }
         )
@@ -147,24 +139,38 @@ struct SettingsView: View {
     private var reminderTimeBinding: Binding<Date> {
         Binding(
             get: {
-                var components = DateComponents()
+                var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
                 components.hour = reminderHour
                 components.minute = reminderMinute
                 return Calendar.current.date(from: components) ?? Date()
             },
             set: { newDate in
                 let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
-                reminderHour = components.hour ?? DailyReminderSettings.defaultHour
-                reminderMinute = components.minute ?? DailyReminderSettings.defaultMinute
+                let hour = components.hour ?? DailyReminderSettings.defaultHour
+                let minute = components.minute ?? DailyReminderSettings.defaultMinute
+                guard hour != reminderHour || minute != reminderMinute else { return }
+                reminderHour = hour
+                reminderMinute = minute
+                guard reminderEnabled else { return }
+                Task { await rescheduleReminderTime() }
             }
         )
     }
 
     @MainActor
     private func setReminderEnabled(_ enabled: Bool) async {
-        guard !isUpdatingReminder else { return }
+        if isUpdatingReminder {
+            pendingReminderEnabled = enabled
+            return
+        }
         isUpdatingReminder = true
-        defer { isUpdatingReminder = false }
+        defer {
+            isUpdatingReminder = false
+            if let pending = pendingReminderEnabled {
+                pendingReminderEnabled = nil
+                Task { await setReminderEnabled(pending) }
+            }
+        }
 
         if enabled {
             let status = await reminderCoordinator.enableReminder(
@@ -173,9 +179,7 @@ struct SettingsView: View {
                 scheduler: reminderScheduler
             )
             reminderAuthStatus = status
-            if status != .authorized {
-                reminderEnabled = false
-            }
+            reminderEnabled = status == .authorized
         } else {
             await reminderCoordinator.disableReminder(scheduler: reminderScheduler)
             reminderEnabled = false
@@ -185,7 +189,9 @@ struct SettingsView: View {
 
     @MainActor
     private func rescheduleReminderTime() async {
-        guard !isUpdatingReminder else { return }
+        if isUpdatingReminder {
+            return
+        }
         isUpdatingReminder = true
         defer { isUpdatingReminder = false }
         await reminderCoordinator.updateReminderTime(

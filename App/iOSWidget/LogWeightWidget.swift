@@ -1,6 +1,5 @@
 import WidgetKit
 import SwiftUI
-import HealthKit
 import LogWeightCore
 
 struct LogWeightWidgetEntry: TimelineEntry {
@@ -34,20 +33,7 @@ struct LogWeightWidgetProvider: TimelineProvider {
         return LogWeightWidgetEntry(
             date: .now,
             currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue(),
-            trend: await loadTrend()
-        )
-    }
-
-    private func loadTrend() async -> WeightTrendDirection {
-        guard HKHealthStore.isHealthDataAvailable() else { return .unknown }
-        let store = HKHealthStoreAdapter()
-        guard let weights = try? await store.recentWeights(limit: 40) else { return .unknown }
-        let now = Date()
-        let windowStart = Calendar.current.date(byAdding: .day, value: -28, to: now)
-        return WeightTrendEvaluator.direction(
-            weights: weights,
-            windowStart: windowStart,
-            referenceDate: now
+            trend: WeightTrendCache.load()
         )
     }
 }

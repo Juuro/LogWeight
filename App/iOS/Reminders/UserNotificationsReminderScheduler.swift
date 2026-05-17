@@ -60,7 +60,7 @@ struct UserNotificationsReminderScheduler: ReminderScheduling, Sendable {
         case .authorized, .provisional, .ephemeral:
             return .authorized
         @unknown default:
-            return .denied
+            return .notDetermined
         }
     }
 }

@@ -50,6 +50,11 @@ struct LogWeightApp: App {
                             await ReminderSync.syncFromStoredSettings()
                         }
                     }
+                    .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification)) { _ in
+                        Task { @MainActor in
+                            await ReminderSync.syncFromStoredSettings()
+                        }
+                    }
 
                 if showSplash {
                     SplashOverlayView(showPreparing: showPreparing) {

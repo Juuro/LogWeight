@@ -51,6 +51,8 @@ final class ReminderCoordinatorTests: XCTestCase {
         )
         XCTAssertEqual(status, .denied)
         XCTAssertFalse(defaults.bool(forKey: SettingsKey.reminderEnabled))
+        XCTAssertEqual(defaults.integer(forKey: SettingsKey.reminderHour), 8)
+        XCTAssertEqual(defaults.integer(forKey: SettingsKey.reminderMinute), 0)
         XCTAssertEqual(scheduler.cancelCount, 1)
         XCTAssertEqual(scheduler.scheduleCalls.count, 0)
     }

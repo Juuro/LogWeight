@@ -1,10 +1,17 @@
 import SwiftUI
 import LogWeightCore
 
+private enum TrendArrowPreferenceStore {
+    static let userDefaults = UserDefaults(suiteName: SharedWeightEntryStore.appGroupIdentifier) ?? .standard
+}
+
 /// Compact trend indicator for widgets and history headers.
 struct WeightTrendArrow: View {
     let direction: WeightTrendDirection
     var font: Font = .caption2.weight(.semibold)
+
+    @AppStorage(SettingsKey.trendArrowEnabled, store: TrendArrowPreferenceStore.userDefaults)
+    private var trendArrowEnabled = true
 
     /// Shared style for Home Screen widget headers (gray, subheadline size).
     static func widget(direction: WeightTrendDirection) -> WeightTrendArrow {
@@ -12,10 +19,10 @@ struct WeightTrendArrow: View {
     }
 
     var body: some View {
-        if !TrendArrowPreferences.isEnabled() {
-            EmptyView()
-        } else {
+        if trendArrowEnabled {
             trendContent
+        } else {
+            EmptyView()
         }
     }
 
