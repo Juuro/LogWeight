@@ -120,6 +120,7 @@ struct LogWeightWidgetView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(minimumScaleFactor)
         }
+        .privacySensitive()
         .accessibilityElement(children: .combine)
         .accessibilityLabel(formattedWeight)
     }
