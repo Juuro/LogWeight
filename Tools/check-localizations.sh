@@ -22,7 +22,7 @@ en_file = resources / "en.lproj" / "Localizable.strings"
 KEY_RE = re.compile(r'^"((?:\\.|[^"\\])*)"\s*=')
 
 
-def keys(path: Path):
+def keys(path):
     text = path.read_text(encoding="utf-8")
     found = set()
     duplicates = []
