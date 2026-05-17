@@ -45,25 +45,24 @@ final class EntryViewSmokeTests: XCTestCase {
                           "Save took longer than 2.0s end-to-end (budget includes UI overhead)")
     }
 
-    /// Verifies that tapping the value display enters edit mode and returns to
-    /// a save-ready state after dismissing the software keyboard toolbar (when present).
-    func testKeyboardOpenDisablesSaveAndDoneReEnablesIt() throws {
-        // Value is a styled Text with button accessibility traits, not always exposed as `XCUIElementTypeButton`.
+    /// Save stays enabled with the keyboard up and commits the typed first weight in one tap.
+    func testSaveWhileKeyboardOpenCommitsFirstWeight() throws {
         let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
         XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
         valueDisplay.tap()
 
-        let done = app.buttons["entry.keyboard.done"]
-        // Single tap waits ~280ms before focusing the field (double-tap vs edit discrimination).
-        if done.waitForExistence(timeout: 3) {
-            done.tap()
-        } else {
-            // Some simulator setups attach a hardware keyboard and skip the
-            // software keyboard toolbar entirely. In that case, just continue.
-        }
+        let valueField = app.textFields["entry.value.textfield"]
+        XCTAssertTrue(valueField.waitForExistence(timeout: 2))
 
         let save = app.buttons["entry.save"]
-        XCTAssertTrue(save.isEnabled, "Save must be re-enabled when keyboard is dismissed")
+        XCTAssertTrue(save.waitForExistence(timeout: 2))
+        XCTAssertTrue(save.isEnabled, "Save must stay enabled while the keyboard is open")
+        save.tap()
+
+        XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2),
+                      "Save should apply typed value, dismiss keyboard, and persist")
+        XCTAssertFalse(valueField.waitForExistence(timeout: 1),
+                       "Keyboard editor should close after Save")
     }
 
     /// Regression guard: when there is no saved weight yet, quick double-tap on
@@ -79,6 +78,23 @@ final class EntryViewSmokeTests: XCTestCase {
         let valueField = app.textFields["entry.value.textfield"]
         XCTAssertTrue(valueField.waitForExistence(timeout: 2),
                       "Double tap should open keyboard editing for first entry")
+    }
+
+    /// After the first save, the value display must not offer keyboard entry again.
+    func testKeyboardEntryUnavailableAfterFirstSave() throws {
+        let plus = app.buttons["entry.stepper.plus"]
+        XCTAssertTrue(plus.waitForExistence(timeout: 2))
+        plus.tap()
+        app.buttons["entry.save"].tap()
+        XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+
+        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
+        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
+        valueDisplay.tap()
+
+        let valueField = app.textFields["entry.value.textfield"]
+        XCTAssertFalse(valueField.waitForExistence(timeout: 1),
+                       "Keyboard entry must not be available after the first weight is saved")
     }
 
     /// Phase 4: history now includes a chart on iOS/iPadOS.

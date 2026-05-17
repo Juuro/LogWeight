@@ -34,6 +34,31 @@ public struct WeightFormatter {
         return formatter.string(from: measurement)
     }
 
+    /// Keeps only decimal digits and at most one decimal separator (locale separator,
+    /// `.`, or `,`). Strips letters, signs, spaces, and other symbols so pasted text
+    /// cannot enter the weight field.
+    public func sanitizeWeightInput(_ string: String) -> String {
+        let preferredSeparator = locale.decimalSeparator ?? "."
+        var sanitized = ""
+        var hasSeparator = false
+
+        for character in string {
+            if character.isNumber {
+                sanitized.append(character)
+                continue
+            }
+            let symbol = String(character)
+            guard symbol == preferredSeparator || symbol == "." || symbol == "," else {
+                continue
+            }
+            guard !hasSeparator else { continue }
+            hasSeparator = true
+            sanitized.append(preferredSeparator)
+        }
+
+        return sanitized
+    }
+
     /// Parses a user-typed string in the given unit into a kilogram value.
     /// Returns `nil` if the input cannot be interpreted under the active locale,
     /// or if the parsed value converts to a negative kilogram amount.
