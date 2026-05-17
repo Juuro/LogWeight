@@ -29,6 +29,7 @@ struct ComplicationWeightDisplay: Sendable {
     let unitText: String
     let fullText: String
     let hasData: Bool
+    let trend: WeightTrendDirection
 
     /// Compact label for corner complications (value + unit, no extra spacing).
     var cornerLabel: String {
@@ -40,7 +41,8 @@ struct ComplicationWeightDisplay: Sendable {
         valueText: "—",
         unitText: "",
         fullText: "No weight",
-        hasData: false
+        hasData: false,
+        trend: .unknown
     )
 }
 
@@ -69,9 +71,12 @@ struct BodyMassTimelineProvider: TimelineProvider {
     private static func previewDisplay() -> ComplicationWeightDisplay {
         let unit: WeightUnit = Locale.current.measurementSystem == .metric ? .kilograms : .pounds
         let sample = unit == .kilograms ? 75.0 : 165.0
-        return makeDisplay(kilograms: unit == .kilograms ? sample : sample / 2.20462,
-                           unit: unit,
-                           locale: .current)
+        return makeDisplay(
+            kilograms: unit == .kilograms ? sample : sample / 2.20462,
+            unit: unit,
+            locale: .current,
+            trend: .flat
+        )
     }
 
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<BodyMassEntry>) -> Void) {
@@ -88,11 +93,23 @@ struct BodyMassTimelineProvider: TimelineProvider {
         guard HKHealthStore.isHealthDataAvailable() else {
             return BodyMassEntry(date: Date(), display: .empty)
         }
-        guard let weights = try? await store.recentWeights(limit: 1), let w = weights.first else {
+        guard let weights = try? await store.recentWeights(limit: 40), let w = weights.first else {
             return BodyMassEntry(date: Date(), display: .empty)
         }
         let unit = Self.preferredUnit()
-        let display = Self.makeDisplay(kilograms: w.valueInKilograms, unit: unit, locale: .current)
+        let now = Date()
+        let windowStart = Calendar.current.date(byAdding: .day, value: -28, to: now)
+        let trend = WeightTrendEvaluator.direction(
+            weights: weights,
+            windowStart: windowStart,
+            referenceDate: now
+        )
+        let display = Self.makeDisplay(
+            kilograms: w.valueInKilograms,
+            unit: unit,
+            locale: .current,
+            trend: trend
+        )
         return BodyMassEntry(date: w.recordedAt, display: display)
     }
 
@@ -103,7 +120,8 @@ struct BodyMassTimelineProvider: TimelineProvider {
     fileprivate static func makeDisplay(
         kilograms: Double,
         unit: WeightUnit,
-        locale: Locale
+        locale: Locale,
+        trend: WeightTrendDirection
     ) -> ComplicationWeightDisplay {
         let measurement = Measurement(value: kilograms, unit: UnitMass.kilograms)
             .converted(to: unit.unitMass)
@@ -122,7 +140,8 @@ struct BodyMassTimelineProvider: TimelineProvider {
             valueText: valueText,
             unitText: unit.shortDisplayName,
             fullText: fullText,
-            hasData: true
+            hasData: true,
+            trend: trend
         )
     }
 }
@@ -157,10 +176,16 @@ struct BodyMassComplicationView: View {
                         .minimumScaleFactor(0.75)
                         .lineLimit(1)
                         .widgetAccentable(false)
-                    Text(entry.display.unitText)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .widgetAccentable(false)
+                    HStack(spacing: 2) {
+                        Text(entry.display.unitText)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .widgetAccentable(false)
+                        WeightTrendArrow(
+                            direction: entry.display.trend,
+                            font: .system(size: 8, weight: .bold)
+                        )
+                    }
                 }
                 .privacySensitive()
             } else {
@@ -223,6 +248,8 @@ struct BodyMassComplicationView: View {
                     .layoutPriority(1)
                     .widgetAccentable(false)
                     .privacySensitive()
+
+                WeightTrendArrow(direction: entry.display.trend, font: .caption.weight(.semibold))
             } else {
                 Text("No weight yet")
                     .font(.headline)
@@ -252,7 +279,8 @@ struct BodyMassComplicationView: View {
             valueText: "71,5",
             unitText: "kg",
             fullText: "71,5 kg",
-            hasData: true
+            hasData: true,
+            trend: .down
         )
     )
 }
@@ -272,7 +300,8 @@ struct BodyMassComplicationView: View {
             valueText: "75,0",
             unitText: "kg",
             fullText: "75,0 kg",
-            hasData: true
+            hasData: true,
+            trend: .up
         )
     )
 }
@@ -286,7 +315,8 @@ struct BodyMassComplicationView: View {
             valueText: "75,0",
             unitText: "kg",
             fullText: "75,0 kg",
-            hasData: true
+            hasData: true,
+            trend: .flat
         )
     )
 }

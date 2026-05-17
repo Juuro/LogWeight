@@ -1,13 +1,28 @@
 import SwiftUI
 import LogWeightCore
+#if os(iOS)
+import UIKit
+#endif
 
 struct SettingsView: View {
 
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @AppStorage(SettingsKey.defaultEntryMode) private var defaultEntryModeRaw: String = DefaultEntryMode.lastSaved.rawValue
     @AppStorage(SettingsKey.hapticsEnabled) private var hapticsEnabled: Bool = true
+    @AppStorage(SettingsKey.trendArrowEnabled) private var trendArrowEnabled: Bool = true
+    @AppStorage(SettingsKey.reminderEnabled) private var reminderEnabled: Bool = false
+    @AppStorage(SettingsKey.reminderHour) private var reminderHour: Int = DailyReminderSettings.defaultHour
+    @AppStorage(SettingsKey.reminderMinute) private var reminderMinute: Int = DailyReminderSettings.defaultMinute
+
+    @State private var reminderAuthStatus: ReminderAuthorizationStatus = .notDetermined
+    @State private var isUpdatingReminder = false
 
     @Environment(\.dismiss) private var dismiss
+
+#if os(iOS)
+    private let reminderCoordinator = ReminderCoordinator()
+    private let reminderScheduler: any ReminderScheduling = UserNotificationsReminderScheduler()
+#endif
 
     var body: some View {
         NavigationStack {
@@ -31,6 +46,38 @@ struct SettingsView: View {
                     Toggle("Haptic feedback on save", isOn: $hapticsEnabled)
                         .accessibilityIdentifier("settings.haptics")
                 }
+
+                Section("Display") {
+                    Toggle("Show trend arrow", isOn: $trendArrowEnabled)
+                        .accessibilityIdentifier("settings.trendArrow")
+                }
+
+#if os(iOS)
+                Section("Reminders") {
+                    Toggle("Daily reminder", isOn: reminderEnabledBinding)
+                        .accessibilityIdentifier("settings.reminder.toggle")
+                        .disabled(isUpdatingReminder)
+
+                    if reminderEnabled {
+                        DatePicker(
+                            "Reminder time",
+                            selection: reminderTimeBinding,
+                            displayedComponents: .hourAndMinute
+                        )
+                        .accessibilityIdentifier("settings.reminder.time")
+                        .disabled(isUpdatingReminder)
+                    }
+
+                    if reminderAuthStatus == .denied {
+                        Text("Notifications are turned off. Enable them in Settings to get daily reminders.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                            Link("Open Settings", destination: settingsURL)
+                        }
+                    }
+                }
+#endif
 
                 Section("Apple Health") {
                     Link(destination: URL(string: "x-apple-health://")!) {
@@ -66,8 +113,89 @@ struct SettingsView: View {
                 WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup()
                 WidgetTimelineRefresh.reloadEntryAndChartWidgets()
             }
+            .onChange(of: trendArrowEnabled) { _, _ in
+                TrendArrowPreferences.mirrorToAppGroup()
+                WidgetTimelineRefresh.reloadEntryAndChartWidgets()
+            }
+#if os(iOS)
+            .task {
+                reminderAuthStatus = await reminderScheduler.authorizationStatus()
+            }
+            .onChange(of: reminderHour) { _, _ in
+                guard reminderEnabled, !isUpdatingReminder else { return }
+                Task { await rescheduleReminderTime() }
+            }
+            .onChange(of: reminderMinute) { _, _ in
+                guard reminderEnabled, !isUpdatingReminder else { return }
+                Task { await rescheduleReminderTime() }
+            }
+#endif
         }
     }
+
+#if os(iOS)
+    private var reminderEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { reminderEnabled },
+            set: { newValue in
+                reminderEnabled = newValue
+                Task { await setReminderEnabled(newValue) }
+            }
+        )
+    }
+
+    private var reminderTimeBinding: Binding<Date> {
+        Binding(
+            get: {
+                var components = DateComponents()
+                components.hour = reminderHour
+                components.minute = reminderMinute
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { newDate in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                reminderHour = components.hour ?? DailyReminderSettings.defaultHour
+                reminderMinute = components.minute ?? DailyReminderSettings.defaultMinute
+            }
+        )
+    }
+
+    @MainActor
+    private func setReminderEnabled(_ enabled: Bool) async {
+        guard !isUpdatingReminder else { return }
+        isUpdatingReminder = true
+        defer { isUpdatingReminder = false }
+
+        if enabled {
+            let status = await reminderCoordinator.enableReminder(
+                hour: reminderHour,
+                minute: reminderMinute,
+                scheduler: reminderScheduler
+            )
+            reminderAuthStatus = status
+            if status != .authorized {
+                reminderEnabled = false
+            }
+        } else {
+            await reminderCoordinator.disableReminder(scheduler: reminderScheduler)
+            reminderEnabled = false
+            reminderAuthStatus = await reminderScheduler.authorizationStatus()
+        }
+    }
+
+    @MainActor
+    private func rescheduleReminderTime() async {
+        guard !isUpdatingReminder else { return }
+        isUpdatingReminder = true
+        defer { isUpdatingReminder = false }
+        await reminderCoordinator.updateReminderTime(
+            hour: reminderHour,
+            minute: reminderMinute,
+            scheduler: reminderScheduler
+        )
+        reminderAuthStatus = await reminderScheduler.authorizationStatus()
+    }
+#endif
 }
 
 #if DEBUG

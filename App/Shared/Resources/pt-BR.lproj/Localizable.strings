@@ -57,3 +57,10 @@
 "Edit entry" = "Editar registro";
 "Saving…" = "Salvando…";
 "Weight" = "Peso";
+"Reminders" = "Lembretes";
+"Daily reminder" = "Lembrete diário";
+"Reminder time" = "Horário do lembrete";
+"Notifications are turned off. Enable them in Settings to get daily reminders." = "As notificações estão desativadas. Ative-as em Ajustes para receber lembretes diários.";
+"Open Settings" = "Abrir Ajustes";
+"Log your weight" = "Registre seu peso";
+"Open LogWeight to record today's weight." = "Abra o LogWeight para registrar o peso de hoje.";

@@ -57,3 +57,10 @@
 "Edit entry" = "기록 편집";
 "Saving…" = "저장 중…";
 "Weight" = "체중";
+"Reminders" = "알림";
+"Daily reminder" = "매일 알림";
+"Reminder time" = "알림 시간";
+"Notifications are turned off. Enable them in Settings to get daily reminders." = "알림이 꺼져 있습니다. 설정에서 켜면 매일 알림을 받을 수 있습니다.";
+"Open Settings" = "설정 열기";
+"Log your weight" = "체중을 기록하세요";
+"Open LogWeight to record today's weight." = "LogWeight를 열어 오늘의 체중을 기록하세요.";
