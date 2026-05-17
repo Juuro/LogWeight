@@ -51,7 +51,7 @@ struct WatchEntryView: View {
                         from: 20,
                         through: 300,
                         by: 0.1,
-                        sensitivity: .medium,
+                        sensitivity: .low,
                         isContinuous: false,
                         isHapticFeedbackEnabled: true
                     )
