@@ -9,11 +9,15 @@ public enum SettingsMigrator {
 
     public static func migrateIfNeeded(defaults: UserDefaults = .standard) {
         let stored = defaults.object(forKey: SettingsKey.schemaVersion) as? Int ?? 0
-        guard stored < CURRENT_SETTINGS_SCHEMA_VERSION else { return }
+        guard stored < CURRENT_SETTINGS_SCHEMA_VERSION else {
+            WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup(standardDefaults: defaults)
+            return
+        }
 
         // Future migrators chain here, e.g.:
         // if stored < 2 { migrateToV2(defaults) }
 
         defaults.set(CURRENT_SETTINGS_SCHEMA_VERSION, forKey: SettingsKey.schemaVersion)
+        WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup(standardDefaults: defaults)
     }
 }

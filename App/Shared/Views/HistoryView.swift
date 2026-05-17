@@ -30,7 +30,7 @@ struct HistoryView: View {
     @State private var isSavingEdit = false
     @State private var showCannotDeleteAlert = false
 #if !os(watchOS)
-    @State private var selectedRange: ChartRange = .oneMonth
+    @State private var selectedRange: ChartTimeRange = .oneMonth
     @State private var hoveredXDate: Date?
     @State private var hoveredWeight: Weight?
     /// Per-row frame in the global coordinate space, refreshed by `HistoryRowFramesKey`.
@@ -95,6 +95,11 @@ struct HistoryView: View {
                 }
                 .task {
                     await load()
+                    for await _ in store.observeChanges() {
+                        guard !Task.isCancelled else { return }
+                        await load()
+                        await refreshWidgetsAfterHealthKitChange()
+                    }
                 }
                 .alert("Cannot Delete Entry", isPresented: $showCannotDeleteAlert) {
 #if !os(watchOS)
@@ -290,49 +295,8 @@ struct HistoryView: View {
 #endif
 
 #if !os(watchOS)
-    private enum ChartRange: String, CaseIterable {
-        case oneWeek
-        case oneMonth
-        case threeMonths
-        case sixMonths
-        case oneYear
-        case all
-
-        var label: String {
-            switch self {
-            case .oneWeek: "1W"
-            case .oneMonth: "1M"
-            case .threeMonths: "3M"
-            case .sixMonths: "6M"
-            case .oneYear: "1Y"
-            case .all: "All"
-            }
-        }
-
-        func cutoffDate(referenceDate: Date, calendar: Calendar = .current) -> Date? {
-            switch self {
-            case .oneWeek:
-                calendar.date(byAdding: .day, value: -7, to: referenceDate)
-            case .oneMonth:
-                calendar.date(byAdding: .month, value: -1, to: referenceDate)
-            case .threeMonths:
-                calendar.date(byAdding: .month, value: -3, to: referenceDate)
-            case .sixMonths:
-                calendar.date(byAdding: .month, value: -6, to: referenceDate)
-            case .oneYear:
-                calendar.date(byAdding: .year, value: -1, to: referenceDate)
-            case .all:
-                nil
-            }
-        }
-    }
-
     private var filteredChartWeights: [Weight] {
-        let sorted = weights.sorted(by: { $0.recordedAt < $1.recordedAt })
-        guard let cutoff = selectedRange.cutoffDate(referenceDate: Date()) else {
-            return sorted
-        }
-        return sorted.filter { $0.recordedAt >= cutoff }
+        selectedRange.filterWeights(weights)
     }
 
     /// Line series including off-window anchors; points and hover use `filteredChartWeights` only.
@@ -347,15 +311,7 @@ struct HistoryView: View {
     }
 
     private var chartXDomain: ClosedRange<Date> {
-        let end = Date()
-        if let start = selectedRange.cutoffDate(referenceDate: end) {
-            return start...end
-        }
-        let sorted = filteredChartWeights
-        guard let first = sorted.first else {
-            return end.addingTimeInterval(-86_400)...end
-        }
-        return first.recordedAt...end
+        selectedRange.xDomain(weights: weights)
     }
 
     /// Newest weight whose row is fully inside the visible list area.
@@ -399,7 +355,7 @@ struct HistoryView: View {
             Text("Trend")
                 .font(.headline)
             Picker("Range", selection: $selectedRange) {
-                ForEach(ChartRange.allCases, id: \.self) { range in
+                ForEach(ChartTimeRange.allCases, id: \.self) { range in
                     Text(range.label).tag(range)
                 }
             }
@@ -510,26 +466,15 @@ struct HistoryView: View {
             .value
     }
 
-    /// Dynamic chart domain anchored around the user's current weight range.
-    /// Keeps all points visible while avoiding a zero-based axis that flattens trends.
     private var chartYDomain: ClosedRange<Double> {
-        let values = chartLineWeights.map(displayValue(for:))
-        guard let minimum = values.min(), let maximum = values.max() else {
-            return 0.0...1.0
-        }
-
-        let span = maximum - minimum
-        let minimumVisibleSpan = 1.0
-        let padding = max(span * 0.25, 0.4)
-
-        let lowerBound = min(minimum, minimum - padding)
-        let adjustedUpper = maximum + padding
-        let upperBound = max(adjustedUpper, lowerBound + minimumVisibleSpan)
-
-        return lowerBound...upperBound
+        WeightChartYDomain.domain(
+            for: chartLineWeights,
+            displayUnit: displayUnit
+        )
     }
 #endif
 
+    @MainActor
     private func load() async {
         do {
             let result = try await store.recentWeights(limit: 5_000)
@@ -557,6 +502,7 @@ struct HistoryView: View {
                 try await store.delete(weight)
             }
             await load()
+            await refreshWidgetsAfterHealthKitChange()
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
@@ -576,6 +522,7 @@ struct HistoryView: View {
         do {
             try await store.delete(weight)
             await load()
+            await refreshWidgetsAfterHealthKitChange()
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
@@ -585,6 +532,12 @@ struct HistoryView: View {
         }
     }
 #endif
+
+    private func refreshWidgetsAfterHealthKitChange() async {
+#if os(iOS)
+        await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
+#endif
+    }
 }
 
 /// Form to edit weight and date/time for a single history row.

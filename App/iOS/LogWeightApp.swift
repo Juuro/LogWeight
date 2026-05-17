@@ -11,6 +11,7 @@ struct LogWeightApp: App {
     @State private var minimumSplashTimeElapsed = false
     @State private var skipRequested = false
     @State private var showPreparing = false
+    @Environment(\.scenePhase) private var scenePhase
     private let holdSplashForUITest: Bool
     private let skipSplashForUITest: Bool
     private let healthKitStore: HealthKitStore
@@ -36,6 +37,18 @@ struct LogWeightApp: App {
             ZStack {
                 MainTabView(entryState: entryState, store: healthKitStore)
                     .modifier(PrivacyRedactionModifier())
+                    .onReceive(NotificationCenter.default.publisher(for: .logWeightWidgetDidSave)) { _ in
+                        Task { @MainActor in
+                            await entryState.loadLastWeight(from: healthKitStore)
+                            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
+                        }
+                    }
+                    .onChange(of: scenePhase) { _, newPhase in
+                        guard newPhase == .active else { return }
+                        Task { @MainActor in
+                            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
+                        }
+                    }
 
                 if showSplash {
                     SplashOverlayView(showPreparing: showPreparing) {
@@ -104,6 +117,7 @@ struct LogWeightApp: App {
         // does not grant LogWeight read/write — this call is required.
         try? await healthKitStore.requestAuthorization()
         await entryState.loadLastWeight(from: healthKitStore)
+        await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
 
         startupReady = true
         preparingTimer.cancel()

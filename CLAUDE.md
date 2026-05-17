@@ -18,6 +18,10 @@ focused on non-obvious conventions.
   Never log health values (weights, dates, free-form payloads).
 - Keep watchOS compatibility in mind.
   `App/Shared` is reused across platforms; avoid UI APIs unsupported on watchOS.
+- Watch/iOS WidgetKit extensions must apply `.containerBackground(..., for: .widget)`
+  on every widget configuration. Without it, physical devices show a system placeholder
+  (“Please adopt containerBackground API”) instead of your UI; the simulator may still
+  look fine. Do not remove it to tweak accent colors—adjust `widgetAccentable` instead.
 
 ## Architectural Conventions
 
