@@ -76,7 +76,7 @@ Tools/CaptureScene.sh --all
 ```
 
 - Screenshot runner target: `App/iOSScreenshots`.
-- Scene docs: `Docs/AIScreenshotWorkflow.md`.
+- Scene docs: `docs/AIScreenshotWorkflow.md`.
 
 ## Localization
 
@@ -101,7 +101,7 @@ and by the Claude Code Bash hook in `.claude/settings.json`:
 
 ## High-Value References
 
-- `Docs/Architecture.md` (ADR rationale)
-- `Docs/Privacy.md` (GDPR/health-data constraints)
-- `Docs/HealthKitAvailability.md` (platform capabilities)
-- `Docs/AIScreenshotWorkflow.md` (scene catalog and usage)
+- `docs/Architecture.md` (ADR rationale)
+- `docs/Privacy.md` (GDPR/health-data constraints)
+- `docs/HealthKitAvailability.md` (platform capabilities)
+- `docs/AIScreenshotWorkflow.md` (scene catalog and usage)
