@@ -12,6 +12,7 @@ public struct WeightEntry: Codable, Equatable, Sendable {
 
 public enum LogWeightWidgetConstants {
     public static let kind = "LogWeightInteractiveWidget"
+    public static let chartKind = "LogWeightChartWidget"
 }
 
 public enum SharedWeightEntryStore {

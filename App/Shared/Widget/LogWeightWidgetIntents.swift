@@ -56,14 +56,10 @@ struct SaveWeightIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         let store = HKHealthStoreAdapter()
         try await WidgetWeightSave.commit(to: store)
-        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+        WidgetCenter.shared.reloadAllTimelines()
         await MainActor.run {
             NotificationCenter.default.post(name: .logWeightWidgetDidSave, object: nil)
         }
         return .result()
     }
-}
-
-extension Notification.Name {
-    static let logWeightWidgetDidSave = Notification.Name("logWeightWidgetDidSave")
 }

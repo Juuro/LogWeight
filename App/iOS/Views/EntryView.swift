@@ -245,7 +245,7 @@ struct EntryView: View {
         SharedWeightEntryStore.save(
             WeightEntry(value: state.displayValueInKilograms, date: savedAt)
         )
-        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

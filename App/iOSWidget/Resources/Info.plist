@@ -25,5 +25,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>LogWeight reads your weight history from Apple Health to show your trend on the Home Screen. Nothing leaves your device.</string>
 </dict>
 </plist>

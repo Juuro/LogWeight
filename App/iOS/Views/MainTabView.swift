@@ -29,6 +29,10 @@ struct MainTabView: View {
                 .tag(Tab.history)
         }
         .modifier(TabBarOnlyOnSupportedPlatforms())
+        .onOpenURL { url in
+            guard url.scheme == "logweight", url.host == "history" else { return }
+            selectedTab = .history
+        }
     }
 }
 

@@ -97,6 +97,7 @@ struct LogWeightWidgetView: View {
 struct LogWeightWidgetBundle: WidgetBundle {
     var body: some Widget {
         LogWeightWidgetConfig()
+        LogWeightChartWidgetConfig()
     }
 }
 

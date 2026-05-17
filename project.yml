@@ -43,6 +43,7 @@ targets:
         CFBundleDisplayName: LogWeight
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your trend on the Home Screen. Nothing leaves your device.
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
@@ -154,6 +155,10 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleURLName: de.juuronina.logweight
+            CFBundleURLSchemes:
+              - logweight
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight
