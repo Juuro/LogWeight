@@ -7,8 +7,8 @@ final class WeightChartLineSeriesTests: XCTestCase {
 
     func testLeadingPrependsSampleBeforeRangeStart() {
         let leading = Weight(valueInKilograms: 70.0, recordedAt: base.addingTimeInterval(-3_600))
-        let firstVisible = Weight(valueInKilograms: 71.0, recordedAt: base)
-        let lastVisible = Weight(valueInKilograms: 72.0, recordedAt: base.addingTimeInterval(3_600))
+        let firstVisible = Weight(valueInKilograms: 71.0, recordedAt: base.addingTimeInterval(3_600))
+        let lastVisible = Weight(valueInKilograms: 72.0, recordedAt: base.addingTimeInterval(7_200))
         let all = [leading, firstVisible, lastVisible]
 
         let line = WeightChartLineSeries.lineWeights(
@@ -18,9 +18,52 @@ final class WeightChartLineSeriesTests: XCTestCase {
         )
 
         XCTAssertEqual(line.count, 3)
-        XCTAssertEqual(line[0], leading)
+        XCTAssertEqual(line[0].recordedAt, rangeStart)
+        XCTAssertEqual(line[0].valueInKilograms, 70.5, accuracy: 0.001)
         XCTAssertEqual(line[1], firstVisible)
         XCTAssertEqual(line[2], lastVisible)
+    }
+
+    func testLeadingBoundaryInterpolatesValueAtRangeStart() {
+        let leading = Weight(valueInKilograms: 70.0, recordedAt: base.addingTimeInterval(-3_600))
+        let firstVisible = Weight(valueInKilograms: 72.0, recordedAt: base.addingTimeInterval(3_600))
+
+        let line = WeightChartLineSeries.lineWeights(
+            visible: [firstVisible],
+            allWeights: [leading, firstVisible],
+            rangeStart: rangeStart
+        )
+
+        XCTAssertEqual(line.count, 2)
+        XCTAssertEqual(line[0].recordedAt, rangeStart)
+        XCTAssertEqual(line[0].valueInKilograms, 71.0, accuracy: 0.001)
+    }
+
+    func testLeadingBoundaryUsesRangeStartAsRecordedAt() {
+        let leading = Weight(valueInKilograms: 70.0, recordedAt: base.addingTimeInterval(-3_600))
+        let firstVisible = Weight(valueInKilograms: 71.0, recordedAt: base.addingTimeInterval(3_600))
+
+        let line = WeightChartLineSeries.lineWeights(
+            visible: [firstVisible],
+            allWeights: [leading, firstVisible],
+            rangeStart: rangeStart
+        )
+
+        XCTAssertEqual(line[0].recordedAt, rangeStart)
+    }
+
+    func testNoLeadingBoundaryWhenFirstVisibleAtRangeStart() {
+        let leading = Weight(valueInKilograms: 70.0, recordedAt: base.addingTimeInterval(-3_600))
+        let firstVisible = Weight(valueInKilograms: 71.0, recordedAt: base)
+        let lastVisible = Weight(valueInKilograms: 72.0, recordedAt: base.addingTimeInterval(3_600))
+
+        let line = WeightChartLineSeries.lineWeights(
+            visible: [firstVisible, lastVisible],
+            allWeights: [leading, firstVisible, lastVisible],
+            rangeStart: rangeStart
+        )
+
+        XCTAssertEqual(line, [firstVisible, lastVisible])
     }
 
     func testNoLeadingWhenAllRange() {

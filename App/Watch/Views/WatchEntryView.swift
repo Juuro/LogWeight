@@ -51,7 +51,7 @@ struct WatchEntryView: View {
                         from: 20,
                         through: 300,
                         by: 0.1,
-                        sensitivity: .medium,
+                        sensitivity: .low,
                         isContinuous: false,
                         isHapticFeedbackEnabled: true
                     )
@@ -118,7 +118,7 @@ struct WatchEntryView: View {
             .onChange(of: state.saveStatus) { _, new in
                 if hapticsEnabled, case .savedAt = new {
                     WKInterfaceDevice.current().play(.success)
-                    WidgetCenter.shared.reloadAllTimelines()
+                    WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.watchKind)
                 }
                 if case .savedAt = new {
                     clearSavedStatusTask?.cancel()

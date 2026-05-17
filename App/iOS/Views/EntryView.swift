@@ -178,6 +178,9 @@ struct EntryView: View {
         Button {
             Task { @MainActor in
                 await state.commit(store: store)
+                if case .savedAt = state.saveStatus {
+                    syncWidgetAfterSuccessfulSave()
+                }
             }
         } label: {
             Text("Save")
@@ -237,6 +240,12 @@ struct EntryView: View {
         }
         pendingOpenEditorWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.singleTapEditDelaySeconds, execute: work)
+    }
+
+    private func syncWidgetAfterSuccessfulSave() {
+        Task {
+            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
+        }
     }
 }
 
