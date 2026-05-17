@@ -62,6 +62,10 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .onChange(of: unitPreferenceRaw) { _, _ in
+                WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup()
+                WidgetTimelineRefresh.reloadEntryAndChartWidgets()
+            }
         }
     }
 }
