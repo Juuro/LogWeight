@@ -57,3 +57,10 @@
 "Edit entry" = "記録を編集";
 "Saving…" = "保存中…";
 "Weight" = "体重";
+"Reminders" = "リマインダー";
+"Daily reminder" = "毎日のリマインダー";
+"Reminder time" = "リマインダーの時刻";
+"Notifications are turned off. Enable them in Settings to get daily reminders." = "通知がオフになっています。設定で有効にすると、毎日のリマインダーを受け取れます。";
+"Open Settings" = "設定を開く";
+"Log your weight" = "体重を記録しましょう";
+"Open LogWeight to record today's weight." = "LogWeightを開いて、今日の体重を記録してください。";

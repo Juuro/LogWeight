@@ -57,3 +57,10 @@
 "Edit entry" = "编辑记录";
 "Saving…" = "保存中…";
 "Weight" = "体重";
+"Reminders" = "提醒";
+"Daily reminder" = "每日提醒";
+"Reminder time" = "提醒时间";
+"Notifications are turned off. Enable them in Settings to get daily reminders." = "通知已关闭。请在“设置”中开启以接收每日提醒。";
+"Open Settings" = "打开设置";
+"Log your weight" = "记录体重";
+"Open LogWeight to record today's weight." = "打开 LogWeight 记录今日体重。";

@@ -5,27 +5,35 @@ import LogWeightCore
 struct LogWeightWidgetEntry: TimelineEntry {
     let date: Date
     let currentWeightInKilograms: Double
+    let trend: WeightTrendDirection
 }
 
 struct LogWeightWidgetProvider: TimelineProvider {
     func placeholder(in context: Context) -> LogWeightWidgetEntry {
-        LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 75.0)
+        LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 75.0, trend: .flat)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (LogWeightWidgetEntry) -> Void) {
-        completion(makeEntry())
+        Task {
+            completion(await makeEntry())
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<LogWeightWidgetEntry>) -> Void) {
-        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: .now) ?? .now.addingTimeInterval(1800)
-        completion(Timeline(entries: [makeEntry()], policy: .after(nextRefresh)))
+        Task {
+            let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: .now)
+                ?? .now.addingTimeInterval(1800)
+            let entry = await makeEntry()
+            completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
+        }
     }
 
-    private func makeEntry() -> LogWeightWidgetEntry {
+    private func makeEntry() async -> LogWeightWidgetEntry {
         SharedWeightEntryStore.expireStaleDraftIfNeeded()
         return LogWeightWidgetEntry(
             date: .now,
-            currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue()
+            currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue(),
+            trend: WeightTrendCache.load()
         )
     }
 }
@@ -74,7 +82,8 @@ struct LogWeightWidgetView: View {
             weightHeader(
                 iconFont: .system(size: 26, weight: .semibold),
                 valueFont: .system(size: 36, weight: .semibold, design: .rounded),
-                minimumScaleFactor: 0.7
+                minimumScaleFactor: 0.7,
+                showTrend: true
             )
 
             Spacer(minLength: 0)
@@ -95,7 +104,8 @@ struct LogWeightWidgetView: View {
             weightHeader(
                 iconFont: .system(size: 18, weight: .semibold),
                 valueFont: .system(size: 22, weight: .semibold, design: .rounded),
-                minimumScaleFactor: 0.65
+                minimumScaleFactor: 0.65,
+                showTrend: false
             )
 
             stepperButtons(buttonSize: 32, expandSteppers: true)
@@ -108,7 +118,8 @@ struct LogWeightWidgetView: View {
     private func weightHeader(
         iconFont: Font,
         valueFont: Font,
-        minimumScaleFactor: CGFloat
+        minimumScaleFactor: CGFloat,
+        showTrend: Bool
     ) -> some View {
         HStack(alignment: .center, spacing: 6) {
             Image(systemName: "scalemass")
@@ -119,6 +130,10 @@ struct LogWeightWidgetView: View {
                 .font(valueFont)
                 .lineLimit(1)
                 .minimumScaleFactor(minimumScaleFactor)
+
+            if showTrend {
+                WeightTrendArrow.widget(direction: entry.trend)
+            }
         }
         .privacySensitive()
         .accessibilityElement(children: .combine)
@@ -168,12 +183,12 @@ struct LogWeightWidgetBundle: WidgetBundle {
 #Preview(as: .systemSmall) {
     LogWeightWidgetConfig()
 } timeline: {
-    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3)
+    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3, trend: .down)
 }
 
 #Preview(as: .systemMedium) {
     LogWeightWidgetConfig()
 } timeline: {
-    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3)
+    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3, trend: .down)
 }
 #endif

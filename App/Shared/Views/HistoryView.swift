@@ -310,6 +310,16 @@ struct HistoryView: View {
         )
     }
 
+    private var chartTrend: WeightTrendDirection {
+        let now = Date()
+        return WeightTrendEvaluator.direction(
+            weights: filteredChartWeights,
+            windowStart: selectedRange.cutoffDate(referenceDate: now),
+            referenceDate: now,
+            configuration: .forChartRange(selectedRange)
+        )
+    }
+
     private var chartXDomain: ClosedRange<Date> {
         selectedRange.xDomain(weights: weights)
     }
@@ -352,8 +362,11 @@ struct HistoryView: View {
 
     private var chartSection: some View {
         return VStack(alignment: .leading, spacing: 8) {
-            Text("Trend")
-                .font(.headline)
+            HStack(spacing: 6) {
+                Text("Trend")
+                    .font(.headline)
+                WeightTrendArrow(direction: chartTrend, font: .subheadline.weight(.semibold))
+            }
             Picker("Range", selection: $selectedRange) {
                 ForEach(ChartTimeRange.allCases, id: \.self) { range in
                     Text(range.label).tag(range)
