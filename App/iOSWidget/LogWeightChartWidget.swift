@@ -163,6 +163,7 @@ struct LogWeightChartWidgetView: View {
                 chartContent
             }
         }
+        .privacySensitive(!entry.loadFailed && entry.hasChartData)
         .widgetURL(URL(string: "logweight://history"))
     }
 
