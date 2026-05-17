@@ -20,7 +20,7 @@ struct IncrementWeightIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         _ = SharedWeightEntryStore.increment(stepInKilograms: stepInKilograms)
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetTimelineRefresh.reloadEntryWidget()
         return .result()
     }
 }
@@ -42,7 +42,7 @@ struct DecrementWeightIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         _ = SharedWeightEntryStore.decrement(stepInKilograms: stepInKilograms)
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetTimelineRefresh.reloadEntryWidget()
         return .result()
     }
 }
@@ -56,7 +56,7 @@ struct SaveWeightIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         let store = HKHealthStoreAdapter()
         try await WidgetWeightSave.commit(to: store)
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetTimelineRefresh.reloadEntryAndChartWidgets()
         await MainActor.run {
             NotificationCenter.default.post(name: .logWeightWidgetDidSave, object: nil)
         }

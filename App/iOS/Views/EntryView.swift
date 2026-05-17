@@ -241,7 +241,7 @@ struct EntryView: View {
 
     private func syncWidgetAfterSuccessfulSave() {
         Task {
-            await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: store)
+            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
         }
     }
 }

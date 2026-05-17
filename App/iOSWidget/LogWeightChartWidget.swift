@@ -79,7 +79,7 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
 
     private static func loadEntry(range: ChartTimeRange) async -> LogWeightChartEntry {
         let now = Date()
-        let displayUnit: WeightUnit = Locale.current.measurementSystem == .metric ? .kilograms : .pounds
+        let displayUnit = WeightDisplayPreferences.preferredUnit()
         let store = HKHealthStoreAdapter()
 
         guard HKHealthStore.isHealthDataAvailable() else {

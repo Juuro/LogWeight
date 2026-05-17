@@ -535,7 +535,7 @@ struct HistoryView: View {
 
     private func refreshWidgetsAfterHealthKitChange() async {
 #if os(iOS)
-        await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: store)
+        await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
 #endif
     }
 }

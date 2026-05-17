@@ -5,7 +5,7 @@ import LogWeightCore
 
 /// Lock Screen / Smart Stack complication: latest body mass from Apple Health (read-only).
 struct BodyMassComplication: Widget {
-    let kind: String = "LogWeightBodyMass"
+    let kind: String = LogWeightWidgetConstants.watchKind
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: BodyMassTimelineProvider()) { entry in
@@ -77,7 +77,7 @@ struct BodyMassTimelineProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<BodyMassEntry>) -> Void) {
         Task {
             let entry = await Self.loadEntry()
-            // Refresh periodically; saves also call `WidgetCenter.reloadAllTimelines()` from the watch app.
+            // Refresh periodically; saves reload `LogWeightWidgetConstants.watchKind` from the watch app.
             let next = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date().addingTimeInterval(1800)
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
@@ -97,11 +97,7 @@ struct BodyMassTimelineProvider: TimelineProvider {
     }
 
     fileprivate static func preferredUnit() -> WeightUnit {
-        if let raw = UserDefaults.standard.string(forKey: SettingsKey.unitPreference),
-           let unit = WeightUnit(rawValue: raw) {
-            return unit
-        }
-        return Locale.current.measurementSystem == .metric ? .kilograms : .pounds
+        WeightDisplayPreferences.preferredUnit()
     }
 
     fileprivate static func makeDisplay(

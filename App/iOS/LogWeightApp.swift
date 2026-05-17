@@ -40,13 +40,13 @@ struct LogWeightApp: App {
                     .onReceive(NotificationCenter.default.publisher(for: .logWeightWidgetDidSave)) { _ in
                         Task { @MainActor in
                             await entryState.loadLastWeight(from: healthKitStore)
-                            await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: healthKitStore)
+                            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
                         }
                     }
                     .onChange(of: scenePhase) { _, newPhase in
                         guard newPhase == .active else { return }
                         Task { @MainActor in
-                            await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: healthKitStore)
+                            await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
                         }
                     }
 
@@ -117,7 +117,7 @@ struct LogWeightApp: App {
         // does not grant LogWeight read/write — this call is required.
         try? await healthKitStore.requestAuthorization()
         await entryState.loadLastWeight(from: healthKitStore)
-        await WidgetTimelineRefresh.syncEntryStoreAndReloadAll(store: healthKitStore)
+        await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
 
         startupReady = true
         preparingTimer.cancel()

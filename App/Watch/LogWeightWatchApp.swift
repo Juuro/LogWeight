@@ -15,7 +15,7 @@ struct LogWeightWatchApp: App {
                     SettingsMigrator.migrateIfNeeded()
                     try? await healthKitStore.requestAuthorization()
                     await entryState.loadLastWeight(from: healthKitStore)
-                    WidgetCenter.shared.reloadAllTimelines()
+                    WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.watchKind)
                 }
         }
     }

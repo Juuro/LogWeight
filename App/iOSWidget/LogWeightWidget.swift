@@ -52,8 +52,12 @@ struct LogWeightWidgetView: View {
         WeightFormatter(locale: .current, fractionDigits: 1)
     }
 
+    private var displayUnit: WeightUnit {
+        WeightDisplayPreferences.preferredUnit()
+    }
+
     private var formattedWeight: String {
-        formatter.format(kilograms: entry.currentWeightInKilograms, in: .kilograms)
+        formatter.format(kilograms: entry.currentWeightInKilograms, in: displayUnit)
     }
 
     var body: some View {

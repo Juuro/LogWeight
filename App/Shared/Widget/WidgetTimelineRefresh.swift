@@ -1,16 +1,33 @@
 import Foundation
 import LogWeightCore
-#if os(iOS)
+#if canImport(WidgetKit)
 import WidgetKit
 #endif
 
-/// Keeps Home Screen widgets aligned with HealthKit after app-side mutations.
+/// Keeps widgets aligned with HealthKit and in-app mutations.
 enum WidgetTimelineRefresh {
-    static func syncEntryStoreAndReloadAll(store: HealthKitStore) async {
+#if canImport(WidgetKit)
+    static func reloadEntryWidget() {
+        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.kind)
+    }
+
+#if os(iOS)
+    static func reloadChartWidget() {
+        WidgetCenter.shared.reloadTimelines(ofKind: LogWeightWidgetConstants.chartKind)
+    }
+
+    static func reloadEntryAndChartWidgets() {
+        reloadEntryWidget()
+        reloadChartWidget()
+    }
+#endif
+
+    static func syncEntryStoreAndReloadWidgets(store: HealthKitStore) async {
 #if os(iOS)
         let latest = try? await store.recentWeights(limit: 1).first
         SharedWeightEntryStore.syncFromLatestWeight(latest)
-        WidgetCenter.shared.reloadAllTimelines()
+        reloadEntryAndChartWidgets()
 #endif
     }
+#endif
 }
