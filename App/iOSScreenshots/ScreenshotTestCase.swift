@@ -26,7 +26,12 @@ class ScreenshotTestCase: XCTestCase {
     /// Pass `seed` to preload the in-memory store with a `ScreenshotFixture`.
     /// `extraArguments` is appended verbatim (e.g. for Dynamic Type overrides).
     func launchApp(seed: String? = nil, extraArguments: [String] = []) {
-        var args = ["--use-in-memory-store", "--skip-splash"]
+        var args = [
+            "--use-in-memory-store",
+            "--skip-splash",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+        ]
         if let seed {
             args.append("--seed=\(seed)")
         }

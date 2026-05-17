@@ -19,6 +19,7 @@ struct HistoryView: View {
     }
 
     let store: HealthKitStore
+    let showsDoneButton: Bool
 
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @State private var weights: [Weight] = []
@@ -38,6 +39,11 @@ struct HistoryView: View {
     @State private var listFrame: CGRect = .zero
 #endif
     @Environment(\.dismiss) private var dismiss
+
+    init(store: HealthKitStore, showsDoneButton: Bool = true) {
+        self.store = store
+        self.showsDoneButton = showsDoneButton
+    }
 
     private var displayUnit: WeightUnit {
         WeightUnit(rawValue: unitPreferenceRaw) ?? .kilograms
@@ -59,8 +65,10 @@ struct HistoryView: View {
                 .navigationBarTitleDisplayMode(.inline)
 #endif
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { dismiss() }
+                    if showsDoneButton {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { dismiss() }
+                        }
                     }
                 }
                 .sheet(item: $editingContext, onDismiss: {
