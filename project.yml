@@ -66,6 +66,7 @@ targets:
           - "Resources/Info.plist"
           - "Resources/LogWeightWatchWidget.entitlements"
           - "Resources/PrivacyInfo.xcprivacy"
+      - path: App/Shared/Widget/WeightTrendArrow.swift
     resources:
       - path: App/WatchWidget/Resources/PrivacyInfo.xcprivacy
     info:

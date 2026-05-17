@@ -47,6 +47,12 @@ struct LogWeightApp: App {
                         guard newPhase == .active else { return }
                         Task { @MainActor in
                             await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
+                            await ReminderSync.syncFromStoredSettings()
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification)) { _ in
+                        Task { @MainActor in
+                            await ReminderSync.syncFromStoredSettings()
                         }
                     }
 
@@ -118,6 +124,7 @@ struct LogWeightApp: App {
         try? await healthKitStore.requestAuthorization()
         await entryState.loadLastWeight(from: healthKitStore)
         await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
+        await ReminderSync.syncFromStoredSettings()
 
         startupReady = true
         preparingTimer.cancel()
