@@ -85,7 +85,7 @@ Tools/CaptureScene.sh --all
 - Parity check: `Tools/check-localizations.sh` (runs from `githooks/pre-commit`)
 - Commit messages: `Tools/check-commit-message.sh` (runs from `githooks/commit-msg`)
 - Install hooks once per clone: `Tools/install-git-hooks.sh`
-- Cursor agents: see `.cursor/rules/localization.mdc`
+- Coding agents: use the catalog, locale list, and parity check above as the localization source of truth.
 
 ## Commit Message Convention
 
