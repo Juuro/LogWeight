@@ -24,7 +24,7 @@ struct EntryView: View {
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
     @State private var didPresentFirstWeightEditor = false
-    @State private var didDeferInitialKeyboardForUITest = false
+    @State private var didLeaveEntryTabWhileDeferringInitialKeyboard = false
     /// Bumped when focus work should be abandoned (tab switch, dismiss, new request). In-flight tasks compare to their captured value.
     @State private var firstWeightFocusRequestID: UInt64 = 0
     @State private var firstWeightKeyboardFocusTask: Task<Void, Never>?
@@ -40,11 +40,15 @@ struct EntryView: View {
         CommandLine.arguments.contains("--ui-test-skip-initial-keyboard")
     }
 
+    private var defersFirstWeightKeyboardForUITest: Bool {
+        Self.skipInitialKeyboardForUITest && !didLeaveEntryTabWhileDeferringInitialKeyboard
+    }
+
     private var prefersFirstWeightDefaultFocus: Bool {
         canEditWithKeyboard
             && isTabActive
             && state.hasResolvedInitialWeight
-            && !(Self.skipInitialKeyboardForUITest && !didDeferInitialKeyboardForUITest)
+            && !defersFirstWeightKeyboardForUITest
     }
 
     private var displayUnit: WeightUnit {
@@ -307,6 +311,9 @@ struct EntryView: View {
             presentFirstWeightEditorIfNeeded()
             return
         }
+        if defersFirstWeightKeyboardForUITest {
+            didLeaveEntryTabWhileDeferringInitialKeyboard = true
+        }
         clearSavedStatusTask?.cancel()
         firstWeightFocusRequestID += 1
         firstWeightKeyboardFocusTask?.cancel()
@@ -394,8 +401,7 @@ struct EntryView: View {
             typedValue = ""
         }
         isEditingValue = true
-        if Self.skipInitialKeyboardForUITest, !didDeferInitialKeyboardForUITest {
-            didDeferInitialKeyboardForUITest = true
+        if defersFirstWeightKeyboardForUITest {
             return
         }
         scheduleFirstWeightKeyboardFocus()
