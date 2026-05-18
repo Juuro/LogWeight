@@ -22,18 +22,21 @@ runs:
           xcodegen --version
         fi
 
-    - name: Cache Homebrew XcodeGen
+    - name: Cache Homebrew downloads
       uses: actions/cache@v4
       with:
-        path: |
-          ~/Library/Caches/Homebrew
-          /opt/homebrew/Cellar/xcodegen
-        key: brew-xcodegen-${{ runner.os }}-v1
-        restore-keys: brew-xcodegen-${{ runner.os }}-
+        path: ~/Library/Caches/Homebrew
+        key: brew-cache-${{ runner.os }}-v2
+        restore-keys: brew-cache-${{ runner.os }}-
 
     - name: Install XcodeGen
       shell: bash
-      run: brew list xcodegen &>/dev/null || brew install xcodegen
+      run: |
+        if command -v xcodegen >/dev/null; then
+          xcodegen --version
+        else
+          brew install xcodegen
+        fi
 
     - name: Cache DerivedData
       uses: actions/cache@v4
