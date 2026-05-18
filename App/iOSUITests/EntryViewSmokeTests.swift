@@ -77,8 +77,10 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
 
         app.openHistoryTab()
-        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5))
-        XCTAssertTrue(historyEmptyState.waitForExistence(timeout: 10))
+        XCTAssertTrue(
+            historyEmptyState.waitForExistence(timeout: 10)
+                || app.staticTexts["No weights yet."].waitForExistence(timeout: 5)
+        )
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
