@@ -3,9 +3,17 @@ import XCTest
 @MainActor
 extension XCUIApplication {
 
+    /// Decimal pad has no Done key; tap above the keyboard so tab-bar buttons are hittable.
+    private func dismissKeyboardIfPresent() {
+        guard keyboards.element(boundBy: 0).waitForExistence(timeout: 0.5) else { return }
+        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+    }
+
     /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;
     /// the second tab index is a fallback when identifiers are not exposed on tab items.
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
+        dismissKeyboardIfPresent()
+
         if tabBars.buttons["tab.history"].waitForExistence(timeout: 3) {
             tabBars.buttons["tab.history"].tap()
             return
@@ -32,6 +40,8 @@ extension XCUIApplication {
 
     /// Returns to the Entry tab after visiting History.
     func openEntryTab(file: StaticString = #file, line: UInt = #line) {
+        dismissKeyboardIfPresent()
+
         if tabBars.buttons["tab.entry"].waitForExistence(timeout: 3) {
             tabBars.buttons["tab.entry"].tap()
             return
