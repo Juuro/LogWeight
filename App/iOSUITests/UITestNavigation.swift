@@ -14,7 +14,12 @@ extension XCUIApplication {
         }
         _ = keyboard.waitForNonExistence(timeout: 3)
         guard keyboard.exists else { return }
-        tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        let tabBar = tabBars.firstMatch
+        if tabBar.waitForExistence(timeout: 1) {
+            tabBar.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        } else {
+            coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
         _ = keyboard.waitForNonExistence(timeout: 2)
     }
 

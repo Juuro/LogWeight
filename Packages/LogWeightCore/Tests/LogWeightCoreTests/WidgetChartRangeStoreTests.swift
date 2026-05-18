@@ -8,7 +8,7 @@ final class WidgetChartRangeStoreTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Unique suite per test method so `swift test --parallel` does not share state.
-        suiteName = "WidgetChartRangeStoreTests.\(name)"
+        suiteName = "WidgetChartRangeStoreTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
     }

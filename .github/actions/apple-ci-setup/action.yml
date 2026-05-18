@@ -26,6 +26,12 @@ runs:
           xcodegen --version
         fi
 
+    - name: Resolve Xcode version for cache key
+      shell: bash
+      run: |
+        VERSION=$(xcodebuild -version | awk '/^Xcode / { print $2; exit }')
+        echo "resolved-xcode-version=$VERSION" >> "$GITHUB_ENV"
+
     - name: Cache Homebrew downloads
       uses: actions/cache@v4
       with:
@@ -46,9 +52,9 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ inputs.derived-data-path }}
-        key: deriveddata-${{ runner.os }}-${{ inputs.xcode-version }}-${{ hashFiles('project.yml', 'Packages/LogWeightCore/**', 'App/**') }}
+        key: deriveddata-${{ runner.os }}-${{ env.resolved-xcode-version }}-${{ hashFiles('project.yml', 'Packages/LogWeightCore/**', 'App/**') }}
         restore-keys: |
-          deriveddata-${{ runner.os }}-${{ inputs.xcode-version }}-
+          deriveddata-${{ runner.os }}-${{ env.resolved-xcode-version }}-
 
     - name: Generate Xcode project
       shell: bash
