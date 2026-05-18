@@ -3,14 +3,18 @@ import XCTest
 @MainActor
 extension XCUIApplication {
 
-    /// Decimal pad has no Done key; tap above the keyboard so tab-bar buttons are hittable.
+    /// Decimal pad has no Done key; resign focus via chrome above the field so the tab bar is hittable.
     private func dismissKeyboardIfPresent() {
         let keyboard = keyboards.element(boundBy: 0)
         guard keyboard.waitForExistence(timeout: 0.5) else { return }
-        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
-        _ = keyboard.waitForNonExistence(timeout: 2)
+        if staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 1) {
+            staticTexts["entry.first-weight.prompt"].tap()
+        } else {
+            coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
+        _ = keyboard.waitForNonExistence(timeout: 3)
         guard keyboard.exists else { return }
-        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         _ = keyboard.waitForNonExistence(timeout: 2)
     }
 

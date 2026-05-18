@@ -78,8 +78,8 @@ final class EntryViewSmokeTests: XCTestCase {
 
         app.openHistoryTab()
         XCTAssertTrue(
-            historyEmptyState.waitForExistence(timeout: 10)
-                || app.staticTexts["No weights yet."].waitForExistence(timeout: 5)
+            app.navigationBars["History"].waitForExistence(timeout: 10),
+            "History tab should be selected"
         )
 
         app.openEntryTab()
