@@ -165,7 +165,14 @@ struct EntryView: View {
                 .onTapGesture(count: 2) {
                     state.restoreDisplayToLastLoggedWeight()
                 }
-                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit))."))
+                .accessibilityLabel(
+                    Text(
+                        String(
+                            format: String(localized: "Weight %@."),
+                            formatter.format(kilograms: displayValue, in: displayUnit)
+                        )
+                    )
+                )
                 .accessibilityHint("Double tap quickly to restore the last logged weight. Use the Restore action in the VoiceOver rotor for the same.")
                 .accessibilityAction(named: Text("Restore last logged weight")) {
                     state.restoreDisplayToLastLoggedWeight()

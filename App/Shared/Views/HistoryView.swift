@@ -488,9 +488,9 @@ struct HistoryView: View {
             loadError = nil
             mutationError = nil
         } catch HealthKitError.queryFailed(let code) {
-            loadError = "HealthKit query failed (code \(code))."
+            loadError = String(format: String(localized: "HealthKit query failed (code %lld)."), code)
         } catch {
-            loadError = "Unexpected error reading from Apple Health."
+            loadError = String(localized: "Unexpected error reading from Apple Health.")
         }
     }
 
@@ -512,9 +512,9 @@ struct HistoryView: View {
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
-            mutationError = "Couldn't delete entry (code \(code))."
+            mutationError = String(format: String(localized: "Couldn’t delete entry (code %lld)."), code)
         } catch {
-            mutationError = "Unexpected error deleting entry."
+            mutationError = String(localized: "Unexpected error deleting entry.")
         }
     }
 
@@ -532,9 +532,9 @@ struct HistoryView: View {
         } catch HealthKitError.deleteNotPermitted {
             showCannotDeleteAlert = true
         } catch HealthKitError.deleteFailed(let code) {
-            mutationError = "Couldn't delete entry (code \(code))."
+            mutationError = String(format: String(localized: "Couldn’t delete entry (code %lld)."), code)
         } catch {
-            mutationError = "Unexpected error deleting entry."
+            mutationError = String(localized: "Unexpected error deleting entry.")
         }
     }
 #endif
@@ -764,7 +764,12 @@ private struct HistoryWeightEditSheet: View {
                         .accessibilityLabel("Increase weight")
                     }
 
-                    Text("Use − / + to adjust weight in 0.1 \(displayUnit.shortDisplayName) steps.")
+                    Text(
+                        String(
+                            format: String(localized: "Use − / + to adjust weight in 0.1 %@ steps."),
+                            displayUnit.shortDisplayName
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -819,7 +824,13 @@ private struct HistoryWeightEditSheet: View {
                     TextField("Weight", text: $editedText)
                         .privacySensitive()
                 } footer: {
-                    Text("Use your locale’s decimal separator (\(Locale.current.decimalSeparator ?? ".")). Values are saved in \(displayUnit.shortDisplayName).")
+                    Text(
+                        String(
+                            format: String(localized: "Use your locale’s decimal separator (%@). Values are saved in %@."),
+                            Locale.current.decimalSeparator ?? ".",
+                            displayUnit.shortDisplayName
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -931,20 +942,20 @@ private struct HistoryWeightEditSheet: View {
         let cleaned = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let parsedKg = formatter.parseToKilograms(cleaned, unit: displayUnit) else {
-            validationMessage = "Couldn’t read that weight. Check the number format."
+            validationMessage = String(localized: "Couldn’t read that weight. Check the number format.")
             return
         }
 
         let clampedKg = Self.clampToBodyRangeKilograms(parsedKg)
         if abs(parsedKg - clampedKg) > 0.000_000_1 {
-            validationMessage = "Weight must be between 1 and 500 kg."
+            validationMessage = String(localized: "Weight must be between 1 and 500 kg.")
             return
         }
 
         let updated = Weight(valueInKilograms: clampedKg, recordedAt: editedDate)
 #endif
         if updated.recordedAt > .now {
-            validationMessage = "Date/time can’t be in the future."
+            validationMessage = String(localized: "Date/time can’t be in the future.")
             return
         }
         if updated == original {
@@ -960,15 +971,15 @@ private struct HistoryWeightEditSheet: View {
             try await store.replace(old: original, new: updated)
             await onSave()
         } catch HealthKitError.authorizationDenied {
-            onError("Health access denied. Allow LogWeight in Settings → Privacy & Security → Health.")
+            onError(String(localized: "Health access denied. Allow LogWeight in Settings → Privacy & Security → Health."))
         } catch HealthKitError.healthDataUnavailable {
-            onError("Health data isn’t available on this device.")
+            onError(String(localized: "Health data isn’t available on this device."))
         } catch HealthKitError.replaceFailed(let code) {
-            onError("Couldn't save edit (code \(code)).")
+            onError(String(format: String(localized: "Couldn’t save edit (code %lld)."), code))
         } catch HealthKitError.queryFailed(let code) {
-            onError("Couldn't read entries (code \(code)).")
+            onError(String(format: String(localized: "Couldn’t read entries (code %lld)."), code))
         } catch {
-            onError("Unexpected error saving edit.")
+            onError(String(localized: "Unexpected error saving edit."))
         }
     }
 }
