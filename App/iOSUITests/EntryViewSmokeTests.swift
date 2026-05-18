@@ -59,9 +59,9 @@ final class EntryViewSmokeTests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2),
-                      "Save should apply typed value, dismiss keyboard, and persist")
-        XCTAssertFalse(valueField.waitForExistence(timeout: 1),
-                       "Keyboard editor should close after Save")
+                      "Save should apply typed value and persist")
+        XCTAssertFalse(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 1),
+                       "First-weight prompt should disappear after the first save")
     }
 
     /// Regression guard: first-time entry keeps the keyboard field available.
@@ -71,19 +71,40 @@ final class EntryViewSmokeTests: XCTestCase {
                       "First entry should open the keyboard field automatically")
     }
 
+    /// Returning to Entry with an empty Apple Health store should reopen the keyboard field.
+    func testFirstEntryReopensKeyboardAfterHistoryTab() throws {
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
+
+        app.openHistoryTab()
+        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+
+        app.openEntryTab()
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2),
+                      "First entry should reopen the keyboard field when returning from History")
+    }
+
     /// After the first save, keyboard entry stays unavailable and double-tap restores last saved weight.
     func testKeyboardEntryUnavailableAfterFirstSave() throws {
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
+
         let plus = app.buttons["entry.stepper.plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
-
-        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
-        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
 
         plus.tap()
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
+        // Tab away and back so Entry leaves keyboard-first editing without changing the saved value.
+        app.openHistoryTab()
+        app.openEntryTab()
+
+        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
         XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
+        XCTAssertFalse(app.staticTexts["entry.first-weight.prompt"].exists)
+        XCTAssertFalse(app.textFields["entry.value.textfield"].exists)
         guard let savedDisplay = Self.parseDisplayValue(valueDisplay.label) else {
             XCTFail("Could not parse display after save: '\(valueDisplay.label)'")
             return
@@ -181,27 +202,56 @@ final class EntryViewSmokeTests: XCTestCase {
     func testStepperLongPressAcceleratesIncrement() throws {
         let plus = app.buttons["entry.stepper.plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
-        // `entry.value.display` is a styled Text with `.accessibilityAddTraits(.isButton)`,
-        // not a real Button — match by accessibility id across element types
-        // (same pattern as testKeyboardOpenDisablesSaveAndDoneReEnablesIt).
-        let display = app.descendants(matching: .any)["entry.value.display"]
-        XCTAssertTrue(display.waitForExistence(timeout: 2))
+        // First entry uses the keyboard field; seed one step so the value is readable.
+        plus.tap()
+        guard let valueElement = Self.weightValueElement(in: app, timeout: 2) else {
+            XCTFail("Weight value UI not found")
+            return
+        }
 
-        guard let beforeValue = Self.parseDisplayValue(display.label) else {
-            XCTFail("Could not parse before-value from display label: '\(display.label)'")
+        guard let beforeValue = Self.parseWeightValue(from: valueElement) else {
+            XCTFail("Could not parse before-value from '\(valueElement.label)' / '\(String(describing: valueElement.value))'")
             return
         }
 
         plus.press(forDuration: 3.0)
 
-        guard let afterValue = Self.parseDisplayValue(display.label) else {
-            XCTFail("Could not parse after-value from display label: '\(display.label)'")
+        guard let afterElement = Self.weightValueElement(in: app, timeout: 2) else {
+            XCTFail("Weight value UI not found after long press")
+            return
+        }
+        guard let afterValue = Self.parseWeightValue(from: afterElement) else {
+            XCTFail("Could not parse after-value from '\(afterElement.label)' / '\(String(describing: afterElement.value))'")
             return
         }
 
         let delta = afterValue - beforeValue
         XCTAssertGreaterThan(delta, 1.6,
                              "Holding +1 for 3 s should produce far more than 16 steps once acceleration kicks in. before=\(beforeValue), after=\(afterValue), delta=\(delta)")
+    }
+
+    /// Returns the visible weight readout (keyboard field on first entry, styled text afterward).
+    private static func weightValueElement(in app: XCUIApplication, timeout: TimeInterval) -> XCUIElement? {
+        let display = app.descendants(matching: .any)["entry.value.display"]
+        if display.waitForExistence(timeout: timeout) {
+            return display
+        }
+        let field = app.textFields["entry.value.textfield"]
+        if field.waitForExistence(timeout: timeout) {
+            return field
+        }
+        return nil
+    }
+
+    /// Parses a weight from the stepper display label or the keyboard field value.
+    private static func parseWeightValue(from element: XCUIElement) -> Double? {
+        if let parsed = parseDisplayValue(element.label) {
+            return parsed
+        }
+        if let value = element.value as? String {
+            return parseDisplayValue(value)
+        }
+        return nil
     }
 
     /// Extracts the leading numeric value from an accessibility label like

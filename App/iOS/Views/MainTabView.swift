@@ -14,7 +14,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            EntryView(state: entryState, store: store)
+            EntryView(state: entryState, store: store, isTabActive: selectedTab == .entry)
                 .tabItem {
                     Label("Entry", systemImage: "scalemass")
                 }
