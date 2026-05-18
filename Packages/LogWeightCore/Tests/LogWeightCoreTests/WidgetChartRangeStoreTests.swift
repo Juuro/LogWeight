@@ -3,11 +3,14 @@ import XCTest
 
 final class WidgetChartRangeStoreTests: XCTestCase {
     private var defaults: UserDefaults!
+    private var suiteName: String!
 
     override func setUp() {
         super.setUp()
-        defaults = UserDefaults(suiteName: "WidgetChartRangeStoreTests")!
-        defaults.removePersistentDomain(forName: "WidgetChartRangeStoreTests")
+        // Unique suite per test method so `swift test --parallel` does not share state.
+        suiteName = "WidgetChartRangeStoreTests.\(name)"
+        defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
     }
 
     func testSaveAndLoadRoundTrip() {
