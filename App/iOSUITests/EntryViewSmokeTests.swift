@@ -73,6 +73,10 @@ final class EntryViewSmokeTests: XCTestCase {
 
     /// Returning to Entry with an empty Apple Health store should reopen the keyboard field.
     func testFirstEntryReopensKeyboardAfterHistoryTab() throws {
+        app.terminate()
+        app.launchArguments = Self.uiTestLaunchArguments + ["--ui-test-skip-initial-keyboard"]
+        app.launch()
+
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
 

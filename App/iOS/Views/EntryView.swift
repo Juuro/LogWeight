@@ -24,6 +24,7 @@ struct EntryView: View {
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
     @State private var didPresentFirstWeightEditor = false
+    @State private var didDeferInitialKeyboardForUITest = false
     /// Bumped when focus work should be abandoned (tab switch, dismiss, new request). In-flight tasks compare to their captured value.
     @State private var firstWeightFocusRequestID: UInt64 = 0
     @State private var firstWeightKeyboardFocusTask: Task<Void, Never>?
@@ -32,6 +33,18 @@ struct EntryView: View {
     /// Keyboard entry only when HealthKit read succeeded and confirmed no prior samples.
     private var canEditWithKeyboard: Bool {
         state.hasConfirmedEmptyWeightStore
+    }
+
+    /// UI tests: show first-weight field without auto-keyboard so tab-bar navigation is hittable on iPad CI.
+    private static var skipInitialKeyboardForUITest: Bool {
+        CommandLine.arguments.contains("--ui-test-skip-initial-keyboard")
+    }
+
+    private var prefersFirstWeightDefaultFocus: Bool {
+        canEditWithKeyboard
+            && isTabActive
+            && state.hasResolvedInitialWeight
+            && !(Self.skipInitialKeyboardForUITest && !didDeferInitialKeyboardForUITest)
     }
 
     private var displayUnit: WeightUnit {
@@ -136,7 +149,7 @@ struct EntryView: View {
                 .focused($valueFieldFocused)
                 .optionalFirstWeightDefaultFocus(
                     $valueFieldFocused,
-                    prefers: canEditWithKeyboard && isTabActive && state.hasResolvedInitialWeight
+                    prefers: prefersFirstWeightDefaultFocus
                 )
                 .font(.system(size: 88, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
@@ -144,7 +157,9 @@ struct EntryView: View {
                 .accessibilityIdentifier("entry.value.textfield")
                 .onAppear {
                     if canEditWithKeyboard, state.hasResolvedInitialWeight {
-                        scheduleFirstWeightKeyboardFocus()
+                        if prefersFirstWeightDefaultFocus {
+                            scheduleFirstWeightKeyboardFocus()
+                        }
                     } else {
                         valueFieldFocused = true
                     }
@@ -379,6 +394,10 @@ struct EntryView: View {
             typedValue = ""
         }
         isEditingValue = true
+        if Self.skipInitialKeyboardForUITest, !didDeferInitialKeyboardForUITest {
+            didDeferInitialKeyboardForUITest = true
+            return
+        }
         scheduleFirstWeightKeyboardFocus()
     }
 
