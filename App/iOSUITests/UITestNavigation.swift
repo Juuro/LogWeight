@@ -6,19 +6,21 @@ extension XCUIApplication {
     /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;
     /// the second tab index is a fallback when identifiers are not exposed on tab items.
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
-        let candidates: [XCUIElement] = [
-            tabBars.buttons["tab.history"],
-            buttons["tab.history"],
-            tabBars.buttons["History"],
-            buttons["History"],
-            tabBars.buttons.element(boundBy: 1),
-        ]
+        if tabBars.buttons["tab.history"].waitForExistence(timeout: 2) {
+            tabBars.buttons["tab.history"].tap()
+            return
+        }
 
-        for candidate in candidates {
-            if candidate.waitForExistence(timeout: 1) {
-                candidate.tap()
-                return
-            }
+        let historyByLabel = tabBars.buttons["History"]
+        if historyByLabel.waitForExistence(timeout: 2) {
+            historyByLabel.firstMatch.tap()
+            return
+        }
+
+        let secondTab = tabBars.buttons.element(boundBy: 1)
+        if secondTab.waitForExistence(timeout: 2) {
+            secondTab.tap()
+            return
         }
 
         XCTFail(
@@ -30,19 +32,21 @@ extension XCUIApplication {
 
     /// Returns to the Entry tab after visiting History.
     func openEntryTab(file: StaticString = #file, line: UInt = #line) {
-        let candidates: [XCUIElement] = [
-            tabBars.buttons["tab.entry"],
-            buttons["tab.entry"],
-            tabBars.buttons["Entry"],
-            buttons["Entry"],
-            tabBars.buttons.element(boundBy: 0),
-        ]
+        if tabBars.buttons["tab.entry"].waitForExistence(timeout: 2) {
+            tabBars.buttons["tab.entry"].tap()
+            return
+        }
 
-        for candidate in candidates {
-            if candidate.waitForExistence(timeout: 1) {
-                candidate.tap()
-                return
-            }
+        let entryByLabel = tabBars.buttons["Entry"]
+        if entryByLabel.waitForExistence(timeout: 2) {
+            entryByLabel.firstMatch.tap()
+            return
+        }
+
+        let firstTab = tabBars.buttons.element(boundBy: 0)
+        if firstTab.waitForExistence(timeout: 2) {
+            firstTab.tap()
+            return
         }
 
         XCTFail(
