@@ -105,7 +105,11 @@ final class EntryViewSmokeTests: XCTestCase {
             XCTFail("Could not parse display after bump: '\(valueDisplay.label)'")
             return
         }
-        XCTAssertGreaterThan(bumpedDisplay, savedDisplay, accuracy: 0.05)
+        XCTAssertGreaterThan(
+            bumpedDisplay,
+            savedDisplay + 0.05,
+            "Display should increase after tapping +"
+        )
 
         valueDisplay.tap()
         let valueField = app.textFields["entry.value.textfield"]
