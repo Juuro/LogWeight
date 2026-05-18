@@ -8,8 +8,9 @@ final class ReminderCoordinatorTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        defaults = UserDefaults(suiteName: "ReminderCoordinatorTests")!
-        defaults.removePersistentDomain(forName: "ReminderCoordinatorTests")
+        let suiteName = "ReminderCoordinatorTests.\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
         scheduler = RecordingReminderScheduler()
         coordinator = ReminderCoordinator()
     }
