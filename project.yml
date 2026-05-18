@@ -8,6 +8,10 @@ options:
   developmentLanguage: en
   createIntermediateGroups: true
 
+configFiles:
+  Debug: Config/Version.xcconfig
+  Release: Config/Version.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -16,8 +20,8 @@ settings:
     GENERATE_INFOPLIST_FILE: NO
     DEVELOPMENT_TEAM: "A8L9TRSZCR"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.3.0"
-    CURRENT_PROJECT_VERSION: "1"
+    VERSIONING_SYSTEM: apple-generic
+    MARKETING_VERSION: "0.3.0" # x-release-please-version
 
 packages:
   LogWeightCore:
@@ -73,6 +77,8 @@ targets:
       path: App/WatchWidget/Resources/Info.plist
       properties:
         CFBundleDisplayName: LogWeight
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSHealthShareUsageDescription: LogWeight reads your latest weight from Apple Health to show it on your watch face. Nothing leaves your device.
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
@@ -106,6 +112,8 @@ targets:
       path: App/Watch/Resources/Info.plist
       properties:
         CFBundleDisplayName: LogWeight
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSHealthShareUsageDescription: LogWeight reads your weight history from Apple Health to show your timeline. Nothing leaves your device.
         NSHealthUpdateUsageDescription: LogWeight saves each weight you enter to Apple Health on this device. Nothing leaves your device.
         WKApplication: true
