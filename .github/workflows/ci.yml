@@ -57,21 +57,14 @@ jobs:
           UDID=$(python3 .github/scripts/resolve-ios-simulator-udid.py)
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
-      - name: Build for testing
-        run: |
-          xcodebuild build-for-testing \
-            -project LogWeight.xcodeproj \
-            -scheme LogWeight \
-            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            -configuration Debug \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
-            CODE_SIGNING_ALLOWED=NO
-
+      # Single test action (matches pre-optimization CI lifecycle; avoids simulator flakes from
+      # test-without-building). DerivedData cache still speeds up compile on warm runs.
       # All 13 EntryViewSmokeTests run on every branch. To run a PR subset later, add
       # repeated -only-testing:LogWeightUITests/EntryViewSmokeTests/testMethodName flags.
-      - name: Run UI smoke tests
+      - name: Build and run UI smoke tests
         run: |
-          xcodebuild test-without-building \
+          xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b || true
+          xcodebuild test \
             -project LogWeight.xcodeproj \
             -scheme LogWeight \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \

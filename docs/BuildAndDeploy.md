@@ -140,7 +140,7 @@ Output folder: `docs/store-screenshots/`
 
 1. `cd Packages/LogWeightCore && swift test` — Core unit tests.
 2. In parallel after (1): **iOS** and **watchOS** jobs each run `.github/actions/apple-ci-setup` (Homebrew download cache, DerivedData cache, `xcodegen generate`).
-3. iOS: ensure iOS/watchOS simulator platforms only when missing, `xcodebuild build-for-testing`, then `xcodebuild test-without-building` — all 13 `EntryViewSmokeTests`.
+3. iOS: ensure iOS/watchOS simulator platforms only when missing, then `xcodebuild test` — all 13 `EntryViewSmokeTests`.
 4. watchOS: ensure watchOS simulator platform when missing, then `xcodebuild build -scheme LogWeightWatch …` — app + widget extension compile check.
 5. On **green** CI on `main`, a final job commits `CURRENT_PROJECT_VERSION + 1` to `Config/Version.xcconfig` with `[skip ci]`.
 
