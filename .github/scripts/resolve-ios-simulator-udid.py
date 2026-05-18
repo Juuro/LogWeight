@@ -7,11 +7,12 @@ import json
 import subprocess
 import sys
 
+# iPhone first: tab-bar XCUITest navigation is reliable; iPad on newer iOS SDKs may not expose tabs.
 PREFERRED_NAMES = (
-    "iPad (10th generation)",
-    "iPad (A16)",
     "iPhone 16",
     "iPhone 16 Pro",
+    "iPad (10th generation)",
+    "iPad (A16)",
 )
 
 
