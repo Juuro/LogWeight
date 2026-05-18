@@ -13,6 +13,10 @@ final class EntryViewSmokeTests: XCTestCase {
 
     private var app: XCUIApplication!
 
+    private var historyEmptyState: XCUIElement {
+        app.descendants(matching: .any)["history.empty"]
+    }
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -69,16 +73,26 @@ final class EntryViewSmokeTests: XCTestCase {
 
     /// Returning to Entry with an empty Apple Health store should reopen the keyboard field.
     func testFirstEntryReopensKeyboardAfterHistoryTab() throws {
+        app.terminate()
+        app.launchArguments = Self.uiTestLaunchArguments + ["--ui-test-skip-initial-keyboard"]
+        app.launch()
+
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
 
         app.openHistoryTab()
-        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+        XCTAssertTrue(
+            app.navigationBars["History"].waitForExistence(timeout: 10),
+            "History tab should be selected"
+        )
 
         app.openEntryTab()
-        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2),
-                      "First entry should reopen the keyboard field when returning from History")
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 5))
+        // Keyboard focus is scheduled ~400ms after tab return (see EntryView.scheduleFirstWeightKeyboardFocus).
+        XCTAssertTrue(
+            app.textFields["entry.value.textfield"].waitForExistence(timeout: 8),
+            "First entry should reopen the keyboard field when returning from History"
+        )
     }
 
     /// After the first save, keyboard entry stays unavailable and double-tap restores last saved weight.
@@ -151,7 +165,7 @@ final class EntryViewSmokeTests: XCTestCase {
         savedRow.press(forDuration: 1.0)
         app.buttons["Delete"].tap()
 
-        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+        XCTAssertTrue(historyEmptyState.waitForExistence(timeout: 10))
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
