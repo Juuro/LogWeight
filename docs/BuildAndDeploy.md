@@ -93,14 +93,14 @@ The placeholder bundle identifier in Phase 1 is `dev.logweight.LogWeight`. Befor
 
 ## Signing
 
-`project.yml` sets `CODE_SIGN_STYLE: Automatic` with an empty `DEVELOPMENT_TEAM`. After running `xcodegen generate`, open the project in Xcode and select your team in the *Signing & Capabilities* tab. The team setting is per-developer and is intentionally not committed.
+`project.yml` sets `CODE_SIGN_STYLE: Automatic` with an empty `DEVELOPMENT_TEAM`. After running `xcodegen generate`, open the project in Xcode and select your team in the _Signing & Capabilities_ tab. The team setting is per-developer and is intentionally not committed.
 
 ## Versioning
 
-| Field | Source | Updated by |
-|-------|--------|------------|
-| **Marketing version** (`MARKETING_VERSION`, user-facing) | `project.yml` | [release-please](https://github.com/googleapis/release-please) when you merge its **Release PR** on `main` |
-| **Build number** (`CURRENT_PROJECT_VERSION`, `CFBundleVersion`) | `Config/Version.xcconfig` | GitHub Actions after a **green** CI run (`[skip ci]` bump commits do not re-run CI) |
+| Field                                                           | Source                    | Updated by                                                                                                 |
+| --------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Marketing version** (`MARKETING_VERSION`, user-facing)        | `project.yml`             | [release-please](https://github.com/googleapis/release-please) when you merge its **Release PR** on `main` |
+| **Build number** (`CURRENT_PROJECT_VERSION`, `CFBundleVersion`) | `Config/Version.xcconfig` | GitHub Actions after a **green** CI run (`[skip ci]` bump commits do not re-run CI)                        |
 
 - `VERSIONING_SYSTEM` is `apple-generic` in `project.yml`.
 - Do not hand-edit `MARKETING_VERSION` for releases; use the Release PR.
@@ -118,11 +118,11 @@ For a **major** semver bump, use one of:
 1. Set your real bundle ID prefix and team in `project.yml`.
 2. Merge feature work to `main` (CI bumps the build number on green runs).
 3. When ready for a new user-facing version, merge the **Release PR** from release-please on `main` (updates `MARKETING_VERSION` and `CHANGELOG.md`; creates `vX.Y.Z` on GitHub).
-4. Pull `main`, run `xcodegen generate`, archive in Xcode (*Product → Archive*).
+4. Pull `main`, run `xcodegen generate`, archive in Xcode (_Product → Archive_).
 5. Upload to App Store Connect.
-6. Add a privacy policy URL in App Store Connect — see `Docs/Privacy.md` for the canonical statement.
-7. Fill App Store listing fields from `Docs/AppStoreMetadata.md`.
-8. Use localized listing variants from `Docs/AppStoreMetadata.localized.md`.
+6. Add a privacy policy URL in App Store Connect — see `docs/Privacy.md` for the canonical statement.
+7. Fill App Store listing fields from `docs/AppStoreMetadata.md`.
+8. Use localized listing variants from `docs/AppStoreMetadata.localized.md`.
 
 ## Store screenshots (Phase 4)
 
@@ -132,7 +132,7 @@ Baseline simulator captures:
 bash Tools/CaptureStoreScreenshots.sh
 ```
 
-Output folder: `Docs/store-screenshots/`
+Output folder: `docs/store-screenshots/`
 
 ## Continuous Integration
 
