@@ -95,12 +95,30 @@ The placeholder bundle identifier in Phase 1 is `dev.logweight.LogWeight`. Befor
 
 `project.yml` sets `CODE_SIGN_STYLE: Automatic` with an empty `DEVELOPMENT_TEAM`. After running `xcodegen generate`, open the project in Xcode and select your team in the *Signing & Capabilities* tab. The team setting is per-developer and is intentionally not committed.
 
+## Versioning
+
+| Field | Source | Updated by |
+|-------|--------|------------|
+| **Marketing version** (`MARKETING_VERSION`, user-facing) | `project.yml` | [release-please](https://github.com/googleapis/release-please) when you merge its **Release PR** on `main` |
+| **Build number** (`CURRENT_PROJECT_VERSION`, `CFBundleVersion`) | `Config/Version.xcconfig` | GitHub Actions after a **green** CI run (`[skip ci]` bump commits do not re-run CI) |
+
+- `VERSIONING_SYSTEM` is `apple-generic` in `project.yml`.
+- Do not hand-edit `MARKETING_VERSION` for releases; use the Release PR.
+- Baseline release tag: `v0.3.0` (see `CHANGELOG.md`).
+
+### Breaking changes (Conventional Commits)
+
+For a **major** semver bump, use one of:
+
+- `feat!: …` / `fix!: …` in the subject, or
+- `BREAKING CHANGE:` in the commit body.
+
 ## TestFlight
 
 1. Set your real bundle ID prefix and team in `project.yml`.
-2. `xcodegen generate`
-3. Increment `CURRENT_PROJECT_VERSION` (and `MARKETING_VERSION` for user-facing version bumps).
-4. Archive in Xcode (*Product → Archive*).
+2. Merge feature work to `main` (CI bumps the build number on green runs).
+3. When ready for a new user-facing version, merge the **Release PR** from release-please on `main` (updates `MARKETING_VERSION` and `CHANGELOG.md`; creates `vX.Y.Z` on GitHub).
+4. Pull `main`, run `xcodegen generate`, archive in Xcode (*Product → Archive*).
 5. Upload to App Store Connect.
 6. Add a privacy policy URL in App Store Connect — see `Docs/Privacy.md` for the canonical statement.
 7. Fill App Store listing fields from `Docs/AppStoreMetadata.md`.
@@ -118,13 +136,14 @@ Output folder: `Docs/store-screenshots/`
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on every push and PR:
+`.github/workflows/ci.yml` runs on push to any branch (except pushes that only change `Config/Version.xcconfig`) and on `workflow_dispatch`:
 
-1. `brew install xcodegen`
-2. `cd Packages/LogWeightCore && swift test` — Core unit tests.
-3. `xcodegen generate`
-4. `xcodebuild test -scheme LogWeight -destination 'platform=iOS Simulator,...'` — iOS build + UI smoke.
-5. `xcodebuild build -scheme LogWeightWatch -destination 'generic/platform=watchOS Simulator' ...` — watchOS app + widget extension compile check.
-6. `xcodebuild build -scheme LogWeightMac -destination 'platform=macOS' ...` — macOS menu-bar app compile check.
+1. `cd Packages/LogWeightCore && swift test` — Core unit tests.
+2. `xcodegen generate`
+3. `xcodebuild test -scheme LogWeight …` — iOS build + UI smoke.
+4. `xcodebuild build -scheme LogWeightWatch …` — watchOS app + widget extension compile check.
+5. On **green** CI, a final job commits `CURRENT_PROJECT_VERSION + 1` to `Config/Version.xcconfig` with `[skip ci]`.
+
+`.github/workflows/release-please.yml` runs on push to `main` and opens or updates a Release PR from Conventional Commits since the last `v*` tag.
 
 CI cannot exercise real HealthKit (no entitlements on GitHub-hosted runners). The `--use-in-memory-store` launch argument injects `InMemoryHealthKitStore` for UI tests.

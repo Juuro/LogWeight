@@ -93,6 +93,13 @@ and by the Claude Code Bash hook in `.claude/settings.json`:
 
 - Preferred types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`.
 - Subject style: imperative, lowercase start, no trailing period.
+- Commits drive **release-please** on `main` (`feat`/`fix`/breaking → Release PR). Use `feat!:` or `BREAKING CHANGE:` in the body for major bumps.
+
+## Versioning
+
+- **Marketing version:** `MARKETING_VERSION` in `project.yml` (`# x-release-please-version`). Bump only by merging a release-please Release PR — do not edit by hand for releases.
+- **Build number:** `Config/Version.xcconfig` (`CURRENT_PROJECT_VERSION`). CI increments on green runs; do not bump manually unless debugging locally.
+- After `project.yml` changes: `xcodegen generate`. See `docs/BuildAndDeploy.md`.
 
 ## High-Value References
 
