@@ -21,7 +21,7 @@ settings:
     DEVELOPMENT_TEAM: "A8L9TRSZCR"
     CODE_SIGN_STYLE: Automatic
     VERSIONING_SYSTEM: apple-generic
-    MARKETING_VERSION: "0.3.0" # x-release-please-version
+    MARKETING_VERSION: "0.4.0" # x-release-please-version
 
 packages:
   LogWeightCore:
