@@ -136,7 +136,10 @@ Output folder: `docs/store-screenshots/`
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on `macos-latest` with **latest-stable Xcode** on push to any branch (except pushes that only change `Config/Version.xcconfig`) and on `workflow_dispatch`:
+`.github/workflows/ci.yml` runs on push to any branch (except pushes that only change `Config/Version.xcconfig`) and on `workflow_dispatch`:
+
+- **Core tests:** `macos-latest`
+- **iOS + watchOS:** `macos-14` with **latest-stable Xcode** (matches the historical ~8m iOS job)
 
 1. `cd Packages/LogWeightCore && swift test` — Core unit tests.
 2. In parallel after (1): **iOS** and **watchOS** jobs each run `.github/actions/apple-ci-setup` (Homebrew download cache, DerivedData cache, `xcodegen generate`).

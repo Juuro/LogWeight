@@ -31,7 +31,8 @@ jobs:
 
   ios-build:
     name: iOS build + UI smoke
-    runs-on: macos-latest
+    # macos-14 + latest-stable matches the ~8m baseline (iPad 10th gen, preinstalled simulators).
+    runs-on: macos-14
     needs: core-tests
     env:
       DERIVED_DATA_PATH: ${{ github.workspace }}/.ci/DerivedData
@@ -74,7 +75,7 @@ jobs:
 
   watch-build:
     name: watchOS build (LogWeightWatch scheme)
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: core-tests
     env:
       DERIVED_DATA_PATH: ${{ github.workspace }}/.ci/DerivedData

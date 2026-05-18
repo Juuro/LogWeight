@@ -6,19 +6,19 @@ extension XCUIApplication {
     /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;
     /// the second tab index is a fallback when identifiers are not exposed on tab items.
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
-        if tabBars.buttons["tab.history"].waitForExistence(timeout: 2) {
+        if tabBars.buttons["tab.history"].waitForExistence(timeout: 3) {
             tabBars.buttons["tab.history"].tap()
             return
         }
 
         let historyByLabel = tabBars.buttons["History"]
-        if historyByLabel.waitForExistence(timeout: 2) {
+        if historyByLabel.waitForExistence(timeout: 3) {
             historyByLabel.firstMatch.tap()
             return
         }
 
         let secondTab = tabBars.buttons.element(boundBy: 1)
-        if secondTab.waitForExistence(timeout: 2) {
+        if secondTab.waitForExistence(timeout: 3) {
             secondTab.tap()
             return
         }
@@ -32,19 +32,19 @@ extension XCUIApplication {
 
     /// Returns to the Entry tab after visiting History.
     func openEntryTab(file: StaticString = #file, line: UInt = #line) {
-        if tabBars.buttons["tab.entry"].waitForExistence(timeout: 2) {
+        if tabBars.buttons["tab.entry"].waitForExistence(timeout: 3) {
             tabBars.buttons["tab.entry"].tap()
             return
         }
 
         let entryByLabel = tabBars.buttons["Entry"]
-        if entryByLabel.waitForExistence(timeout: 2) {
+        if entryByLabel.waitForExistence(timeout: 3) {
             entryByLabel.firstMatch.tap()
             return
         }
 
         let firstTab = tabBars.buttons.element(boundBy: 0)
-        if firstTab.waitForExistence(timeout: 2) {
+        if firstTab.waitForExistence(timeout: 3) {
             firstTab.tap()
             return
         }
