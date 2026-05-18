@@ -47,6 +47,10 @@ jobs:
       - name: Download iOS simulator platform
         run: xcodebuild -downloadPlatform iOS
 
+      # LogWeight embeds the Watch app; build-for-testing requires watchOS simulators too.
+      - name: Download watchOS simulator platform
+        run: xcodebuild -downloadPlatform watchOS
+
       - name: Resolve iOS simulator
         id: sim
         run: |
