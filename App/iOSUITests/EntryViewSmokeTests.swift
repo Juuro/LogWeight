@@ -86,7 +86,7 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 5))
         // Keyboard focus is scheduled ~400ms after tab return (see EntryView.scheduleFirstWeightKeyboardFocus).
         XCTAssertTrue(
-            app.textFields["entry.value.textfield"].waitForExistence(timeout: 5),
+            app.textFields["entry.value.textfield"].waitForExistence(timeout: 8),
             "First entry should reopen the keyboard field when returning from History"
         )
     }

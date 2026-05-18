@@ -5,8 +5,23 @@ extension XCUIApplication {
 
     /// Decimal pad has no Done key; tap above the keyboard so tab-bar buttons are hittable.
     private func dismissKeyboardIfPresent() {
-        guard keyboards.element(boundBy: 0).waitForExistence(timeout: 0.5) else { return }
-        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        let keyboard = keyboards.element(boundBy: 0)
+        guard keyboard.waitForExistence(timeout: 0.5) else { return }
+        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        _ = keyboard.waitForNonExistence(timeout: 2)
+        guard keyboard.exists else { return }
+        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        _ = keyboard.waitForNonExistence(timeout: 2)
+    }
+
+    /// Taps a tab-bar control without scroll-to-visible (keyboard can block AX scroll on iPad CI).
+    private func tapTabBarButton(_ button: XCUIElement) {
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        if button.isHittable {
+            button.tap()
+        } else {
+            button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
     }
 
     /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;
@@ -14,20 +29,20 @@ extension XCUIApplication {
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
         dismissKeyboardIfPresent()
 
-        if tabBars.buttons["tab.history"].waitForExistence(timeout: 3) {
-            tabBars.buttons["tab.history"].tap()
+        if tabBars.buttons["tab.history"].waitForExistence(timeout: 1) {
+            tapTabBarButton(tabBars.buttons["tab.history"])
             return
         }
 
         let historyByLabel = tabBars.buttons["History"]
         if historyByLabel.waitForExistence(timeout: 3) {
-            historyByLabel.firstMatch.tap()
+            tapTabBarButton(historyByLabel.firstMatch)
             return
         }
 
         let secondTab = tabBars.buttons.element(boundBy: 1)
         if secondTab.waitForExistence(timeout: 3) {
-            secondTab.tap()
+            tapTabBarButton(secondTab)
             return
         }
 
@@ -42,20 +57,20 @@ extension XCUIApplication {
     func openEntryTab(file: StaticString = #file, line: UInt = #line) {
         dismissKeyboardIfPresent()
 
-        if tabBars.buttons["tab.entry"].waitForExistence(timeout: 3) {
-            tabBars.buttons["tab.entry"].tap()
+        if tabBars.buttons["tab.entry"].waitForExistence(timeout: 1) {
+            tapTabBarButton(tabBars.buttons["tab.entry"])
             return
         }
 
         let entryByLabel = tabBars.buttons["Entry"]
         if entryByLabel.waitForExistence(timeout: 3) {
-            entryByLabel.firstMatch.tap()
+            tapTabBarButton(entryByLabel.firstMatch)
             return
         }
 
         let firstTab = tabBars.buttons.element(boundBy: 0)
         if firstTab.waitForExistence(timeout: 3) {
-            firstTab.tap()
+            tapTabBarButton(firstTab)
             return
         }
 
