@@ -121,23 +121,22 @@ struct EntryView: View {
         } else if !state.hasResolvedInitialWeight {
             formattedWeightText(kilograms: displayValue)
         } else if canEditWithKeyboard {
-            Button {
-                openWeightEditor(currentKilograms: displayValue)
-            } label: {
-                Text(formatter.format(kilograms: displayValue, in: displayUnit))
-                    .font(.system(size: 72, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("entry.value.display")
-            .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to type your first weight."))
-            .accessibilityHint("Opens the keyboard to type your weight.")
+            formattedWeightText(kilograms: displayValue)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    openWeightEditor(currentKilograms: displayValue)
+                }
+                .simultaneousGesture(
+                    TapGesture(count: 2).onEnded {
+                        openWeightEditor(currentKilograms: displayValue)
+                    }
+                )
+                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to type your first weight."))
+                .accessibilityHint("Opens the keyboard to type your weight.")
+                .accessibilityAddTraits(.isButton)
         } else {
             formattedWeightText(kilograms: displayValue)
+                .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
                     state.restoreDisplayToLastLoggedWeight()
                 }

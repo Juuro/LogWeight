@@ -7,17 +7,6 @@ import Charts
 /// HealthKit history (source of truth). Shared by iOS and watchOS.
 /// iOS/iPadOS get a trend chart above the list; watchOS remains list-only.
 struct HistoryView: View {
-    private class Cache {
-        static let formatter = WeightFormatter(locale: .current, fractionDigits: 1)
-        static let dateFormatter: DateFormatter = {
-            let f = DateFormatter()
-            f.dateStyle = .medium
-            f.timeStyle = .short
-            f.locale = .current
-            return f
-        }()
-    }
-
     let store: HealthKitStore
     let showsDoneButton: Bool
 
@@ -50,11 +39,15 @@ struct HistoryView: View {
     }
 
     private var formatter: WeightFormatter {
-        Cache.formatter
+        WeightFormatter(locale: .current, fractionDigits: 1)
     }
 
     private var dateFormatter: DateFormatter {
-        Cache.dateFormatter
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .short
+        f.locale = .current
+        return f
     }
 
     var body: some View {

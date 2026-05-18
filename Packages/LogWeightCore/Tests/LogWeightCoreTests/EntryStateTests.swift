@@ -153,4 +153,16 @@ final class EntryStateTests: XCTestCase {
         state.restoreDisplayToLastLoggedWeight()
         XCTAssertEqual(state.displayValueInKilograms, 80.0, accuracy: 0.001)
     }
+
+    @MainActor
+    func testCommitClearsConfirmedEmptyStoreAfterFirstSave() async {
+        let store = InMemoryHealthKitStore()
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        XCTAssertTrue(state.hasConfirmedEmptyWeightStore)
+
+        await state.commit(store: store, now: referenceDate)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .hasPriorWeight)
+        XCTAssertFalse(state.hasConfirmedEmptyWeightStore)
+    }
 }

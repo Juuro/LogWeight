@@ -3,7 +3,7 @@ import LogWeightCore
 import UserNotifications
 
 /// Production `ReminderScheduling` backed by `UNUserNotificationCenter`.
-struct UserNotificationsReminderScheduler: ReminderScheduling, Sendable {
+struct UserNotificationsReminderScheduler: ReminderScheduling, @unchecked Sendable {
     private let center: UNUserNotificationCenter
 
     init(center: UNUserNotificationCenter = .current()) {

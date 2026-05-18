@@ -101,6 +101,9 @@ public final class EntryState {
             try await store.save(weight)
             saveStatus = .savedAt(now)
             lastSavedWeight = weight
+            if initialWeightLoadOutcome == .emptyStore {
+                initialWeightLoadOutcome = .hasPriorWeight
+            }
         } catch HealthKitError.saveFailed(let code) {
             saveStatus = .failed(reasonCode: code)
         } catch HealthKitError.healthDataUnavailable {

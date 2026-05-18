@@ -13,8 +13,8 @@ final class EntryViewSmokeTests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() async throws {
-        try await super.setUp()
+    override func setUp() {
+        super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         // Inject the in-memory store so this test does NOT require HealthKit
@@ -74,8 +74,7 @@ final class EntryViewSmokeTests: XCTestCase {
         let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
         XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
 
-        valueDisplay.tap()
-        valueDisplay.tap()
+        valueDisplay.tap(withNumberOfTaps: 2, numberOfTouches: 1)
 
         let valueField = app.textFields["entry.value.textfield"]
         XCTAssertTrue(valueField.waitForExistence(timeout: 2),
