@@ -138,11 +138,14 @@ Output folder: `docs/store-screenshots/`
 
 `.github/workflows/ci.yml` runs on push to any branch (except pushes that only change `Config/Version.xcconfig`) and on `workflow_dispatch`:
 
+- **Core tests:** `macos-latest`
+- **iOS + watchOS:** `macos-14` with **latest-stable Xcode** (matches the historical ~8m iOS job)
+
 1. `cd Packages/LogWeightCore && swift test` — Core unit tests.
-2. `xcodegen generate`
-3. `xcodebuild test -scheme LogWeight …` — iOS build + UI smoke.
-4. `xcodebuild build -scheme LogWeightWatch …` — watchOS app + widget extension compile check.
-5. On **green** CI, a final job commits `CURRENT_PROJECT_VERSION + 1` to `Config/Version.xcconfig` with `[skip ci]`.
+2. In parallel after (1): **iOS** and **watchOS** jobs each run `.github/actions/apple-ci-setup` (Homebrew download cache, DerivedData cache, `xcodegen generate`).
+3. iOS: ensure iOS/watchOS simulator platforms only when missing, then `xcodebuild test` — all 13 `EntryViewSmokeTests`.
+4. watchOS: ensure watchOS simulator platform when missing, then `xcodebuild build -scheme LogWeightWatch …` — app + widget extension compile check.
+5. On **green** CI on `main`, a final job commits `CURRENT_PROJECT_VERSION + 1` to `Config/Version.xcconfig` with `[skip ci]`.
 
 `.github/workflows/release-please.yml` runs on push to `main` and opens or updates a Release PR from Conventional Commits since the last `v*` tag.
 
