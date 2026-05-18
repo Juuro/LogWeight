@@ -27,6 +27,7 @@
 "Couldn't read your weight history." = "체중 기록을 불러올 수 없습니다.";
 "No weights yet." = "아직 체중 기록이 없습니다.";
 "Save your first weight on the entry screen." = "입력 화면에서 첫 체중을 저장하세요.";
+"Enter your first weight" = "첫 체중을 입력하세요";
 "Recent entries" = "최근 기록";
 "Trend" = "추세";
 "Allow Body Mass in Watch → Settings → Health → Apps." = "Watch → 설정 → 건강 → 앱에서 체중을 허용하세요.";

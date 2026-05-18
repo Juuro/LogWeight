@@ -2,7 +2,8 @@ import SwiftUI
 import LogWeightCore
 
 private enum TrendArrowPreferenceStore {
-    static let userDefaults = UserDefaults(suiteName: SharedWeightEntryStore.appGroupIdentifier) ?? .standard
+    nonisolated(unsafe) static let userDefaults =
+        UserDefaults(suiteName: SharedWeightEntryStore.appGroupIdentifier) ?? .standard
 }
 
 /// Compact trend indicator for widgets and history headers.

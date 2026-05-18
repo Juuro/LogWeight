@@ -56,4 +56,32 @@ final class WeightFormatterTests: XCTestCase {
         XCTAssertNil(formatter.parseToKilograms("-70.5", unit: .kilograms))
         XCTAssertNil(formatter.parseToKilograms("-155.4", unit: .pounds))
     }
+
+    func testFormatEditableValueUsesLocaleDecimalSeparator() {
+        let german = WeightFormatter(locale: Locale(identifier: "de_DE"), fractionDigits: 1)
+        XCTAssertEqual(german.formatEditableValue(kilograms: 75.0, in: .kilograms), "75,0")
+
+        let english = WeightFormatter(locale: Locale(identifier: "en_US"), fractionDigits: 1)
+        XCTAssertEqual(english.formatEditableValue(kilograms: 75.0, in: .kilograms), "75.0")
+    }
+
+    func testSanitizeWeightInputEnglishLocale() {
+        let formatter = WeightFormatter(locale: Locale(identifier: "en_US"))
+        XCTAssertEqual(formatter.sanitizeWeightInput("82.3"), "82.3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("82abc.3kg"), "82.3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("-12.34"), "12.3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("1.2.3"), "1.2")
+        XCTAssertEqual(formatter.sanitizeWeightInput("83.-+*K5"), "83.5")
+        XCTAssertEqual(formatter.sanitizeWeightInput("083.55"), "83.5")
+        XCTAssertEqual(formatter.sanitizeWeightInput("05"), "5")
+        XCTAssertEqual(formatter.sanitizeWeightInput("0.8"), "0.8")
+    }
+
+    func testSanitizeWeightInputGermanLocaleUsesComma() {
+        let formatter = WeightFormatter(locale: Locale(identifier: "de_DE"))
+        XCTAssertEqual(formatter.sanitizeWeightInput("82,3"), "82,3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("82.3"), "82,3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("ab82,3xy"), "82,3")
+        XCTAssertEqual(formatter.sanitizeWeightInput("083,555"), "83,5")
+    }
 }

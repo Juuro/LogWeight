@@ -14,7 +14,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            EntryView(state: entryState, store: store)
+            EntryView(state: entryState, store: store, isTabActive: selectedTab == .entry)
                 .tabItem {
                     Label("Entry", systemImage: "scalemass")
                 }
@@ -29,6 +29,13 @@ struct MainTabView: View {
                 .tag(Tab.history)
         }
         .modifier(TabBarOnlyOnSupportedPlatforms())
+        .task {
+            for await _ in store.observeChanges() {
+                guard !Task.isCancelled else { return }
+                await entryState.loadLastWeight(from: store)
+                await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
+            }
+        }
         .onOpenURL { url in
             guard url.scheme == "logweight", url.host == "history" else { return }
             selectedTab = .history

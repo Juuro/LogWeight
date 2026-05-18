@@ -27,6 +27,7 @@
 "Couldn't read your weight history." = "体重履歴を読み込めませんでした。";
 "No weights yet." = "まだ体重データがありません。";
 "Save your first weight on the entry screen." = "入力画面で最初の体重を保存してください。";
+"Enter your first weight" = "最初の体重を入力してください";
 "Recent entries" = "最近の記録";
 "Trend" = "推移";
 "Allow Body Mass in Watch → Settings → Health → Apps." = "Watch → 設定 → ヘルスケア → App で「体重」を許可してください。";

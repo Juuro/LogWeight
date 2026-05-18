@@ -22,10 +22,6 @@ focused on non-obvious conventions.
   on every widget configuration. Without it, physical devices show a system placeholder
   (“Please adopt containerBackground API”) instead of your UI; the simulator may still
   look fine. Do not remove it to tweak accent colors—adjust `widgetAccentable` instead.
-- **Every new user-facing string** must be added to **all**
-  `App/Shared/Resources/*.lproj/Localizable.strings` locales (`en` plus ten translations).
-  Use the English UI text as the key in Swift (`Text("…")`). Run `Tools/check-localizations.sh`
-  before committing; install the git hook once per clone with `Tools/install-git-hooks.sh`.
 
 ## Architectural Conventions
 
@@ -41,9 +37,8 @@ focused on non-obvious conventions.
 
 ## UX and Product Gotchas
 
-- Entry flow is stepper-first; keyboard entry is secondary.
-- On iOS, Save must remain disabled while keyboard is presented to avoid
-  occlusion-related mistakes.
+- Entry flow is stepper-first; keyboard entry only after a successful HealthKit read confirms no body-mass samples exist.
+- On iOS first entry, Save commits the typed value and dismisses the keyboard in one tap.
 - History chart is additive on iOS/iPadOS; watchOS remains list-only.
   Do not regress list readability or auditability.
 

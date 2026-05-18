@@ -1,6 +1,14 @@
 import Foundation
 import Observation
 
+/// Result of the entry surface's first HealthKit weight history read.
+public enum InitialWeightLoadOutcome: Equatable, Sendable {
+    case pending
+    case emptyStore
+    case hasPriorWeight
+    case loadFailed
+}
+
 /// Observable state for the entry surface.
 ///
 /// One instance per screen lifetime. `commit(store:)` is the only path that
@@ -21,8 +29,23 @@ public final class EntryState {
     public var displayUnit: WeightUnit
     public private(set) var saveStatus: SaveStatus
     public private(set) var lastSavedWeight: Weight?
+    /// Outcome of the first `loadLastWeight(from:)` attempt.
+    public private(set) var initialWeightLoadOutcome: InitialWeightLoadOutcome = .pending
+    /// `true` when HealthKit has no samples yet and the entry surface should not show a default weight.
+    public private(set) var isAwaitingFirstWeight: Bool = false
+
+    /// `true` after the first `loadLastWeight(from:)` attempt finishes (success or failure).
+    public var hasResolvedInitialWeight: Bool {
+        initialWeightLoadOutcome != .pending
+    }
+
+    /// `true` only when HealthKit read succeeded and returned no body-mass samples.
+    public var hasConfirmedEmptyWeightStore: Bool {
+        initialWeightLoadOutcome == .emptyStore
+    }
 
     private let stepIncrementInKilograms: Double
+    private static let stepperBaseKilograms: Double = 75.0
 
     public init(
         initialValueInKilograms: Double = 75.0,
@@ -37,21 +60,40 @@ public final class EntryState {
     }
 
     /// Pre-fills the value with the most-recent saved weight, if available.
-    /// Silently no-ops on read failure — the entry surface is never blocked.
+    /// On read failure the entry surface is never blocked; keyboard-first entry is not offered.
     public func loadLastWeight(from store: HealthKitStore) async {
-        guard let recent = try? await store.recentWeights(limit: 1).first else {
-            return
+        do {
+            if let recent = try await store.recentWeights(limit: 1).first {
+                lastSavedWeight = recent
+                displayValueInKilograms = recent.valueInKilograms
+                initialWeightLoadOutcome = .hasPriorWeight
+                isAwaitingFirstWeight = false
+            } else {
+                prepareForFirstWeightEntry()
+                initialWeightLoadOutcome = .emptyStore
+            }
+        } catch {
+            initialWeightLoadOutcome = .loadFailed
+            isAwaitingFirstWeight = false
         }
-        self.lastSavedWeight = recent
-        self.displayValueInKilograms = recent.valueInKilograms
+    }
+
+    /// Resets the entry surface for keyboard-first first weight entry.
+    public func prepareForFirstWeightEntry() {
+        isAwaitingFirstWeight = true
+        displayValueInKilograms = 0
+        lastSavedWeight = nil
+        saveStatus = .idle
     }
 
     public func increment() {
+        activateStepperBaseIfNeeded()
         let next = displayValueInKilograms + stepIncrementInKilograms
         displayValueInKilograms = clamp(next)
     }
 
     public func decrement() {
+        activateStepperBaseIfNeeded()
         let next = displayValueInKilograms - stepIncrementInKilograms
         displayValueInKilograms = clamp(next)
     }
@@ -59,6 +101,13 @@ public final class EntryState {
     public func setValue(_ value: Double, unit: WeightUnit) {
         let measurement = Measurement(value: value, unit: unit.unitMass)
         displayValueInKilograms = clamp(measurement.converted(to: .kilograms).value)
+        isAwaitingFirstWeight = false
+    }
+
+    private func activateStepperBaseIfNeeded() {
+        guard isAwaitingFirstWeight, displayValueInKilograms == 0 else { return }
+        displayValueInKilograms = Self.stepperBaseKilograms
+        isAwaitingFirstWeight = false
     }
 
     /// Persists the current value via `store`. The function returns when the save
@@ -68,6 +117,9 @@ public final class EntryState {
     /// app or adding manual samples does **not** grant LogWeight access — the user
     /// must allow this app in the system HealthKit sheet (or in Settings → Health).
     public func commit(store: HealthKitStore, now: Date = .now) async {
+        guard displayValueInKilograms > 0 else {
+            return
+        }
         saveStatus = .saving
         let weight = Weight(valueInKilograms: displayValueInKilograms, recordedAt: now)
         do {
@@ -75,6 +127,10 @@ public final class EntryState {
             try await store.save(weight)
             saveStatus = .savedAt(now)
             lastSavedWeight = weight
+            if initialWeightLoadOutcome == .emptyStore {
+                initialWeightLoadOutcome = .hasPriorWeight
+                isAwaitingFirstWeight = false
+            }
         } catch HealthKitError.saveFailed(let code) {
             saveStatus = .failed(reasonCode: code)
         } catch HealthKitError.healthDataUnavailable {

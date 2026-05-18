@@ -1,21 +1,20 @@
 import SwiftUI
+import UIKit
 import HealthKit
 import LogWeightCore
 
 /// Stepper-primary entry surface.
 ///
 /// Layout (top to bottom):
-/// - Big SF Rounded numeric value (tap → opens decimal pad after a short delay; second tap quickly restores last logged weight)
+/// - Big SF Rounded numeric value: after Health load, keyboard edit only when Apple Health has no body-mass samples; otherwise double-tap restores last weight
 /// - Prominent − / + stepper buttons (44pt, long-press accelerates via SwiftUI Stepper)
-/// - Save button bottom-trailing in safe area, disabled while keyboard is up
-///
-/// DA1 fix: Save is disabled while the decimal-pad keyboard is up. The keyboard
-/// toolbar contains a "Done" button that dismisses the keyboard, after which Save
-/// becomes tappable. Stepper is the primary path; typing is the secondary path.
+/// - Save button bottom-trailing; on first entry, Save commits typed value and dismisses the keyboard in one tap
 struct EntryView: View {
 
     @Bindable var state: EntryState
     let store: HealthKitStore
+    /// True while the Entry tab is selected in `MainTabView`.
+    var isTabActive: Bool = true
 
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @AppStorage(SettingsKey.hapticsEnabled) private var hapticsEnabled: Bool = true
@@ -24,11 +23,16 @@ struct EntryView: View {
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
-    @State private var pendingOpenEditorWork: DispatchWorkItem?
+    @State private var didPresentFirstWeightEditor = false
+    /// Bumped when focus work should be abandoned (tab switch, dismiss, new request). In-flight tasks compare to their captured value.
+    @State private var firstWeightFocusRequestID: UInt64 = 0
+    @State private var firstWeightKeyboardFocusTask: Task<Void, Never>?
     @FocusState private var valueFieldFocused: Bool
 
-    /// Delay before one tap opens the decimal pad; second tap within this window restores last logged weight (UIKit-style double-tap vs single-tap tradeoff).
-    private static let singleTapEditDelaySeconds: TimeInterval = 0.28
+    /// Keyboard entry only when HealthKit read succeeded and confirmed no prior samples.
+    private var canEditWithKeyboard: Bool {
+        state.hasConfirmedEmptyWeightStore
+    }
 
     private var displayUnit: WeightUnit {
         WeightUnit(rawValue: unitPreferenceRaw) ?? .kilograms
@@ -38,20 +42,41 @@ struct EntryView: View {
         WeightFormatter(locale: .current, fractionDigits: 1)
     }
 
+    private var weightInputBinding: Binding<String> {
+        Binding(
+            get: { typedValue },
+            set: { typedValue = formatter.sanitizeWeightInput($0) }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
                 Spacer()
+                if canEditWithKeyboard {
+                    Text("Enter your first weight")
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("entry.first-weight.prompt")
+                }
                 weightDisplay
                 stepperRow
                 Spacer()
-                statusLine
-                saveButton
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(uiColor: .systemBackground))
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 12) {
+                    statusLine
+                    saveButton
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(Color(uiColor: .systemBackground))
+            }
             .privacySensitive()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -62,14 +87,6 @@ struct EntryView: View {
                     }
                     .accessibilityLabel("Settings")
                     .accessibilityIdentifier("entry.settings")
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        commitTypedValueIfNeeded()
-                        valueFieldFocused = false
-                    }
-                    .accessibilityIdentifier("entry.keyboard.done")
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -88,10 +105,24 @@ struct EntryView: View {
                     state.reset()
                 }
             }
-            .onDisappear {
-                clearSavedStatusTask?.cancel()
-                pendingOpenEditorWork?.cancel()
-                pendingOpenEditorWork = nil
+            .onAppear {
+                handleEntryVisibilityChange(isVisible: isTabActive)
+            }
+            .onChange(of: isTabActive) { _, isActive in
+                handleEntryVisibilityChange(isVisible: isActive)
+            }
+            .onChange(of: state.hasConfirmedEmptyWeightStore) { _, isEmpty in
+                guard isEmpty else { return }
+                typedValue = ""
+                didPresentFirstWeightEditor = false
+                presentFirstWeightEditorIfNeeded()
+            }
+            .onChange(of: state.hasResolvedInitialWeight) { _, resolved in
+                guard resolved, state.hasConfirmedEmptyWeightStore else { return }
+                presentFirstWeightEditorIfNeeded()
+            }
+            .onChange(of: state.displayValueInKilograms) { _, newValue in
+                syncTypedValueFromStepperIfNeeded(kilograms: newValue)
             }
         }
     }
@@ -99,33 +130,57 @@ struct EntryView: View {
     @ViewBuilder
     private var weightDisplay: some View {
         let displayValue = state.displayValueInKilograms
-        if valueFieldFocused {
-            TextField("", text: $typedValue)
+        if isEditingValue || (canEditWithKeyboard && state.hasResolvedInitialWeight) {
+            TextField("", text: weightInputBinding, prompt: Text(" "))
                 .keyboardType(.decimalPad)
                 .focused($valueFieldFocused)
+                .optionalFirstWeightDefaultFocus(
+                    $valueFieldFocused,
+                    prefers: canEditWithKeyboard && isTabActive && state.hasResolvedInitialWeight
+                )
                 .font(.system(size: 88, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .accessibilityLabel("Weight value")
                 .accessibilityIdentifier("entry.value.textfield")
-        } else {
-            Text(formatter.format(kilograms: displayValue, in: displayUnit))
-                .font(.system(size: 72, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    handleWeightDisplayTap(currentKilograms: displayValue)
+                .onAppear {
+                    if canEditWithKeyboard, state.hasResolvedInitialWeight {
+                        scheduleFirstWeightKeyboardFocus()
+                    } else {
+                        valueFieldFocused = true
+                    }
                 }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityIdentifier("entry.value.display")
-                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to edit."))
+                .onChange(of: valueFieldFocused) { _, focused in
+                    if !focused, !canEditWithKeyboard {
+                        isEditingValue = false
+                    }
+                }
+        } else if !state.hasResolvedInitialWeight {
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: 88)
+                .accessibilityHidden(true)
+        } else {
+            formattedWeightText(kilograms: displayValue)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) {
+                    state.restoreDisplayToLastLoggedWeight()
+                }
+                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit))."))
                 .accessibilityHint("Double tap quickly to restore the last logged weight. Use the Restore action in the VoiceOver rotor for the same.")
                 .accessibilityAction(named: Text("Restore last logged weight")) {
                     state.restoreDisplayToLastLoggedWeight()
                 }
         }
+    }
+
+    private func formattedWeightText(kilograms: Double) -> some View {
+        Text(formatter.format(kilograms: kilograms, in: displayUnit))
+            .font(.system(size: 72, weight: .semibold, design: .rounded))
+            .foregroundStyle(.primary)
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("entry.value.display")
     }
 
     private var stepperRow: some View {
@@ -177,6 +232,8 @@ struct EntryView: View {
     private var saveButton: some View {
         Button {
             Task { @MainActor in
+                commitTypedValueIfNeeded()
+                dismissKeyboard()
                 await state.commit(store: store)
                 if case .savedAt = state.saveStatus {
                     syncWidgetAfterSuccessfulSave()
@@ -190,12 +247,12 @@ struct EntryView: View {
                 .foregroundStyle(.white)
         }
         .buttonStyle(.plain)
-        .disabled(valueFieldFocused || state.saveStatus == .saving)
+        .disabled(state.saveStatus == .saving)
         .accessibilityIdentifier("entry.save")
     }
 
     private var saveButtonBackground: Color {
-        if valueFieldFocused || state.saveStatus == .saving {
+        if state.saveStatus == .saving {
             return Color.accentColor.opacity(0.4)
         }
         return Color.accentColor
@@ -223,20 +280,114 @@ struct EntryView: View {
         }
     }
 
-    private func handleWeightDisplayTap(currentKilograms: Double) {
-        if let work = pendingOpenEditorWork {
-            work.cancel()
-            pendingOpenEditorWork = nil
-            state.restoreDisplayToLastLoggedWeight()
+    private func handleEntryVisibilityChange(isVisible: Bool) {
+        if isVisible {
+            presentFirstWeightEditorIfNeeded()
             return
         }
-        let work = DispatchWorkItem {
-            typedValue = String(format: "%.1f", currentKilograms.value(in: displayUnit, formatter: formatter))
+        clearSavedStatusTask?.cancel()
+        firstWeightFocusRequestID += 1
+        firstWeightKeyboardFocusTask?.cancel()
+        firstWeightKeyboardFocusTask = nil
+        dismissKeyboard()
+        didPresentFirstWeightEditor = false
+    }
+
+    /// Returning from History via the tab bar leaves `@FocusState` in a state that SwiftUI does
+    /// not always reconcile with UIKit. Programmatic `valueFieldFocused = true` (with or without a
+    /// false→true toggle) is silently dropped — the value flips but the underlying UITextField is
+    /// never made first responder, so no keyboard appears.
+    ///
+    /// Fix: wait for the tab transition to settle, then bypass SwiftUI and call
+    /// `becomeFirstResponder()` directly on the UITextField that backs the SwiftUI `TextField`.
+    /// We find it by accessibility identifier in the key window.
+    ///
+    /// **Important:** uses the `firstWeightFocusRequestID` generation guard so a fresh schedule
+    /// (e.g., from another `onChange`) cancels the in-flight pulse cleanly.
+    private func scheduleFirstWeightKeyboardFocus() {
+        guard isTabActive, canEditWithKeyboard, state.hasResolvedInitialWeight else { return }
+        firstWeightFocusRequestID += 1
+        let requestID = firstWeightFocusRequestID
+        firstWeightKeyboardFocusTask?.cancel()
+        firstWeightKeyboardFocusTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled, requestID == firstWeightFocusRequestID else { return }
+            guard isTabActive, canEditWithKeyboard, state.hasResolvedInitialWeight else { return }
+            isEditingValue = true
+            // Sync SwiftUI's @FocusState — important so the SwiftUI-side state matches reality and
+            // dependent modifiers (binding reads, etc.) behave correctly.
             valueFieldFocused = true
-            pendingOpenEditorWork = nil
+            // Then bypass SwiftUI and directly make the UITextField first responder. This is the
+            // only thing that reliably shows the keyboard after a tab swap on iOS 17/18.
+            EntryView.makeWeightFieldFirstResponder()
+            // Retry once after the keyboard animation slot to catch the rare case where the first
+            // call lost a race with another responder change.
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled, requestID == firstWeightFocusRequestID else { return }
+            guard isTabActive, canEditWithKeyboard, state.hasResolvedInitialWeight else { return }
+            if !EntryView.isWeightFieldFirstResponder() {
+                valueFieldFocused = true
+                EntryView.makeWeightFieldFirstResponder()
+            }
         }
-        pendingOpenEditorWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.singleTapEditDelaySeconds, execute: work)
+    }
+
+    /// Accessibility identifier of the weight TextField — propagated by SwiftUI to the underlying
+    /// UITextField so we can locate it in the UIKit window hierarchy.
+    private static let weightFieldAccessibilityIdentifier = "entry.value.textfield"
+
+    @MainActor
+    private static func makeWeightFieldFirstResponder() {
+        guard let textField = findWeightTextField() else { return }
+        if !textField.isFirstResponder {
+            textField.becomeFirstResponder()
+        }
+    }
+
+    @MainActor
+    private static func isWeightFieldFirstResponder() -> Bool {
+        findWeightTextField()?.isFirstResponder ?? false
+    }
+
+    @MainActor
+    private static func findWeightTextField() -> UITextField? {
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            for window in windowScene.windows where window.isKeyWindow {
+                if let textField = window.firstDescendant(
+                    ofType: UITextField.self,
+                    accessibilityIdentifier: weightFieldAccessibilityIdentifier
+                ) {
+                    return textField
+                }
+            }
+        }
+        return nil
+    }
+
+    private func presentFirstWeightEditorIfNeeded() {
+        guard isTabActive, canEditWithKeyboard, state.hasResolvedInitialWeight else { return }
+        if !didPresentFirstWeightEditor {
+            didPresentFirstWeightEditor = true
+            typedValue = ""
+        }
+        isEditingValue = true
+        scheduleFirstWeightKeyboardFocus()
+    }
+
+    private func syncTypedValueFromStepperIfNeeded(kilograms: Double) {
+        guard canEditWithKeyboard, isEditingValue, kilograms > 0 else { return }
+        typedValue = formatter.formatEditableValue(kilograms: kilograms, in: displayUnit)
+    }
+
+    private func dismissKeyboard() {
+        firstWeightFocusRequestID += 1
+        firstWeightKeyboardFocusTask?.cancel()
+        firstWeightKeyboardFocusTask = nil
+        valueFieldFocused = false
+        if !canEditWithKeyboard {
+            isEditingValue = false
+        }
     }
 
     private func syncWidgetAfterSuccessfulSave() {
@@ -246,11 +397,41 @@ struct EntryView: View {
     }
 }
 
-private extension Double {
-    func value(in unit: WeightUnit, formatter: WeightFormatter) -> Double {
-        Measurement(value: self, unit: UnitMass.kilograms)
-            .converted(to: unit.unitMass)
-            .value
+// MARK: - Focus helpers
+
+private extension View {
+    /// Applies `.defaultFocus` only when this branch should own initial keyboard focus (iOS 17+ two-parameter API).
+    @ViewBuilder
+    func optionalFirstWeightDefaultFocus(
+        _ binding: FocusState<Bool>.Binding,
+        prefers: Bool
+    ) -> some View {
+        if prefers {
+            self.defaultFocus(binding, true)
+        } else {
+            self
+        }
+    }
+}
+
+private extension UIView {
+    /// Depth-first search for the first descendant matching `type` and (optionally) an
+    /// `accessibilityIdentifier`. Used to locate SwiftUI-backed UITextFields in the window
+    /// hierarchy when SwiftUI's `@FocusState` doesn't reliably establish first responder.
+    func firstDescendant<T: UIView>(
+        ofType type: T.Type,
+        accessibilityIdentifier: String? = nil
+    ) -> T? {
+        if let typed = self as? T,
+           accessibilityIdentifier == nil || self.accessibilityIdentifier == accessibilityIdentifier {
+            return typed
+        }
+        for subview in subviews {
+            if let found = subview.firstDescendant(ofType: type, accessibilityIdentifier: accessibilityIdentifier) {
+                return found
+            }
+        }
+        return nil
     }
 }
 
