@@ -103,6 +103,7 @@ jobs:
     if: >-
       success() &&
       github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
       github.repository == github.event.repository.full_name
     concurrency:
       group: bump-build-${{ github.ref }}
