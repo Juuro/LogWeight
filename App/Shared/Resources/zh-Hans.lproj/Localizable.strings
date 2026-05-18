@@ -27,6 +27,7 @@
 "Couldn't read your weight history." = "无法读取你的体重历史。";
 "No weights yet." = "还没有体重记录。";
 "Save your first weight on the entry screen." = "在录入界面保存你的第一条体重记录。";
+"Enter your first weight" = "输入你的首次体重";
 "Recent entries" = "最近记录";
 "Trend" = "趋势";
 "Allow Body Mass in Watch → Settings → Health → Apps." = "请在“Watch → 设置 → 健康 → App”中允许“身体质量”。";

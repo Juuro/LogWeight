@@ -46,6 +46,7 @@ struct LogWeightApp: App {
                     .onChange(of: scenePhase) { _, newPhase in
                         guard newPhase == .active else { return }
                         Task { @MainActor in
+                            await entryState.loadLastWeight(from: healthKitStore)
                             await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: healthKitStore)
                             await ReminderSync.syncFromStoredSettings()
                         }

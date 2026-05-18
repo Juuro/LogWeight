@@ -47,11 +47,13 @@ public struct WeightFormatter {
         return numberFormatter.string(from: NSNumber(value: value)) ?? ""
     }
 
-    /// Keeps only ASCII decimal digits and at most one decimal separator (locale separator,
-    /// `.`, or `,`). Strips minus signs and other symbols; truncates at a second separator.
+    /// Keeps only ASCII decimal digits and at most one locale decimal separator.
+    /// Strips minus signs and other symbols; removes leading zeros from the integer part;
+    /// allows at most one fractional digit.
     public func sanitizeWeightInput(_ string: String) -> String {
         let preferredSeparator = locale.decimalSeparator ?? "."
-        var sanitized = ""
+        var integerPart = ""
+        var fractionPart = ""
         var hasSeparator = false
 
         for character in string {
@@ -59,7 +61,11 @@ public struct WeightFormatter {
                 continue
             }
             if Self.isASCIIWeightDigit(character) {
-                sanitized.append(character)
+                if hasSeparator {
+                    fractionPart.append(character)
+                } else {
+                    integerPart.append(character)
+                }
                 continue
             }
             let symbol = String(character)
@@ -70,10 +76,24 @@ public struct WeightFormatter {
                 break
             }
             hasSeparator = true
-            sanitized.append(preferredSeparator)
         }
 
-        return sanitized
+        integerPart = Self.normalizedIntegerDigits(integerPart)
+        if fractionPart.count > 1 {
+            fractionPart = String(fractionPart.prefix(1))
+        }
+
+        if hasSeparator {
+            return integerPart + preferredSeparator + fractionPart
+        }
+        return integerPart
+    }
+
+    private static func normalizedIntegerDigits(_ digits: String) -> String {
+        guard !digits.isEmpty else { return "" }
+        guard digits.count > 1, digits.first == "0" else { return digits }
+        let trimmed = digits.drop(while: { $0 == "0" })
+        return trimmed.isEmpty ? "0" : String(trimmed)
     }
 
     private static func isASCIIWeightDigit(_ character: Character) -> Bool {

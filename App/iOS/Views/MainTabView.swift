@@ -29,6 +29,13 @@ struct MainTabView: View {
                 .tag(Tab.history)
         }
         .modifier(TabBarOnlyOnSupportedPlatforms())
+        .task {
+            for await _ in store.observeChanges() {
+                guard !Task.isCancelled else { return }
+                await entryState.loadLastWeight(from: store)
+                await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
+            }
+        }
         .onOpenURL { url in
             guard url.scheme == "logweight", url.host == "history" else { return }
             selectedTab = .history

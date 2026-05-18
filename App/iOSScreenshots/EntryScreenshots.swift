@@ -29,8 +29,8 @@ final class EntryScreenshots: ScreenshotTestCase {
         let display = app.descendants(matching: .any)["entry.value.display"]
         waitForElement(display, named: "entry.value.display")
         display.tap()
-        // Wait for the keyboard toolbar's Done button to confirm the keyboard is up.
-        _ = app.buttons["entry.keyboard.done"].waitForExistence(timeout: 3)
+        // Wait for the decimal-pad field to confirm the keyboard is up.
+        _ = app.textFields["entry.value.textfield"].waitForExistence(timeout: 3)
         Thread.sleep(forTimeInterval: 0.2)
         attachScreenshot(named: "entry-keyboard-up")
     }

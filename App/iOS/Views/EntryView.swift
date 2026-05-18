@@ -20,6 +20,7 @@ struct EntryView: View {
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
+    @State private var didPresentFirstWeightEditor = false
     @FocusState private var valueFieldFocused: Bool
 
     /// Keyboard entry only when HealthKit read succeeded and confirmed no prior samples.
@@ -46,16 +47,30 @@ struct EntryView: View {
         NavigationStack {
             VStack(spacing: 32) {
                 Spacer()
+                if canEditWithKeyboard {
+                    Text("Enter your first weight")
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier("entry.first-weight.prompt")
+                }
                 weightDisplay
                 stepperRow
                 Spacer()
-                statusLine
-                saveButton
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(uiColor: .systemBackground))
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 12) {
+                    statusLine
+                    saveButton
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(Color(uiColor: .systemBackground))
+            }
             .privacySensitive()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -66,14 +81,6 @@ struct EntryView: View {
                     }
                     .accessibilityLabel("Settings")
                     .accessibilityIdentifier("entry.settings")
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        commitTypedValueIfNeeded()
-                        dismissWeightEditor()
-                    }
-                    .accessibilityIdentifier("entry.keyboard.done")
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -94,7 +101,21 @@ struct EntryView: View {
             }
             .onDisappear {
                 clearSavedStatusTask?.cancel()
-                dismissWeightEditor()
+                dismissKeyboard()
+                didPresentFirstWeightEditor = false
+            }
+            .onChange(of: state.hasConfirmedEmptyWeightStore) { _, isEmpty in
+                guard isEmpty else { return }
+                typedValue = ""
+                didPresentFirstWeightEditor = false
+                presentFirstWeightEditorIfNeeded()
+            }
+            .onChange(of: state.hasResolvedInitialWeight) { _, resolved in
+                guard resolved, state.hasConfirmedEmptyWeightStore else { return }
+                presentFirstWeightEditorIfNeeded()
+            }
+            .onChange(of: state.displayValueInKilograms) { _, newValue in
+                syncTypedValueFromStepperIfNeeded(kilograms: newValue)
             }
         }
     }
@@ -102,8 +123,8 @@ struct EntryView: View {
     @ViewBuilder
     private var weightDisplay: some View {
         let displayValue = state.displayValueInKilograms
-        if isEditingValue {
-            TextField("", text: weightInputBinding)
+        if isEditingValue || (canEditWithKeyboard && state.hasResolvedInitialWeight) {
+            TextField("", text: weightInputBinding, prompt: Text(" "))
                 .keyboardType(.decimalPad)
                 .focused($valueFieldFocused)
                 .font(.system(size: 88, weight: .semibold, design: .rounded))
@@ -114,26 +135,15 @@ struct EntryView: View {
                     valueFieldFocused = true
                 }
                 .onChange(of: valueFieldFocused) { _, focused in
-                    if !focused {
+                    if !focused, !canEditWithKeyboard {
                         isEditingValue = false
                     }
                 }
         } else if !state.hasResolvedInitialWeight {
-            formattedWeightText(kilograms: displayValue)
-        } else if canEditWithKeyboard {
-            formattedWeightText(kilograms: displayValue)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    openWeightEditor(currentKilograms: displayValue)
-                }
-                .simultaneousGesture(
-                    TapGesture(count: 2).onEnded {
-                        openWeightEditor(currentKilograms: displayValue)
-                    }
-                )
-                .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to type your first weight."))
-                .accessibilityHint("Opens the keyboard to type your weight.")
-                .accessibilityAddTraits(.isButton)
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: 88)
+                .accessibilityHidden(true)
         } else {
             formattedWeightText(kilograms: displayValue)
                 .contentShape(Rectangle())
@@ -207,10 +217,8 @@ struct EntryView: View {
     private var saveButton: some View {
         Button {
             Task { @MainActor in
-                if isEditingValue {
-                    commitTypedValueIfNeeded()
-                    dismissWeightEditor()
-                }
+                commitTypedValueIfNeeded()
+                dismissKeyboard()
                 await state.commit(store: store)
                 if case .savedAt = state.saveStatus {
                     syncWidgetAfterSuccessfulSave()
@@ -257,15 +265,24 @@ struct EntryView: View {
         }
     }
 
-    private func openWeightEditor(currentKilograms: Double) {
-        guard canEditWithKeyboard else { return }
-        typedValue = formatter.formatEditableValue(kilograms: currentKilograms, in: displayUnit)
+    private func presentFirstWeightEditorIfNeeded() {
+        guard canEditWithKeyboard, !didPresentFirstWeightEditor else { return }
+        didPresentFirstWeightEditor = true
+        typedValue = ""
         isEditingValue = true
+        valueFieldFocused = true
     }
 
-    private func dismissWeightEditor() {
+    private func syncTypedValueFromStepperIfNeeded(kilograms: Double) {
+        guard canEditWithKeyboard, isEditingValue, kilograms > 0 else { return }
+        typedValue = formatter.formatEditableValue(kilograms: kilograms, in: displayUnit)
+    }
+
+    private func dismissKeyboard() {
         valueFieldFocused = false
-        isEditingValue = false
+        if !canEditWithKeyboard {
+            isEditingValue = false
+        }
     }
 
     private func syncWidgetAfterSuccessfulSave() {

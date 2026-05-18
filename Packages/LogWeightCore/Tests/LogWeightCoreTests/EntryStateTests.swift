@@ -95,11 +95,54 @@ final class EntryStateTests: XCTestCase {
         let store = InMemoryHealthKitStore()
         let state = EntryState(initialValueInKilograms: 75.0)
         await state.loadLastWeight(from: store)
-        XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
+        XCTAssertEqual(state.displayValueInKilograms, 0, accuracy: 0.001)
+        XCTAssertTrue(state.isAwaitingFirstWeight)
         XCTAssertEqual(state.initialWeightLoadOutcome, .emptyStore)
         XCTAssertTrue(state.hasResolvedInitialWeight)
         XCTAssertTrue(state.hasConfirmedEmptyWeightStore)
         XCTAssertNil(state.lastSavedWeight)
+    }
+
+    @MainActor
+    func testCommitNoOpsWhileAwaitingFirstWeightWithoutValue() async {
+        let store = InMemoryHealthKitStore()
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        await state.commit(store: store, now: referenceDate)
+        XCTAssertEqual(state.saveStatus, .idle)
+        XCTAssertNil(state.lastSavedWeight)
+    }
+
+    @MainActor
+    func testLoadLastWeightReturnsToFirstEntryAfterAllSamplesRemoved() async throws {
+        let store = InMemoryHealthKitStore()
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        state.setValue(80.0, unit: .kilograms)
+        await state.commit(store: store, now: referenceDate)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .hasPriorWeight)
+        XCTAssertNotNil(state.lastSavedWeight)
+
+        let recent = try await store.recentWeights(limit: 1)
+        let saved = try XCTUnwrap(recent.first)
+        try await store.delete(saved)
+        await state.loadLastWeight(from: store)
+
+        XCTAssertTrue(state.hasConfirmedEmptyWeightStore)
+        XCTAssertTrue(state.isAwaitingFirstWeight)
+        XCTAssertEqual(state.displayValueInKilograms, 0, accuracy: 0.001)
+        XCTAssertNil(state.lastSavedWeight)
+        XCTAssertEqual(state.saveStatus, .idle)
+    }
+
+    @MainActor
+    func testStepperActivatesBaseValueFromAwaitingFirstWeight() async {
+        let store = InMemoryHealthKitStore()
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        state.increment()
+        XCTAssertEqual(state.displayValueInKilograms, 75.1, accuracy: 0.001)
+        XCTAssertFalse(state.isAwaitingFirstWeight)
     }
 
     @MainActor
@@ -160,6 +203,7 @@ final class EntryStateTests: XCTestCase {
         let state = EntryState(initialValueInKilograms: 75.0)
         await state.loadLastWeight(from: store)
         XCTAssertTrue(state.hasConfirmedEmptyWeightStore)
+        state.setValue(80.0, unit: .kilograms)
 
         await state.commit(store: store, now: referenceDate)
         XCTAssertEqual(state.initialWeightLoadOutcome, .hasPriorWeight)

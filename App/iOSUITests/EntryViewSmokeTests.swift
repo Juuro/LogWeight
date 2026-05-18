@@ -30,7 +30,6 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
         plus.tap()
         plus.tap()
-        plus.tap()
 
         let save = app.buttons["entry.save"]
         XCTAssertTrue(save.exists)
@@ -49,12 +48,10 @@ final class EntryViewSmokeTests: XCTestCase {
 
     /// Save stays enabled with the keyboard up and commits the typed first weight in one tap.
     func testSaveWhileKeyboardOpenCommitsFirstWeight() throws {
-        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
-        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
-        valueDisplay.tap()
-
         let valueField = app.textFields["entry.value.textfield"]
         XCTAssertTrue(valueField.waitForExistence(timeout: 2))
+        valueField.tap()
+        valueField.typeText("80")
 
         let save = app.buttons["entry.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 2))
@@ -67,18 +64,11 @@ final class EntryViewSmokeTests: XCTestCase {
                        "Keyboard editor should close after Save")
     }
 
-    /// Regression guard: when there is no saved weight yet, quick double-tap on
-    /// the entry value should still open keyboard editing instead of triggering
-    /// restore-last-weight behavior.
-    func testFirstEntryDoubleTapStillOpensKeyboardEditing() throws {
-        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
-        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
-
-        valueDisplay.tap(withNumberOfTaps: 2, numberOfTouches: 1)
-
-        let valueField = app.textFields["entry.value.textfield"]
-        XCTAssertTrue(valueField.waitForExistence(timeout: 2),
-                      "Double tap should open keyboard editing for first entry")
+    /// Regression guard: first-time entry keeps the keyboard field available.
+    func testFirstEntryShowsKeyboardFieldOnLaunch() throws {
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2),
+                      "First entry should open the keyboard field automatically")
     }
 
     /// After the first save, keyboard entry stays unavailable and double-tap restores last saved weight.
@@ -125,6 +115,34 @@ final class EntryViewSmokeTests: XCTestCase {
         }
         XCTAssertEqual(restored, savedDisplay, accuracy: 0.05,
                        "Double tap should restore the last saved weight on the returning-user branch")
+    }
+
+    /// Deleting the last saved weight in History returns Entry to the first-time screen.
+    func testDeletingLastWeightReturnsToFirstEntryScreen() throws {
+        let valueField = app.textFields["entry.value.textfield"]
+        XCTAssertTrue(valueField.waitForExistence(timeout: 2))
+        valueField.tap()
+        valueField.typeText("80")
+        app.buttons["entry.save"].tap()
+        XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
+
+        app.openHistoryTab()
+        let savedRow = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS '80'")
+        ).firstMatch
+        XCTAssertTrue(savedRow.waitForExistence(timeout: 2))
+        savedRow.press(forDuration: 1.0)
+        app.buttons["Delete"].tap()
+
+        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+
+        app.openEntryTab()
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
+        XCTAssertFalse(
+            app.descendants(matching: .any)["entry.value.display"].waitForExistence(timeout: 1),
+            "Stepper display must not appear when Apple Health has no weights"
+        )
     }
 
     /// Phase 4: history now includes a chart on iOS/iPadOS.
