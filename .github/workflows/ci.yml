@@ -44,6 +44,9 @@ jobs:
         with:
           derived-data-path: ${{ env.DERIVED_DATA_PATH }}
 
+      - name: Download iOS simulator platform
+        run: xcodebuild -downloadPlatform iOS
+
       - name: Resolve iOS simulator
         id: sim
         run: |
