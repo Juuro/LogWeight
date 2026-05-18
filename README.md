@@ -72,6 +72,10 @@ Phase 4 release docs:
 
 LogWeight handles GDPR Art. 9 special-category health data. See [`docs/Privacy.md`](docs/Privacy.md) for the full data-flow statement, lawful basis, and Privacy Manifest summary.
 
+## Monetization
+
+See [`docs/Monetization.md`](docs/Monetization.md) for the recommended pricing approach: keep the core logging flow free, avoid ads and subscriptions, and use a low-cost optional one-time supporter purchase in Settings.
+
 ## Contributing
 
 See [`docs/jmat-reports/2026-04-27-logweight-multiplatform-plan.md`](docs/jmat-reports/2026-04-27-logweight-multiplatform-plan.md) for the synthesised architecture and the constraints baked into the roadmap.
