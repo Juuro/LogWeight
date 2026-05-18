@@ -44,12 +44,12 @@ jobs:
         with:
           derived-data-path: ${{ env.DERIVED_DATA_PATH }}
 
-      - name: Download iOS simulator platform
-        run: xcodebuild -downloadPlatform iOS
+      - name: Ensure iOS simulator platform
+        run: bash .github/scripts/ensure-simulator-platform.sh iOS LogWeight
 
-      # LogWeight embeds the Watch app; build-for-testing requires watchOS simulators too.
-      - name: Download watchOS simulator platform
-        run: xcodebuild -downloadPlatform watchOS
+      # LogWeight embeds the Watch app; build-for-testing needs watchOS simulators when absent.
+      - name: Ensure watchOS simulator platform
+        run: bash .github/scripts/ensure-simulator-platform.sh watchOS LogWeight
 
       - name: Resolve iOS simulator
         id: sim
@@ -77,8 +77,6 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -configuration Debug \
             -derivedDataPath "$DERIVED_DATA_PATH" \
-            -parallel-testing-enabled YES \
-            -maximum-parallel-testing-workers 4 \
             CODE_SIGNING_ALLOWED=NO
 
   watch-build:
@@ -96,9 +94,8 @@ jobs:
         with:
           derived-data-path: ${{ env.DERIVED_DATA_PATH }}
 
-      # macos-latest ships newer watch simulator runtimes than Xcode 16.2's SDK expects.
-      - name: Download watchOS simulator platform
-        run: xcodebuild -downloadPlatform watchOS
+      - name: Ensure watchOS simulator platform
+        run: bash .github/scripts/ensure-simulator-platform.sh watchOS LogWeightWatch
 
       - name: Build for watchOS Simulator
         run: |
