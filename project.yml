@@ -170,6 +170,7 @@ targets:
           - CFBundleURLName: de.juuronina.logweight
             CFBundleURLSchemes:
               - logweight
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.juuronina.logweight
