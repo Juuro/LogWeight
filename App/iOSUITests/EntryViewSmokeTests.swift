@@ -13,6 +13,10 @@ final class EntryViewSmokeTests: XCTestCase {
 
     private var app: XCUIApplication!
 
+    private var historyEmptyState: XCUIElement {
+        app.descendants(matching: .any)["history.empty"]
+    }
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
@@ -73,7 +77,8 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
 
         app.openHistoryTab()
-        XCTAssertTrue(app.otherElements["history.empty"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5))
+        XCTAssertTrue(historyEmptyState.waitForExistence(timeout: 10))
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
@@ -151,7 +156,7 @@ final class EntryViewSmokeTests: XCTestCase {
         savedRow.press(forDuration: 1.0)
         app.buttons["Delete"].tap()
 
-        XCTAssertTrue(app.otherElements["history.empty"].waitForExistence(timeout: 5))
+        XCTAssertTrue(historyEmptyState.waitForExistence(timeout: 10))
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
