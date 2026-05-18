@@ -34,7 +34,7 @@ jobs:
     runs-on: macos-latest
     needs: core-tests
     env:
-      DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData
+      DERIVED_DATA_PATH: ${{ github.workspace }}/.ci/DerivedData
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
     runs-on: macos-latest
     needs: core-tests
     env:
-      DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData
+      DERIVED_DATA_PATH: ${{ github.workspace }}/.ci/DerivedData
     steps:
       - name: Checkout
         uses: actions/checkout@v4
