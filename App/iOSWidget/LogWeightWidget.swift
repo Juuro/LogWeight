@@ -13,13 +13,13 @@ struct LogWeightWidgetProvider: TimelineProvider {
         LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 75.0, trend: .flat)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (LogWeightWidgetEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping @Sendable (LogWeightWidgetEntry) -> Void) {
         Task {
             completion(await makeEntry())
         }
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<LogWeightWidgetEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<LogWeightWidgetEntry>) -> Void) {
         Task {
             let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: .now)
                 ?? .now.addingTimeInterval(1800)

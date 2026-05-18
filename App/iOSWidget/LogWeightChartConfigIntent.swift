@@ -12,7 +12,7 @@ enum ChartWidgetRange: String, AppEnum {
     case oneYear
     case all
 
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Range")
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Range")
 
     static var defaultCase: ChartWidgetRange { .oneWeek }
 
@@ -40,8 +40,8 @@ enum ChartWidgetRange: String, AppEnum {
 }
 
 struct LogWeightChartConfigIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Weight Trend"
-    static var description = IntentDescription("Shows your weight trend from Apple Health.")
+    static let title: LocalizedStringResource = "Weight Trend"
+    static let description = IntentDescription("Shows your weight trend from Apple Health.")
 
     @Parameter(title: "Range")
     var range: ChartWidgetRange
