@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: ["**"]
+    paths-ignore:
+      - Config/Version.xcconfig
   workflow_dispatch:
 
 concurrency:
@@ -93,3 +95,58 @@ jobs:
             -destination 'generic/platform=watchOS Simulator' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
+
+  bump-build-number:
+    name: Bump build number
+    runs-on: ubuntu-latest
+    needs: [core-tests, ios-build, watch-build]
+    if: >-
+      success() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'Juuro/LogWeight'
+    concurrency:
+      group: bump-build-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Skip bump commits
+        id: skip
+        env:
+          HEAD_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if printf '%s' "$HEAD_MSG" | grep -qF '[skip ci]'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: head commit is a CI bump ([skip ci])."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump CURRENT_PROJECT_VERSION
+        if: steps.skip.outputs.skip != 'true'
+        id: bump
+        run: |
+          new="$(Tools/bump-build-number.sh)"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.skip.outputs.skip != 'true'
+        env:
+          NEW_BUILD: ${{ steps.bump.outputs.new }}
+        run: |
+          if git diff --quiet -- Config/Version.xcconfig; then
+            echo "No change to Config/Version.xcconfig; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Config/Version.xcconfig
+          git commit -m "chore(ci): bump build number to ${NEW_BUILD} [skip ci]"
+          git push

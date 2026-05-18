@@ -1,0 +1,3 @@
+// Build number (CFBundleVersion). Auto-incremented by CI on green runs.
+// See .github/workflows/ci.yml and Tools/bump-build-number.sh.
+CURRENT_PROJECT_VERSION = 1
