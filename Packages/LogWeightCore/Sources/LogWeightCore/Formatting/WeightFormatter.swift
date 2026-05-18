@@ -34,16 +34,33 @@ public struct WeightFormatter {
         return formatter.string(from: measurement)
     }
 
-    /// Keeps only decimal digits and at most one decimal separator (locale separator,
-    /// `.`, or `,`). Strips letters, signs, spaces, and other symbols so pasted text
-    /// cannot enter the weight field.
+    /// Locale-aware numeric string for weight text fields (no unit suffix).
+    public func formatEditableValue(kilograms: Double, in unit: WeightUnit) -> String {
+        let value = Measurement(value: kilograms, unit: UnitMass.kilograms)
+            .converted(to: unit.unitMass)
+            .value
+        let numberFormatter = NumberFormatter()
+        numberFormatter.locale = locale
+        numberFormatter.numberStyle = .decimal
+        numberFormatter.minimumFractionDigits = fractionDigits
+        numberFormatter.maximumFractionDigits = fractionDigits
+        return numberFormatter.string(from: NSNumber(value: value)) ?? ""
+    }
+
+    /// Keeps only ASCII decimal digits and at most one decimal separator (locale separator,
+    /// `.`, or `,`). Rejects minus signs and other symbols so pasted text cannot enter
+    /// invalid weights silently.
     public func sanitizeWeightInput(_ string: String) -> String {
+        if string.contains("-") {
+            return ""
+        }
+
         let preferredSeparator = locale.decimalSeparator ?? "."
         var sanitized = ""
         var hasSeparator = false
 
         for character in string {
-            if character.isNumber {
+            if Self.isASCIIWeightDigit(character) {
                 sanitized.append(character)
                 continue
             }
@@ -57,6 +74,10 @@ public struct WeightFormatter {
         }
 
         return sanitized
+    }
+
+    private static func isASCIIWeightDigit(_ character: Character) -> Bool {
+        ("0"..."9").contains(character)
     }
 
     /// Parses a user-typed string in the given unit into a kilogram value.

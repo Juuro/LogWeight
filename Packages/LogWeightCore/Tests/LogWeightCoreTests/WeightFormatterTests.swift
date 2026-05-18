@@ -57,11 +57,19 @@ final class WeightFormatterTests: XCTestCase {
         XCTAssertNil(formatter.parseToKilograms("-155.4", unit: .pounds))
     }
 
+    func testFormatEditableValueUsesLocaleDecimalSeparator() {
+        let german = WeightFormatter(locale: Locale(identifier: "de_DE"), fractionDigits: 1)
+        XCTAssertEqual(german.formatEditableValue(kilograms: 75.0, in: .kilograms), "75,0")
+
+        let english = WeightFormatter(locale: Locale(identifier: "en_US"), fractionDigits: 1)
+        XCTAssertEqual(english.formatEditableValue(kilograms: 75.0, in: .kilograms), "75.0")
+    }
+
     func testSanitizeWeightInputEnglishLocale() {
         let formatter = WeightFormatter(locale: Locale(identifier: "en_US"))
         XCTAssertEqual(formatter.sanitizeWeightInput("82.3"), "82.3")
         XCTAssertEqual(formatter.sanitizeWeightInput("82abc.3kg"), "82.3")
-        XCTAssertEqual(formatter.sanitizeWeightInput("-12.34"), "12.34")
+        XCTAssertEqual(formatter.sanitizeWeightInput("-12.34"), "")
         XCTAssertEqual(formatter.sanitizeWeightInput("1.2.3"), "1.23")
     }
 

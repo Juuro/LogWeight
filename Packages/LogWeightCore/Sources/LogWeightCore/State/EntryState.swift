@@ -21,6 +21,8 @@ public final class EntryState {
     public var displayUnit: WeightUnit
     public private(set) var saveStatus: SaveStatus
     public private(set) var lastSavedWeight: Weight?
+    /// `true` after the first `loadLastWeight(from:)` attempt finishes (success or failure).
+    public private(set) var hasResolvedInitialWeight = false
 
     private let stepIncrementInKilograms: Double
 
@@ -39,6 +41,7 @@ public final class EntryState {
     /// Pre-fills the value with the most-recent saved weight, if available.
     /// Silently no-ops on read failure — the entry surface is never blocked.
     public func loadLastWeight(from store: HealthKitStore) async {
+        defer { hasResolvedInitialWeight = true }
         guard let recent = try? await store.recentWeights(limit: 1).first else {
             return
         }

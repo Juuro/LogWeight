@@ -82,21 +82,46 @@ final class EntryViewSmokeTests: XCTestCase {
                       "Double tap should open keyboard editing for first entry")
     }
 
-    /// After the first save, the value display must not offer keyboard entry again.
+    /// After the first save, keyboard entry stays unavailable and double-tap restores last saved weight.
     func testKeyboardEntryUnavailableAfterFirstSave() throws {
         let plus = app.buttons["entry.stepper.plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 2))
+
+        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
+        XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
+
         plus.tap()
         app.buttons["entry.save"].tap()
         XCTAssertTrue(app.staticTexts["entry.status.saved"].waitForExistence(timeout: 2))
 
-        let valueDisplay = app.descendants(matching: .any)["entry.value.display"]
         XCTAssertTrue(valueDisplay.waitForExistence(timeout: 2))
-        valueDisplay.tap()
+        guard let savedDisplay = Self.parseDisplayValue(valueDisplay.label) else {
+            XCTFail("Could not parse display after save: '\(valueDisplay.label)'")
+            return
+        }
 
+        plus.tap()
+        guard let bumpedDisplay = Self.parseDisplayValue(valueDisplay.label) else {
+            XCTFail("Could not parse display after bump: '\(valueDisplay.label)'")
+            return
+        }
+        XCTAssertGreaterThan(bumpedDisplay, savedDisplay, accuracy: 0.05)
+
+        valueDisplay.tap()
         let valueField = app.textFields["entry.value.textfield"]
         XCTAssertFalse(valueField.waitForExistence(timeout: 1),
                        "Keyboard entry must not be available after the first weight is saved")
+
+        valueDisplay.tap(withNumberOfTaps: 2, numberOfTouches: 1)
+        XCTAssertFalse(valueField.waitForExistence(timeout: 1),
+                       "Double tap must not reopen keyboard editing after the first save")
+
+        guard let restored = Self.parseDisplayValue(valueDisplay.label) else {
+            XCTFail("Could not parse display after double tap: '\(valueDisplay.label)'")
+            return
+        }
+        XCTAssertEqual(restored, savedDisplay, accuracy: 0.05,
+                       "Double tap should restore the last saved weight on the returning-user branch")
     }
 
     /// Phase 4: history now includes a chart on iOS/iPadOS.

@@ -22,10 +22,6 @@ focused on non-obvious conventions.
   on every widget configuration. Without it, physical devices show a system placeholder
   (“Please adopt containerBackground API”) instead of your UI; the simulator may still
   look fine. Do not remove it to tweak accent colors—adjust `widgetAccentable` instead.
-- **Every new user-facing string** must be added to **all**
-  `App/Shared/Resources/*.lproj/Localizable.strings` locales (`en` plus ten translations).
-  Use the English UI text as the key in Swift (`Text("…")`). Run `Tools/check-localizations.sh`
-  before committing; install the git hook once per clone with `Tools/install-git-hooks.sh`.
 
 ## Architectural Conventions
 
@@ -41,9 +37,7 @@ focused on non-obvious conventions.
 
 ## UX and Product Gotchas
 
-- Entry flow is stepper-first; keyboard entry is secondary.
-- On iOS, Save must remain disabled while keyboard is presented to avoid
-  occlusion-related mistakes.
+- Entry flow is stepper-first; keyboard entry is only allowed when there are no body weight entries in Apple Health yet.
 - History chart is additive on iOS/iPadOS; watchOS remains list-only.
   Do not regress list readability or auditability.
 
@@ -76,21 +70,11 @@ Tools/CaptureScene.sh --all
 ```
 
 - Screenshot runner target: `App/iOSScreenshots`.
-- Scene docs: `docs/AIScreenshotWorkflow.md`.
-
-## Localization
-
-- Catalog: `App/Shared/Resources/<locale>.lproj/Localizable.strings`
-- Locales: `en`, `de`, `fr`, `es`, `it`, `nl`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `zh-Hant`
-- Parity check: `Tools/check-localizations.sh` (runs from `githooks/pre-commit`)
-- Commit messages: `Tools/check-commit-message.sh` (runs from `githooks/commit-msg`)
-- Install hooks once per clone: `Tools/install-git-hooks.sh`
-- Coding agents: use the catalog, locale list, and parity check above as the localization source of truth.
+- Scene docs: `Docs/AIScreenshotWorkflow.md`.
 
 ## Commit Message Convention
 
-Conventional Commits are enforced by `githooks/commit-msg` (after `Tools/install-git-hooks.sh`)
-and by the Claude Code Bash hook in `.claude/settings.json`:
+Conventional Commits are enforced by a pre-commit hook:
 
 ```text
 <type>(<scope>): <subject>
@@ -101,7 +85,7 @@ and by the Claude Code Bash hook in `.claude/settings.json`:
 
 ## High-Value References
 
-- `docs/Architecture.md` (ADR rationale)
-- `docs/Privacy.md` (GDPR/health-data constraints)
-- `docs/HealthKitAvailability.md` (platform capabilities)
-- `docs/AIScreenshotWorkflow.md` (scene catalog and usage)
+- `Docs/Architecture.md` (ADR rationale)
+- `Docs/Privacy.md` (GDPR/health-data constraints)
+- `Docs/HealthKitAvailability.md` (platform capabilities)
+- `Docs/AIScreenshotWorkflow.md` (scene catalog and usage)

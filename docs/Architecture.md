@@ -54,7 +54,7 @@ This document records the architectural decisions that shape Phase 1. Decisions 
 
 **Status:** accepted.
 
-**Decision.** The primary entry path is the ± stepper. The big number is tappable — tapping it opens the decimal pad. The Save button is **disabled while the keyboard is up**, and a "Done" button in the keyboard toolbar dismisses the keyboard before Save becomes tappable.
+**Decision.** The primary entry path is the ± stepper. The if there is no weight value in Apple Health the app opens with the EntryView and an open decimal pad with the input field where the big number normally is.
 
 **Rationale.** The Devil's Advocate (DA1) flagged that a Save button in the safe-area inset is occluded by the decimal-pad keyboard on every iPhone. The user chose stepper-primary at the approval gate. This eliminates the keyboard from the median entry path entirely.
 

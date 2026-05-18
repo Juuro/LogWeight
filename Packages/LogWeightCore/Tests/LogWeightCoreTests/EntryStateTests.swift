@@ -11,6 +11,7 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
         XCTAssertEqual(state.saveStatus, .idle)
         XCTAssertNil(state.lastSavedWeight)
+        XCTAssertFalse(state.hasResolvedInitialWeight)
     }
 
     @MainActor
@@ -82,6 +83,7 @@ final class EntryStateTests: XCTestCase {
         await state.loadLastWeight(from: store)
         XCTAssertEqual(state.displayValueInKilograms, 78.5, accuracy: 0.001)
         XCTAssertEqual(state.lastSavedWeight?.valueInKilograms, 78.5)
+        XCTAssertTrue(state.hasResolvedInitialWeight)
     }
 
     @MainActor
@@ -90,6 +92,8 @@ final class EntryStateTests: XCTestCase {
         let state = EntryState(initialValueInKilograms: 75.0)
         await state.loadLastWeight(from: store)
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
+        XCTAssertTrue(state.hasResolvedInitialWeight)
+        XCTAssertNil(state.lastSavedWeight)
     }
 
     @MainActor

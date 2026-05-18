@@ -5,9 +5,9 @@ import LogWeightCore
 /// Stepper-primary entry surface.
 ///
 /// Layout (top to bottom):
-/// - Big SF Rounded numeric value (first entry only: tap → decimal pad; later: double-tap restores last weight)
+/// - Big SF Rounded numeric value: after Health load, keyboard edit only when Apple Health has no body-mass samples; otherwise double-tap restores last weight
 /// - Prominent − / + stepper buttons (44pt, long-press accelerates via SwiftUI Stepper)
-/// - Save button bottom-trailing; while the keyboard is up it applies the typed value, dismisses, and saves
+/// - Save button bottom-trailing; on first entry, Save commits typed value and dismisses the keyboard in one tap
 struct EntryView: View {
 
     @Bindable var state: EntryState
@@ -22,9 +22,9 @@ struct EntryView: View {
     @State private var clearSavedStatusTask: Task<Void, Never>?
     @FocusState private var valueFieldFocused: Bool
 
-    /// Keyboard entry is only offered before the first weight exists in Apple Health.
+    /// Keyboard entry only after initial Health load completes and no body-mass sample exists.
     private var canEditWithKeyboard: Bool {
-        state.lastSavedWeight == nil
+        state.hasResolvedInitialWeight && state.lastSavedWeight == nil
     }
 
     private var displayUnit: WeightUnit {
@@ -113,6 +113,13 @@ struct EntryView: View {
                 .onAppear {
                     valueFieldFocused = true
                 }
+                .onChange(of: valueFieldFocused) { _, focused in
+                    if !focused {
+                        isEditingValue = false
+                    }
+                }
+        } else if !state.hasResolvedInitialWeight {
+            formattedWeightText(kilograms: displayValue)
         } else if canEditWithKeyboard {
             Button {
                 openWeightEditor(currentKilograms: displayValue)
@@ -130,13 +137,7 @@ struct EntryView: View {
             .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit)). Tap to type your first weight."))
             .accessibilityHint("Opens the keyboard to type your weight.")
         } else {
-            Text(formatter.format(kilograms: displayValue, in: displayUnit))
-                .font(.system(size: 72, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
+            formattedWeightText(kilograms: displayValue)
                 .onTapGesture(count: 2) {
                     state.restoreDisplayToLastLoggedWeight()
                 }
@@ -147,6 +148,15 @@ struct EntryView: View {
                     state.restoreDisplayToLastLoggedWeight()
                 }
         }
+    }
+
+    private func formattedWeightText(kilograms: Double) -> some View {
+        Text(formatter.format(kilograms: kilograms, in: displayUnit))
+            .font(.system(size: 72, weight: .semibold, design: .rounded))
+            .foregroundStyle(.primary)
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity)
     }
 
     private var stepperRow: some View {
@@ -250,7 +260,7 @@ struct EntryView: View {
 
     private func openWeightEditor(currentKilograms: Double) {
         guard canEditWithKeyboard else { return }
-        typedValue = String(format: "%.1f", currentKilograms.value(in: displayUnit, formatter: formatter))
+        typedValue = formatter.formatEditableValue(kilograms: currentKilograms, in: displayUnit)
         isEditingValue = true
     }
 
@@ -263,14 +273,6 @@ struct EntryView: View {
         Task {
             await WidgetTimelineRefresh.syncEntryStoreAndReloadWidgets(store: store)
         }
-    }
-}
-
-private extension Double {
-    func value(in unit: WeightUnit, formatter: WeightFormatter) -> Double {
-        Measurement(value: self, unit: UnitMass.kilograms)
-            .converted(to: unit.unitMass)
-            .value
     }
 }
 
