@@ -17,15 +17,13 @@ permissions:
 jobs:
   core-tests:
     name: Core unit tests (swift test)
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Show toolchain
-        run: |
-          swift --version
-          xcodebuild -version
+        run: swift --version
 
       - name: swift test
         working-directory: Packages/LogWeightCore
@@ -33,59 +31,78 @@ jobs:
 
   ios-build:
     name: iOS build + UI smoke
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: core-tests
+    env:
+      DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select latest stable Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Apple CI setup
+        uses: ./.github/actions/apple-ci-setup
         with:
-          xcode-version: latest-stable
+          derived-data-path: ${{ env.DERIVED_DATA_PATH }}
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate
-
-      - name: Build for iOS Simulator
+      - name: Resolve iOS simulator
+        id: sim
         run: |
-          xcodebuild build \
+          UDID=$(xcrun simctl list devices available -j | python3 - <<'PY'
+          import json
+          import sys
+
+          data = json.load(sys.stdin)
+          for runtime, devices in data.get("devices", {}).items():
+              if "iOS" not in runtime:
+                  continue
+              for device in devices:
+                  if device.get("isAvailable") and device.get("name") == "iPad (10th generation)":
+                      print(device["udid"])
+                      sys.exit(0)
+          sys.stderr.write("No available iPad (10th generation) simulator found\n")
+          sys.exit(1)
+          PY
+          )
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build for testing
+        run: |
+          xcodebuild build-for-testing \
             -project LogWeight.xcodeproj \
             -scheme LogWeight \
-            -destination 'platform=iOS Simulator,name=iPad (10th generation)' \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -configuration Debug \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
             CODE_SIGNING_ALLOWED=NO
 
+      # All 13 EntryViewSmokeTests run on every branch. To run a PR subset later, add
+      # repeated -only-testing:LogWeightUITests/EntryViewSmokeTests/testMethodName flags.
       - name: Run UI smoke tests
         run: |
-          xcodebuild test \
+          xcodebuild test-without-building \
             -project LogWeight.xcodeproj \
             -scheme LogWeight \
-            -destination 'platform=iOS Simulator,name=iPad (10th generation)' \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -configuration Debug \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            -parallel-testing-enabled YES \
+            -maximum-parallel-testing-workers 4 \
             CODE_SIGNING_ALLOWED=NO
 
   watch-build:
     name: watchOS build (LogWeightWatch scheme)
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: core-tests
+    env:
+      DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select latest stable Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Apple CI setup
+        uses: ./.github/actions/apple-ci-setup
         with:
-          xcode-version: latest-stable
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate
+          derived-data-path: ${{ env.DERIVED_DATA_PATH }}
 
       - name: Build for watchOS Simulator
         run: |
@@ -94,6 +111,7 @@ jobs:
             -scheme LogWeightWatch \
             -destination 'generic/platform=watchOS Simulator' \
             -configuration Debug \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
             CODE_SIGNING_ALLOWED=NO
 
   bump-build-number:
