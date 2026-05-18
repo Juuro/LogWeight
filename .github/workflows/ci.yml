@@ -47,22 +47,7 @@ jobs:
       - name: Resolve iOS simulator
         id: sim
         run: |
-          UDID=$(xcrun simctl list devices available -j | python3 - <<'PY'
-          import json
-          import sys
-
-          data = json.load(sys.stdin)
-          for runtime, devices in data.get("devices", {}).items():
-              if "iOS" not in runtime:
-                  continue
-              for device in devices:
-                  if device.get("isAvailable") and device.get("name") == "iPad (10th generation)":
-                      print(device["udid"])
-                      sys.exit(0)
-          sys.stderr.write("No available iPad (10th generation) simulator found\n")
-          sys.exit(1)
-          PY
-          )
+          UDID=$(python3 .github/scripts/resolve-ios-simulator-udid.py)
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Build for testing
@@ -103,6 +88,10 @@ jobs:
         uses: ./.github/actions/apple-ci-setup
         with:
           derived-data-path: ${{ env.DERIVED_DATA_PATH }}
+
+      # macos-latest ships newer watch simulator runtimes than Xcode 16.2's SDK expects.
+      - name: Download watchOS simulator platform
+        run: xcodebuild -downloadPlatform watchOS
 
       - name: Build for watchOS Simulator
         run: |
