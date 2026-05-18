@@ -104,7 +104,7 @@ jobs:
       success() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      github.repository == github.event.repository.full_name
+      github.repository == 'Juuro/LogWeight'
     concurrency:
       group: bump-build-${{ github.ref }}
       cancel-in-progress: false
