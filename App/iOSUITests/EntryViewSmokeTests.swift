@@ -83,9 +83,12 @@ final class EntryViewSmokeTests: XCTestCase {
         )
 
         app.openEntryTab()
-        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2),
-                      "First entry should reopen the keyboard field when returning from History")
+        XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 5))
+        // Keyboard focus is scheduled ~400ms after tab return (see EntryView.scheduleFirstWeightKeyboardFocus).
+        XCTAssertTrue(
+            app.textFields["entry.value.textfield"].waitForExistence(timeout: 5),
+            "First entry should reopen the keyboard field when returning from History"
+        )
     }
 
     /// After the first save, keyboard entry stays unavailable and double-tap restores last saved weight.
