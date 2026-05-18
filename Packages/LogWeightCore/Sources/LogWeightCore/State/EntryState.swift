@@ -1,6 +1,14 @@
 import Foundation
 import Observation
 
+/// Result of the entry surface's first HealthKit weight history read.
+public enum InitialWeightLoadOutcome: Equatable, Sendable {
+    case pending
+    case emptyStore
+    case hasPriorWeight
+    case loadFailed
+}
+
 /// Observable state for the entry surface.
 ///
 /// One instance per screen lifetime. `commit(store:)` is the only path that
@@ -21,8 +29,18 @@ public final class EntryState {
     public var displayUnit: WeightUnit
     public private(set) var saveStatus: SaveStatus
     public private(set) var lastSavedWeight: Weight?
+    /// Outcome of the first `loadLastWeight(from:)` attempt.
+    public private(set) var initialWeightLoadOutcome: InitialWeightLoadOutcome = .pending
+
     /// `true` after the first `loadLastWeight(from:)` attempt finishes (success or failure).
-    public private(set) var hasResolvedInitialWeight = false
+    public var hasResolvedInitialWeight: Bool {
+        initialWeightLoadOutcome != .pending
+    }
+
+    /// `true` only when HealthKit read succeeded and returned no body-mass samples.
+    public var hasConfirmedEmptyWeightStore: Bool {
+        initialWeightLoadOutcome == .emptyStore
+    }
 
     private let stepIncrementInKilograms: Double
 
@@ -39,14 +57,19 @@ public final class EntryState {
     }
 
     /// Pre-fills the value with the most-recent saved weight, if available.
-    /// Silently no-ops on read failure — the entry surface is never blocked.
+    /// On read failure the entry surface is never blocked; keyboard-first entry is not offered.
     public func loadLastWeight(from store: HealthKitStore) async {
-        defer { hasResolvedInitialWeight = true }
-        guard let recent = try? await store.recentWeights(limit: 1).first else {
-            return
+        do {
+            if let recent = try await store.recentWeights(limit: 1).first {
+                lastSavedWeight = recent
+                displayValueInKilograms = recent.valueInKilograms
+                initialWeightLoadOutcome = .hasPriorWeight
+            } else {
+                initialWeightLoadOutcome = .emptyStore
+            }
+        } catch {
+            initialWeightLoadOutcome = .loadFailed
         }
-        self.lastSavedWeight = recent
-        self.displayValueInKilograms = recent.valueInKilograms
     }
 
     public func increment() {

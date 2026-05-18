@@ -69,8 +69,8 @@ final class WeightFormatterTests: XCTestCase {
         let formatter = WeightFormatter(locale: Locale(identifier: "en_US"))
         XCTAssertEqual(formatter.sanitizeWeightInput("82.3"), "82.3")
         XCTAssertEqual(formatter.sanitizeWeightInput("82abc.3kg"), "82.3")
-        XCTAssertEqual(formatter.sanitizeWeightInput("-12.34"), "")
-        XCTAssertEqual(formatter.sanitizeWeightInput("1.2.3"), "1.23")
+        XCTAssertEqual(formatter.sanitizeWeightInput("-12.34"), "12.34")
+        XCTAssertEqual(formatter.sanitizeWeightInput("1.2.3"), "1.2")
     }
 
     func testSanitizeWeightInputGermanLocaleUsesComma() {

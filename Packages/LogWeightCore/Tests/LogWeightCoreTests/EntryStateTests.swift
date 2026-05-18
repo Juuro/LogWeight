@@ -11,7 +11,9 @@ final class EntryStateTests: XCTestCase {
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
         XCTAssertEqual(state.saveStatus, .idle)
         XCTAssertNil(state.lastSavedWeight)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .pending)
         XCTAssertFalse(state.hasResolvedInitialWeight)
+        XCTAssertFalse(state.hasConfirmedEmptyWeightStore)
     }
 
     @MainActor
@@ -83,16 +85,32 @@ final class EntryStateTests: XCTestCase {
         await state.loadLastWeight(from: store)
         XCTAssertEqual(state.displayValueInKilograms, 78.5, accuracy: 0.001)
         XCTAssertEqual(state.lastSavedWeight?.valueInKilograms, 78.5)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .hasPriorWeight)
         XCTAssertTrue(state.hasResolvedInitialWeight)
+        XCTAssertFalse(state.hasConfirmedEmptyWeightStore)
     }
 
     @MainActor
-    func testLoadLastWeightSilentlyNoOpsOnEmptyStore() async {
+    func testLoadLastWeightConfirmsEmptyStore() async {
         let store = InMemoryHealthKitStore()
         let state = EntryState(initialValueInKilograms: 75.0)
         await state.loadLastWeight(from: store)
         XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .emptyStore)
         XCTAssertTrue(state.hasResolvedInitialWeight)
+        XCTAssertTrue(state.hasConfirmedEmptyWeightStore)
+        XCTAssertNil(state.lastSavedWeight)
+    }
+
+    @MainActor
+    func testLoadLastWeightMarksLoadFailedOnQueryError() async {
+        let store = InMemoryHealthKitStore(failureMode: .queryFails(reasonCode: 11))
+        let state = EntryState(initialValueInKilograms: 75.0)
+        await state.loadLastWeight(from: store)
+        XCTAssertEqual(state.displayValueInKilograms, 75.0, accuracy: 0.001)
+        XCTAssertEqual(state.initialWeightLoadOutcome, .loadFailed)
+        XCTAssertTrue(state.hasResolvedInitialWeight)
+        XCTAssertFalse(state.hasConfirmedEmptyWeightStore)
         XCTAssertNil(state.lastSavedWeight)
     }
 

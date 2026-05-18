@@ -37,7 +37,8 @@ focused on non-obvious conventions.
 
 ## UX and Product Gotchas
 
-- Entry flow is stepper-first; keyboard entry is only allowed when there are no body weight entries in Apple Health yet.
+- Entry flow is stepper-first; keyboard entry only after a successful HealthKit read confirms no body-mass samples exist.
+- On iOS first entry, Save commits the typed value and dismisses the keyboard in one tap.
 - History chart is additive on iOS/iPadOS; watchOS remains list-only.
   Do not regress list readability or auditability.
 
@@ -70,11 +71,21 @@ Tools/CaptureScene.sh --all
 ```
 
 - Screenshot runner target: `App/iOSScreenshots`.
-- Scene docs: `Docs/AIScreenshotWorkflow.md`.
+- Scene docs: `docs/AIScreenshotWorkflow.md`.
+
+## Localization
+
+- Catalog: `App/Shared/Resources/<locale>.lproj/Localizable.strings`
+- Locales: `en`, `de`, `fr`, `es`, `it`, `nl`, `pt-BR`, `ja`, `ko`, `zh-Hans`, `zh-Hant`
+- Parity check: `Tools/check-localizations.sh` (runs from `githooks/pre-commit`)
+- Commit messages: `Tools/check-commit-message.sh` (runs from `githooks/commit-msg`)
+- Install hooks once per clone: `Tools/install-git-hooks.sh`
+- Coding agents: use the catalog, locale list, and parity check above as the localization source of truth.
 
 ## Commit Message Convention
 
-Conventional Commits are enforced by a pre-commit hook:
+Conventional Commits are enforced by `githooks/commit-msg` (after `Tools/install-git-hooks.sh`)
+and by the Claude Code Bash hook in `.claude/settings.json`:
 
 ```text
 <type>(<scope>): <subject>
@@ -85,7 +96,7 @@ Conventional Commits are enforced by a pre-commit hook:
 
 ## High-Value References
 
-- `Docs/Architecture.md` (ADR rationale)
-- `Docs/Privacy.md` (GDPR/health-data constraints)
-- `Docs/HealthKitAvailability.md` (platform capabilities)
-- `Docs/AIScreenshotWorkflow.md` (scene catalog and usage)
+- `docs/Architecture.md` (ADR rationale)
+- `docs/Privacy.md` (GDPR/health-data constraints)
+- `docs/HealthKitAvailability.md` (platform capabilities)
+- `docs/AIScreenshotWorkflow.md` (scene catalog and usage)

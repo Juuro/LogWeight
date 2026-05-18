@@ -48,18 +48,16 @@ public struct WeightFormatter {
     }
 
     /// Keeps only ASCII decimal digits and at most one decimal separator (locale separator,
-    /// `.`, or `,`). Rejects minus signs and other symbols so pasted text cannot enter
-    /// invalid weights silently.
+    /// `.`, or `,`). Strips minus signs and other symbols; truncates at a second separator.
     public func sanitizeWeightInput(_ string: String) -> String {
-        if string.contains("-") {
-            return ""
-        }
-
         let preferredSeparator = locale.decimalSeparator ?? "."
         var sanitized = ""
         var hasSeparator = false
 
         for character in string {
+            if character == "-" {
+                continue
+            }
             if Self.isASCIIWeightDigit(character) {
                 sanitized.append(character)
                 continue
@@ -68,7 +66,9 @@ public struct WeightFormatter {
             guard symbol == preferredSeparator || symbol == "." || symbol == "," else {
                 continue
             }
-            guard !hasSeparator else { continue }
+            if hasSeparator {
+                break
+            }
             hasSeparator = true
             sanitized.append(preferredSeparator)
         }

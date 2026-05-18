@@ -22,9 +22,9 @@ struct EntryView: View {
     @State private var clearSavedStatusTask: Task<Void, Never>?
     @FocusState private var valueFieldFocused: Bool
 
-    /// Keyboard entry only after initial Health load completes and no body-mass sample exists.
+    /// Keyboard entry only when HealthKit read succeeded and confirmed no prior samples.
     private var canEditWithKeyboard: Bool {
-        state.hasResolvedInitialWeight && state.lastSavedWeight == nil
+        state.hasConfirmedEmptyWeightStore
     }
 
     private var displayUnit: WeightUnit {
@@ -141,7 +141,6 @@ struct EntryView: View {
                 .onTapGesture(count: 2) {
                     state.restoreDisplayToLastLoggedWeight()
                 }
-                .accessibilityIdentifier("entry.value.display")
                 .accessibilityLabel(Text("Weight \(formatter.format(kilograms: displayValue, in: displayUnit))."))
                 .accessibilityHint("Double tap quickly to restore the last logged weight. Use the Restore action in the VoiceOver rotor for the same.")
                 .accessibilityAction(named: Text("Restore last logged weight")) {
@@ -157,6 +156,7 @@ struct EntryView: View {
             .minimumScaleFactor(0.5)
             .lineLimit(1)
             .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("entry.value.display")
     }
 
     private var stepperRow: some View {
