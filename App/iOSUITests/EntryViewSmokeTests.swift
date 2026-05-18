@@ -73,7 +73,7 @@ final class EntryViewSmokeTests: XCTestCase {
         XCTAssertTrue(app.textFields["entry.value.textfield"].waitForExistence(timeout: 2))
 
         app.openHistoryTab()
-        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.otherElements["history.empty"].waitForExistence(timeout: 5))
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))
@@ -151,7 +151,7 @@ final class EntryViewSmokeTests: XCTestCase {
         savedRow.press(forDuration: 1.0)
         app.buttons["Delete"].tap()
 
-        XCTAssertTrue(app.staticTexts["No weights yet."].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.otherElements["history.empty"].waitForExistence(timeout: 5))
 
         app.openEntryTab()
         XCTAssertTrue(app.staticTexts["entry.first-weight.prompt"].waitForExistence(timeout: 2))

@@ -136,6 +136,7 @@ struct HistoryView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityIdentifier("history.empty")
         } else {
             VStack(spacing: 0) {
 #if !os(watchOS)
