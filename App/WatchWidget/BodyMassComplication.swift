@@ -37,13 +37,15 @@ struct ComplicationWeightDisplay: Sendable {
         return "\(valueText)\(unitText)"
     }
 
-    static let empty = ComplicationWeightDisplay(
-        valueText: "—",
-        unitText: "",
-        fullText: "No weight",
-        hasData: false,
-        trend: .unknown
-    )
+    static var empty: ComplicationWeightDisplay {
+        ComplicationWeightDisplay(
+            valueText: "—",
+            unitText: "",
+            fullText: String(localized: "No weight"),
+            hasData: false,
+            trend: .unknown
+        )
+    }
 }
 
 struct BodyMassEntry: TimelineEntry {
@@ -231,7 +233,9 @@ struct BodyMassComplicationView: View {
                 .widgetAccentable(false)
         }
         .privacySensitive()
-        .accessibilityLabel("Weight \(entry.display.fullText)")
+        .accessibilityLabel(
+            String(format: String(localized: "Weight %@"), entry.display.fullText)
+        )
     }
 
     private var rectangularLayout: some View {

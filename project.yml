@@ -36,6 +36,7 @@ targets:
           - "Resources/PrivacyInfo.xcprivacy"
       - path: App/Shared/Widget
     resources:
+      - path: App/Shared/Resources
       - path: App/iOSWidget/Resources/PrivacyInfo.xcprivacy
     info:
       path: App/iOSWidget/Resources/Info.plist
@@ -68,6 +69,7 @@ targets:
           - "Resources/PrivacyInfo.xcprivacy"
       - path: App/Shared/Widget/WeightTrendArrow.swift
     resources:
+      - path: App/Shared/Resources
       - path: App/WatchWidget/Resources/PrivacyInfo.xcprivacy
     info:
       path: App/WatchWidget/Resources/Info.plist
