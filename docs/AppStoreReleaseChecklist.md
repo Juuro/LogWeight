@@ -7,21 +7,21 @@ This checklist answers two release questions directly:
 
 ## What is still missing
 
-- [ ] **Pick the exact submission scope.** The current XcodeGen project (`/home/runner/work/LogWeight/LogWeight/project.yml`) ships:
+- [ ] **Pick the exact submission scope.** The current XcodeGen project (`project.yml`) ships:
   - iPhone + iPad app (`LogWeight`)
   - Apple Watch companion app (`LogWeightWatchApp`)
   - Home Screen / watch widgets
 
   Do **not** claim macOS support in App Store Connect metadata, screenshots, or review notes unless a real macOS target is added back to `project.yml`.
 
-- [ ] **Host a public privacy policy URL.** App Store Connect needs a public HTTPS page. Publish the policy from [`/home/runner/work/LogWeight/LogWeight/docs/Privacy.md`](./Privacy.md) verbatim or near-verbatim.
+- [ ] **Host a public privacy policy URL.** App Store Connect needs a public HTTPS page. Publish the policy from [`docs/Privacy.md`](./Privacy.md) verbatim or near-verbatim.
 
 - [ ] **Host a public support URL.** The support page can be simple, but it should exist before submission. Include:
   - contact email or contact form
   - short explanation that data lives in Apple Health
   - links to the privacy policy and support instructions
 
-- [ ] **Generate final App Store screenshots.** Use [`/home/runner/work/LogWeight/LogWeight/docs/AIScreenshotWorkflow.md`](./AIScreenshotWorkflow.md) and `bash Tools/CaptureStoreScreenshots.sh`, then manually confirm the screenshots match the shipped platforms and current UI.
+- [ ] **Generate final App Store screenshots.** Use [`docs/AIScreenshotWorkflow.md`](./AIScreenshotWorkflow.md) and `bash Tools/CaptureStoreScreenshots.sh`, then manually confirm the screenshots match the shipped platforms and current UI.
 
 - [ ] **Run the release validation pass on macOS/Xcode.**
   - `xcodegen generate`
@@ -35,8 +35,8 @@ This checklist answers two release questions directly:
   - widgets and complications refresh after saves
 
 - [ ] **Fill App Store Connect metadata from the checked-in drafts.**
-  - base listing: [`/home/runner/work/LogWeight/LogWeight/docs/AppStoreMetadata.md`](./AppStoreMetadata.md)
-  - localized variants: [`/home/runner/work/LogWeight/LogWeight/docs/AppStoreMetadata.localized.md`](./AppStoreMetadata.localized.md)
+  - base listing: [`docs/AppStoreMetadata.md`](./AppStoreMetadata.md)
+  - localized variants: [`docs/AppStoreMetadata.localized.md`](./AppStoreMetadata.localized.md)
 
 ## What improves first-pass approval chances
 
@@ -44,7 +44,7 @@ This checklist answers two release questions directly:
 - **Explain HealthKit usage clearly in Review Notes.** State that LogWeight requests read/write access only for Body Mass and keeps data on-device.
 - **Keep privacy answers consistent everywhere.** Privacy manifests, App Privacy answers, the privacy policy URL, and in-app behavior should all say the same thing: no account, no analytics, no third-party SDKs, no off-device syncing by the app.
 - **Avoid broken links.** Apple reviewers often check the support URL and privacy policy URL.
-- **Verify accessibility before submit.** Use [`/home/runner/work/LogWeight/LogWeight/docs/AccessibilityAudit.md`](./AccessibilityAudit.md) as the final manual checklist.
+- **Verify accessibility before submit.** Use [`docs/AccessibilityAudit.md`](./AccessibilityAudit.md) as the final manual checklist.
 - **Review screenshots for policy risk.** Avoid placeholder text, debug UI, clipped layouts, and claims about platforms or features not in the build.
 
 ## Suggested submission flow
