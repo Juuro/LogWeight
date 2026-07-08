@@ -24,7 +24,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Direkt in Apple Health speichern (Körpergewicht)
   • Stepper-basierte Eingabe für einhändige Nutzung
   • Apple Watch Unterstützung mit Digital Crown
-  • Verlaufsliste mit Trenddiagramm auf iPhone, iPad und Mac
+  • Verlaufsliste mit Trenddiagramm auf iPhone und iPad
   • Datenschutz zuerst: keine Konten, keine Analytics, keine Drittanbieter-SDKs
   Deine Daten bleiben in Apple Health. LogWeight führt keine eigene Gewichtsdatenbank.`
 - **Keywords:** `gewicht,körpergewicht,health,healthkit,apple health,protokoll,tracker,watch`
@@ -38,7 +38,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Enregistrement direct dans Apple Santé (poids corporel)
   • Saisie prioritaire via incréments pour une utilisation à une main
   • Prise en charge Apple Watch avec Digital Crown
-  • Historique avec liste et courbe de tendance sur iPhone, iPad et Mac
+  • Historique avec liste et courbe de tendance sur iPhone et iPad
   • Confidentialité d’abord : pas de compte, pas d’analytics, aucun SDK tiers
   Vos données restent dans Apple Santé. LogWeight n’utilise pas de base de données de poids séparée.`
 - **Keywords:** `poids,sante,healthkit,apple santé,journal,suivi,watch`
@@ -52,7 +52,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Guarda directamente en Apple Health (masa corporal)
   • Entrada con botones +/- para usar con una mano
   • Soporte para Apple Watch con Digital Crown
-  • Lista de historial con gráfico de tendencia en iPhone, iPad y Mac
+  • Lista de historial con gráfico de tendencia en iPhone y iPad
   • Privacidad primero: sin cuentas, sin analítica, sin SDKs de terceros
   Tus datos permanecen en Apple Health. LogWeight no mantiene una base de datos propia de peso.`
 - **Keywords:** `peso,salud,healthkit,apple health,registro,seguimiento,watch`
@@ -66,7 +66,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Salvataggio diretto in Apple Health (massa corporea)
   • Inserimento con stepper per uso con una mano
   • Supporto Apple Watch con Digital Crown
-  • Cronologia con elenco e grafico di tendenza su iPhone, iPad e Mac
+  • Cronologia con elenco e grafico di tendenza su iPhone e iPad
   • Privacy first: niente account, niente analytics, nessun SDK di terze parti
   I tuoi dati restano in Apple Health. LogWeight non mantiene un database peso separato.`
 - **Keywords:** `peso,salute,healthkit,apple health,registro,tracker,watch`
@@ -80,7 +80,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Salve direto no Apple Health (massa corporal)
   • Entrada com stepper para uso com uma mão
   • Suporte ao Apple Watch com Digital Crown
-  • Histórico em lista com gráfico de tendência no iPhone, iPad e Mac
+  • Histórico em lista com gráfico de tendência no iPhone e iPad
   • Privacidade em primeiro lugar: sem contas, sem analytics, sem SDKs de terceiros
   Seus dados permanecem no Apple Health. O LogWeight não mantém banco de dados próprio de peso.`
 - **Keywords:** `peso,saúde,healthkit,apple health,registro,rastreador,watch`
@@ -94,7 +94,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Appleヘルスケア（体重）へ直接保存
   • 片手操作しやすいステッパー中心の入力
   • Digital Crown対応のApple Watchサポート
-  • iPhone / iPad / Macで履歴リストとトレンドチャート
+  • iPhone / iPadで履歴リストとトレンドチャート
   • プライバシー重視：アカウント不要、解析なし、サードパーティSDKなし
   データはAppleヘルスケア内に保存されます。LogWeight独自の体重DBは持ちません。`
 - **Keywords:** `体重,ヘルスケア,healthkit,Appleヘルスケア,記録,トラッカー,watch`
@@ -108,7 +108,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Apple 건강(체중)으로 직접 저장
   • 한 손 사용에 맞춘 스테퍼 중심 입력
   • Digital Crown을 지원하는 Apple Watch
-  • iPhone, iPad, Mac에서 목록 + 추세 차트
+  • iPhone, iPad에서 목록 + 추세 차트
   • 프라이버시 우선: 계정 없음, 분석 없음, 서드파티 SDK 없음
   데이터는 Apple 건강에만 저장됩니다. LogWeight는 별도 체중 DB를 운영하지 않습니다.`
 - **Keywords:** `체중,건강,healthkit,apple 건강,기록,추적,watch`
@@ -122,7 +122,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • 直接保存到 Apple 健康（体重）
   • 以步进器为主，单手操作更高效
   • 支持 Apple Watch 数码表冠输入
-  • iPhone、iPad、Mac 上提供列表 + 趋势图
+  • 在 iPhone、iPad 上提供列表 + 趋势图
   • 隐私优先：无账号、无分析、无第三方 SDK
   你的数据保留在 Apple 健康中。LogWeight 不维护独立体重数据库。`
 - **Keywords:** `体重,健康,healthkit,Apple健康,记录,追踪,watch`
@@ -136,7 +136,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • 直接儲存到 Apple 健康（體重）
   • 以步進按鈕為主，單手操作更順手
   • 支援 Apple Watch 數位錶冠輸入
-  • 在 iPhone、iPad、Mac 顯示列表與趨勢圖
+  • 在 iPhone、iPad 顯示列表與趨勢圖
   • 隱私優先：無帳號、無分析、無第三方 SDK
   你的資料保留在 Apple 健康中。LogWeight 不維護獨立體重資料庫。`
 - **Keywords:** `體重,健康,healthkit,Apple健康,記錄,追蹤,watch`
@@ -150,7 +150,7 @@ This file provides localized App Store listing copy for ten high-potential marke
   • Direct opslaan in Apple Gezondheid (lichaamsgewicht)
   • Stepper-first invoer voor gebruik met één hand
   • Apple Watch-ondersteuning met Digital Crown
-  • Historielijst met trendgrafiek op iPhone, iPad en Mac
+  • Historielijst met trendgrafiek op iPhone en iPad
   • Privacy-first: geen accounts, geen analytics, geen SDK’s van derden
   Je gegevens blijven in Apple Gezondheid. LogWeight gebruikt geen eigen gewichtsdatabase.`
 - **Keywords:** `gewicht,gezondheid,healthkit,apple gezondheid,log,tracker,watch`

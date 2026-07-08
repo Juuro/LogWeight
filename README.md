@@ -67,6 +67,7 @@ Phase 4 release docs:
 - [`docs/AccessibilityAudit.md`](docs/AccessibilityAudit.md)
 - [`docs/AppStoreMetadata.md`](docs/AppStoreMetadata.md)
 - [`docs/AppStoreMetadata.localized.md`](docs/AppStoreMetadata.localized.md)
+- [`docs/AppStoreReleaseChecklist.md`](docs/AppStoreReleaseChecklist.md)
 
 ## Privacy
 
