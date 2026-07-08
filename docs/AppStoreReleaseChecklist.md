@@ -21,7 +21,7 @@ This checklist answers two release questions directly:
   - short explanation that data lives in Apple Health
   - links to the privacy policy and support instructions
 
-- [ ] **Generate final App Store screenshots.** Use [`docs/AIScreenshotWorkflow.md`](./AIScreenshotWorkflow.md) and `bash Tools/CaptureStoreScreenshots.sh`, then manually confirm the screenshots match the shipped platforms and current UI.
+- [ ] **Generate final App Store screenshots.** Use [`docs/AIScreenshotWorkflow.md`](./AIScreenshotWorkflow.md) for per-scene capture (`Tools/CaptureScene.sh`) and `bash Tools/CaptureStoreScreenshots.sh` for the store batch, then manually confirm the screenshots match the shipped platforms and current UI.
 
 - [ ] **Run the release validation pass on macOS/Xcode.**
   - `xcodegen generate`
