@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LogWeight Privacy Policy</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page-background: #f5f5f7;
+      --card-background: rgba(255, 255, 255, 0.92);
+      --text-color: #1d1d1f;
+      --muted-color: #6e6e73;
+      --border-color: rgba(60, 60, 67, 0.18);
+      --shadow-color: rgba(0, 0, 0, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page-background: #000;
+        --card-background: rgba(28, 28, 30, 0.92);
+        --text-color: #f5f5f7;
+        --muted-color: #a1a1a6;
+        --border-color: rgba(84, 84, 88, 0.65);
+        --shadow-color: rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-background);
+      color: var(--text-color);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      box-sizing: border-box;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    article {
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px var(--shadow-color);
+      padding: 32px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.25;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.35rem;
+    }
+
+    h3 {
+      margin-top: 1.5rem;
+      font-size: 1.05rem;
+    }
+
+    p,
+    li {
+      margin: 0.75rem 0;
+    }
+
+    ol,
+    ul {
+      padding-left: 1.5rem;
+    }
+
+    code {
+      font-family: ui-monospace, "SFMono-Regular", SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    .updated {
+      margin-top: 0;
+      color: var(--muted-color);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <h1>Privacy</h1>
+      <p class="updated">Canonical source: <code>docs/Privacy.md</code></p>
+      <p>LogWeight handles body weight, which is GDPR Art. 9 special-category personal data. The privacy posture is documented here so reviewers, auditors, and future contributors share the same understanding.</p>
+
+      <h2>Data flow</h2>
+      <ol>
+        <li>The user enters a weight in the app.</li>
+        <li>The value is held in memory (<code>@State</code>) only for the lifetime of the entry surface.</li>
+        <li>On Save, the value is written to <code>HKHealthStore</code> via <code>HKQuantityTypeIdentifier.bodyMass</code>.</li>
+        <li>The local copy is discarded; subsequent reads go back through HealthKit.</li>
+      </ol>
+
+      <p>The app:</p>
+      <ul>
+        <li>has <strong>no</strong> server, <strong>no</strong> account, <strong>no</strong> cloud sync of its own.</li>
+        <li>maintains <strong>no</strong> separate weight database.</li>
+        <li>writes <strong>no</strong> weight values to logs, <code>UserDefaults</code>, <code>Keychain</code>, files, or any other persistent storage.</li>
+        <li>contains <strong>no</strong> third-party SDKs (no analytics, no crash reporters, no auth providers).</li>
+        <li>does <strong>not</strong> access the contact book, location, microphone, camera, photos, or any sensor other than HealthKit body-mass.</li>
+      </ul>
+
+      <p>Cross-device synchronisation, when the user has more than one device, is handled by Apple Health itself.</p>
+
+      <h2>Lawful basis</h2>
+      <p>The lawful basis for processing under GDPR is <strong>explicit consent</strong>, gathered through the standard HealthKit authorisation sheet. The user can revoke consent at any time in <strong>Settings → Health → Data Access &amp; Devices → LogWeight</strong>. Once revoked, future writes will fail and the app surfaces a calm prompt to re-enable.</p>
+
+      <h2>Data subject rights</h2>
+      <p>Because the app holds no copy of the user's data:</p>
+      <ul>
+        <li><strong>Right of access:</strong> the user reads their data in the Health app.</li>
+        <li><strong>Right to rectification:</strong> edits happen in the Health app.</li>
+        <li><strong>Right to erasure:</strong> delete in the Health app or revoke HealthKit access.</li>
+        <li><strong>Right to data portability:</strong> export from the Health app.</li>
+        <li><strong>Right to object:</strong> revoke HealthKit access.</li>
+      </ul>
+
+      <h2>Apple Privacy Manifest</h2>
+      <p><code>App/iOS/Resources/PrivacyInfo.xcprivacy</code> declares:</p>
+      <ul>
+        <li><code>NSPrivacyTracking = false</code> — LogWeight does not track users.</li>
+        <li><code>NSPrivacyCollectedDataTypes</code> — declares Health &amp; Fitness &gt; Body Measurements with purpose <code>AppFunctionality</code>, linked to the user, not used for tracking.</li>
+        <li><code>NSPrivacyAccessedAPITypes</code> — declares the required-reason <code>UserDefaults</code> API (settings storage).</li>
+      </ul>
+
+      <h2>On-screen redaction</h2>
+      <p>The app implements two layers of on-screen redaction:</p>
+      <ol>
+        <li><code>.privacySensitive()</code> — the SwiftUI modifier that asks the OS to redact content in system-generated screenshots (app switcher, Siri suggestions, Lock-Screen previews).</li>
+        <li><code>PrivacyRedactionModifier</code> — a custom modifier that overlays an opaque view when the app is backgrounded OR when <code>UIScreen.main.isCaptured</code> reports an active screen recording.</li>
+      </ol>
+
+      <h3>Known limitations of <code>UIScreen.isCaptured</code></h3>
+      <p><code>UIScreen.isCaptured</code> is documented by Apple to <em>not</em> fire reliably in every capture scenario. We acknowledge:</p>
+      <ul>
+        <li><strong>AirPlay mirroring</strong> to an Apple TV does not always set <code>isCaptured = true</code>.</li>
+        <li><strong>Wired QuickTime recording</strong> via a Mac does not set <code>isCaptured = true</code>.</li>
+        <li><strong>ReplayKit-driven capture</strong> has its own lifecycle and may not be reflected in <code>isCaptured</code>.</li>
+      </ul>
+
+      <p>These are Apple-framework limitations, not defects in LogWeight. The <code>.privacySensitive()</code> modifier handles every system-generated capture scenario regardless of these gaps.</p>
+
+      <h2>Data export and deletion (operational)</h2>
+      <p>If a user requests their data:</p>
+      <ul>
+        <li>They control it themselves in the Health app — LogWeight cannot return data it does not hold.</li>
+        <li>If a request comes through the LogWeight contact channel, the response is: "Open the Health app on your device. Tap your profile photo → Export All Health Data."</li>
+      </ul>
+
+      <p>If a user requests deletion:</p>
+      <ul>
+        <li>They delete the values in the Health app.</li>
+        <li>They revoke HealthKit access for LogWeight in Settings → Health.</li>
+      </ul>
+
+      <h2>Logging</h2>
+      <p><code>SecurityLog</code> (in <code>LogWeightCore</code>) is the only logging facade. It exposes <code>event(_: StaticString)</code> and <code>error(_: StaticString, code: Int)</code> — and nothing else. There is no API path through which a weight value, a user identifier, a sample identifier, or a date can be logged.</p>
+    </article>
+  </main>
+</body>
+</html>
