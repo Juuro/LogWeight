@@ -120,7 +120,7 @@ For a **major** semver bump, use one of:
 3. When ready for a new user-facing version, merge the **Release PR** from release-please on `main` (updates `MARKETING_VERSION` and `CHANGELOG.md`; creates `vX.Y.Z` on GitHub).
 4. Pull `main`, run `xcodegen generate`, archive in Xcode (_Product → Archive_).
 5. Upload to App Store Connect.
-6. Add a privacy policy URL in App Store Connect — publish `privacy/index.html` as a public HTTPS page, using `docs/Privacy.md` as the canonical statement.
+6. Add a privacy policy URL in App Store Connect — publish `privacy/index.html` on Vercel (or another static HTTPS host) as `/privacy/`, using `docs/Privacy.md` as the canonical statement.
 7. Fill App Store listing fields from `docs/AppStoreMetadata.md`.
 8. Use localized listing variants from `docs/AppStoreMetadata.localized.md`.
 

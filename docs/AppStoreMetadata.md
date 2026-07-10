@@ -38,7 +38,7 @@ Your data remains in Apple Health. LogWeight does not run its own weight databas
 ## Privacy URL
 
 - Canonical policy source: `docs/Privacy.md`
-- Static page for hosting: `privacy/index.html`
+- Static page for hosting: `privacy/index.html` (serve it from Vercel or another static HTTPS host, ideally at `/privacy/`)
 - App Store Connect requires a public HTTPS URL (publish this page before submission).
 
 ## Support URL
