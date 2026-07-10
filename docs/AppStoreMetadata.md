@@ -42,7 +42,7 @@ Your data remains in Apple Health. LogWeight does not run its own weight databas
 
 ## Support URL
 
-- Host on Vercel: `https://<your-domain>/support/`
+- Host on Vercel: `https://<your-domain>/support/` (replace `<your-domain>` with your real domain before submission)
 
 ## Screenshots checklist
 
