@@ -123,6 +123,7 @@ For a **major** semver bump, use one of:
 6. Add a privacy policy URL in App Store Connect — see `docs/Privacy.md` for the canonical statement.
 7. Fill App Store listing fields from `docs/AppStoreMetadata.md`.
 8. Use localized listing variants from `docs/AppStoreMetadata.localized.md`.
+9. Walk through `docs/AppStoreReleaseChecklist.md` before pressing Submit for Review.
 
 ## Store screenshots (Phase 4)
 
