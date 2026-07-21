@@ -43,7 +43,8 @@ Your data remains in Apple Health. LogWeight does not run its own weight databas
 
 ## Support URL
 
-- TODO before release: choose a public support page/contact URL.
+- Host at `https://juuronina.de/LogWeight/support/`
+- Verify HTTPS + path resolve before submitting to App Store Connect (TLS was broken domain-wide as of 2026-07-21 — recheck).
 
 ## Screenshots checklist
 
