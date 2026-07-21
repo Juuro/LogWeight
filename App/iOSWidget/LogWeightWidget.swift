@@ -5,12 +5,11 @@ import LogWeightCore
 struct LogWeightWidgetEntry: TimelineEntry {
     let date: Date
     let currentWeightInKilograms: Double
-    let trend: WeightTrendDirection
 }
 
 struct LogWeightWidgetProvider: TimelineProvider {
     func placeholder(in context: Context) -> LogWeightWidgetEntry {
-        LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 75.0, trend: .flat)
+        LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 75.0)
     }
 
     func getSnapshot(in context: Context, completion: @escaping @Sendable (LogWeightWidgetEntry) -> Void) {
@@ -32,8 +31,7 @@ struct LogWeightWidgetProvider: TimelineProvider {
         SharedWeightEntryStore.expireStaleDraftIfNeeded()
         return LogWeightWidgetEntry(
             date: .now,
-            currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue(),
-            trend: WeightTrendCache.load()
+            currentWeightInKilograms: SharedWeightEntryStore.loadCurrentValue()
         )
     }
 }
@@ -82,8 +80,7 @@ struct LogWeightWidgetView: View {
             weightHeader(
                 iconFont: .system(size: 26, weight: .semibold),
                 valueFont: .system(size: 36, weight: .semibold, design: .rounded),
-                minimumScaleFactor: 0.7,
-                showTrend: true
+                minimumScaleFactor: 0.7
             )
 
             Spacer(minLength: 0)
@@ -104,8 +101,7 @@ struct LogWeightWidgetView: View {
             weightHeader(
                 iconFont: .system(size: 18, weight: .semibold),
                 valueFont: .system(size: 22, weight: .semibold, design: .rounded),
-                minimumScaleFactor: 0.65,
-                showTrend: false
+                minimumScaleFactor: 0.65
             )
 
             stepperButtons(buttonSize: 32, expandSteppers: true)
@@ -118,8 +114,7 @@ struct LogWeightWidgetView: View {
     private func weightHeader(
         iconFont: Font,
         valueFont: Font,
-        minimumScaleFactor: CGFloat,
-        showTrend: Bool
+        minimumScaleFactor: CGFloat
     ) -> some View {
         HStack(alignment: .center, spacing: 6) {
             Image(systemName: "scalemass")
@@ -130,10 +125,6 @@ struct LogWeightWidgetView: View {
                 .font(valueFont)
                 .lineLimit(1)
                 .minimumScaleFactor(minimumScaleFactor)
-
-            if showTrend {
-                WeightTrendArrow.widget(direction: entry.trend)
-            }
         }
         .privacySensitive()
         .accessibilityElement(children: .combine)
@@ -183,12 +174,12 @@ struct LogWeightWidgetBundle: WidgetBundle {
 #Preview(as: .systemSmall) {
     LogWeightWidgetConfig()
 } timeline: {
-    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3, trend: .down)
+    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3)
 }
 
 #Preview(as: .systemMedium) {
     LogWeightWidgetConfig()
 } timeline: {
-    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3, trend: .down)
+    LogWeightWidgetEntry(date: .now, currentWeightInKilograms: 72.3)
 }
 #endif

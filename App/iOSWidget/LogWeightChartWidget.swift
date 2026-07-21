@@ -11,7 +11,6 @@ struct LogWeightChartEntry: TimelineEntry {
     let lineWeights: [Weight]
     let latestWeight: Weight?
     let displayUnit: WeightUnit
-    let trend: WeightTrendDirection
     let loadFailed: Bool
 
     var hasChartData: Bool {
@@ -59,7 +58,6 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
             allWeights: samples,
             rangeStart: range.cutoffDate(referenceDate: now)
         )
-        let trend = Self.chartTrend(for: filtered, range: range, referenceDate: now)
         return LogWeightChartEntry(
             date: now,
             range: range,
@@ -67,21 +65,7 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
             lineWeights: line,
             latestWeight: samples.last,
             displayUnit: .kilograms,
-            trend: trend,
             loadFailed: false
-        )
-    }
-
-    private static func chartTrend(
-        for filtered: [Weight],
-        range: ChartTimeRange,
-        referenceDate: Date
-    ) -> WeightTrendDirection {
-        WeightTrendEvaluator.direction(
-            weights: filtered,
-            windowStart: range.cutoffDate(referenceDate: referenceDate),
-            referenceDate: referenceDate,
-            configuration: .forChartRange(range)
         )
     }
 
@@ -111,7 +95,6 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
                 rangeStart: range.cutoffDate(referenceDate: now)
             )
             let latest = allWeights.max(by: { $0.recordedAt < $1.recordedAt })
-            let trend = Self.chartTrend(for: filtered, range: range, referenceDate: now)
             return LogWeightChartEntry(
                 date: now,
                 range: range,
@@ -119,7 +102,6 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
                 lineWeights: line,
                 latestWeight: latest,
                 displayUnit: displayUnit,
-                trend: trend,
                 loadFailed: false
             )
         } catch {
@@ -140,7 +122,6 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
             lineWeights: [],
             latestWeight: nil,
             displayUnit: displayUnit,
-            trend: .unknown,
             loadFailed: loadFailed
         )
     }
@@ -254,8 +235,6 @@ struct LogWeightChartWidgetView: View {
                     .font(weightFont)
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
-
-                WeightTrendArrow.widget(direction: entry.trend)
             }
 
             Spacer(minLength: 0)
