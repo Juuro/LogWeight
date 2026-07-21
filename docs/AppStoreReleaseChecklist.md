@@ -16,7 +16,7 @@ This checklist answers two release questions directly:
 
 - [ ] **Host a public privacy policy URL.** App Store Connect needs a public HTTPS page. Publish the policy from [`docs/Privacy.md`](./Privacy.md) verbatim or near-verbatim.
 
-- [ ] **Host a public support URL.** The support page can be simple, but it should exist before submission. Include:
+- [ ] **Verify the public support URL is submission-ready.** The support page can stay simple, but confirm the hosted page resolves over HTTPS before submission and still includes:
   - contact email or contact form
   - short explanation that data lives in Apple Health
   - links to the privacy policy and support instructions
