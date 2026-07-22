@@ -7,10 +7,11 @@ This checklist answers two release questions directly:
 
 ## What is still missing
 
-- [ ] **Pick the exact submission scope.** The current XcodeGen project (`project.yml`) ships:
+- [x] **Pick the exact submission scope.** The current XcodeGen project (`project.yml`) ships:
   - iPhone + iPad app (`LogWeight`)
   - Apple Watch companion app (`LogWeightWatchApp`)
-  - Home Screen / watch widgets
+  - iOS/iPadOS Home Screen widget (`LogWeightWidget`)
+  - watchOS widget/complication (`LogWeightWatchWidget`)
 
   Do **not** claim macOS support in App Store Connect metadata, screenshots, or review notes unless a real macOS target is added back to `project.yml`.
 
