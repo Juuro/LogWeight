@@ -46,6 +46,13 @@ Your data remains in Apple Health. LogWeight does not run its own weight databas
 - Verify HTTPS + path resolve before submitting to App Store Connect.
 - See `docs/AppStoreReleaseChecklist.md` for the minimum support-page contents and submission-ready URL checklist.
 
+## Monetization
+
+- Recommended launch model: free download with an optional one-time `Support LogWeight` purchase in Settings.
+- Price target: start around `$2.99`; consider higher optional support tiers only if they stay clearly voluntary.
+- No subscription, no ads, and no paywall around Apple Health logging or history.
+- Keep monetization messaging out of the main entry flow.
+
 ## Screenshots checklist
 
 - iPhone 6.9": entry, history chart, settings.
