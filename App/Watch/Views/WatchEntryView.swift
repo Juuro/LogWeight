@@ -57,6 +57,7 @@ struct WatchEntryView: View {
                     )
                     .privacySensitive()
                     .accessibilityLabel("Weight")
+                    .accessibilityIdentifier("watch.entry.value")
                     .onTapGesture(count: 2) {
                         state.restoreDisplayToLastLoggedWeight()
                     }
@@ -99,6 +100,7 @@ struct WatchEntryView: View {
                         Image(systemName: "clock")
                     }
                     .accessibilityLabel("History")
+                    .accessibilityIdentifier("watch.history.button")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

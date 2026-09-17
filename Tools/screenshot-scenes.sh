@@ -43,6 +43,8 @@ ALL_SCENES=(
   history-with-chart-30d
   history-90d-plateau
   history-chart-crosshair
+  history-list-scrolled
+  history-list-small-scroll
   settings-default
   settings-lbs-unit
 )

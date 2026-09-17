@@ -25,12 +25,20 @@ class ScreenshotTestCase: XCTestCase {
     /// Launches the app with the standard screenshot launch arguments.
     /// Pass `seed` to preload the in-memory store with a `ScreenshotFixture`.
     /// `extraArguments` is appended verbatim (e.g. for Dynamic Type overrides).
+    ///
+    /// Language/region are intentionally *not* pinned here — env vars set by
+    /// the calling shell don't cross into the simulator-hosted test process,
+    /// so locale is driven by `xcodebuild test -testLanguage -testRegion`
+    /// instead (see Tools/CaptureScene.sh and Tools/CaptureStoreScreenshots.sh).
+    /// Display unit follows that same region: DE captures in kg, everything
+    /// else in lb, passed via the `-logweight_unit_preference` NSUserDefaults
+    /// argument (crosses into the app process the same way `-AppleLanguages` did).
     func launchApp(seed: String? = nil, extraArguments: [String] = []) {
+        let unit = Locale.current.region?.identifier == "DE" ? "kg" : "lb"
         var args = [
             "--use-in-memory-store",
             "--skip-splash",
-            "-AppleLanguages", "(en)",
-            "-AppleLocale", "en_US",
+            "-logweight_unit_preference", unit,
         ]
         if let seed {
             args.append("--seed=\(seed)")

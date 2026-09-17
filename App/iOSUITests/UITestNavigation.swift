@@ -33,8 +33,12 @@ extension XCUIApplication {
         }
     }
 
-    /// Opens the History tab on iPhone and iPad. UI tests pin English via launch arguments;
-    /// the second tab index is a fallback when identifiers are not exposed on tab items.
+    /// Opens the History tab on iPhone and iPad, in whatever locale the
+    /// simulator is running (see Tools/CaptureStoreScreenshots.sh's
+    /// `-testLanguage`/`-testRegion`) — falls back through stable identifier,
+    /// localized label (English and German), and tab index, in that order.
+    /// iPadOS 18's regular-width tab bar floats as a top capsule outside the
+    /// `tabBars` accessibility container, so the last fallbacks search `app.buttons` directly.
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
         dismissKeyboardIfPresent()
 
@@ -43,16 +47,32 @@ extension XCUIApplication {
             return
         }
 
-        let historyByLabel = tabBars.buttons["History"]
-        if historyByLabel.waitForExistence(timeout: 3) {
-            tapTabBarButton(historyByLabel.firstMatch)
-            return
+        for label in ["History", "Verlauf"] {
+            let byLabel = tabBars.buttons[label]
+            if byLabel.waitForExistence(timeout: 2) {
+                tapTabBarButton(byLabel.firstMatch)
+                return
+            }
         }
 
         let secondTab = tabBars.buttons.element(boundBy: 1)
         if secondTab.waitForExistence(timeout: 3) {
             tapTabBarButton(secondTab)
             return
+        }
+
+        let historyButton = buttons["tab.history"]
+        if historyButton.waitForExistence(timeout: 3) {
+            tapTabBarButton(historyButton)
+            return
+        }
+
+        for label in ["History", "Verlauf"] {
+            let byLabel = buttons[label]
+            if byLabel.waitForExistence(timeout: 2) {
+                tapTabBarButton(byLabel.firstMatch)
+                return
+            }
         }
 
         XCTFail(

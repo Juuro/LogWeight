@@ -90,6 +90,8 @@ run_tests() {
     -scheme "$SCHEME" \
     -destination "id=$udid" \
     -resultBundlePath "$RESULT_BUNDLE" \
+    -testLanguage en \
+    -testRegion US \
     CODE_SIGNING_ALLOWED=NO \
     "${only_testing_flag[@]}" \
     2>&1 | grep -E "(Test|error:|warning:|Build)" | grep -v "^$" || true

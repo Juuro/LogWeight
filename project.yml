@@ -214,6 +214,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightScreenshots
         TEST_TARGET_NAME: LogWeight
 
+  LogWeightWatchScreenshots:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: App/WatchScreenshots
+    dependencies:
+      - target: LogWeightWatchApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightWatchScreenshots
+        TEST_TARGET_NAME: LogWeightWatchApp
+
 schemes:
   LogWeight:
     build:
@@ -260,6 +273,24 @@ schemes:
       config: Debug
       targets:
         - LogWeightScreenshots
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  LogWeightWatchScreenshots:
+    build:
+      targets:
+        LogWeightWatchApp: all
+        LogWeightWatchScreenshots: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LogWeightWatchScreenshots
     profile:
       config: Release
     analyze:

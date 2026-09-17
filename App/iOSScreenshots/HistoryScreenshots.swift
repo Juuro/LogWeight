@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class HistoryScreenshots: ScreenshotTestCase {
 
     /// History tab with no entries — empty-state copy.

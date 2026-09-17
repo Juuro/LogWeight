@@ -4,7 +4,7 @@ This file tracks App Store Connect metadata needed for a v1.0 submission.
 
 ## Product identity
 
-- App name: `LogWeight`
+- App name: `LogWeight` (9 chars, limit 30)
 - Primary category: `Health & Fitness`
 - Secondary category: none
 - Platforms: iOS, iPadOS, watchOS companion
@@ -12,7 +12,7 @@ This file tracks App Store Connect metadata needed for a v1.0 submission.
 
 ## Subtitle options
 
-- `Fast weight logging to Apple Health`
+- `Fast weight logging to Health`
 - `Calm body-weight tracking`
 
 ## Promotional text

@@ -1,55 +1,41 @@
 #!/usr/bin/env bash
-# Captures a full App Store screenshot set for LogWeight: every scene from
-# Tools/screenshot-scenes.sh, captured on each required App Store device
-# size, in each required locale. Reuses the same LogWeightScreenshots
-# XCUITest target as Tools/CaptureScene.sh, just run once per device+locale
-# instead of once per scene.
+# Captures Apple Watch App Store screenshots for LogWeight: Entry + History,
+# on Apple Watch Series 11, in each required locale.
 #
 # Usage:
-#   bash Tools/CaptureStoreScreenshots.sh
+#   bash Tools/CaptureWatchScreenshots.sh
 #
-# Output: Docs/store-screenshots/<locale>/<device-key>/<scene>.png
+# Output: Docs/store-screenshots/<locale>/watch-series-11/<scene>.png
 #
-# Locale is set via `xcodebuild test -testLanguage -testRegion`, which boots
-# the simulator with that system language/region for the whole test run.
-# (A SCREENSHOT_LOCALE env var doesn't work here: env vars set by the calling
-# shell don't cross into the simulator-hosted XCTest process.)
-#
-# Note: Apple currently caps uploads at 10 screenshots per device size —
-# trim Docs/store-screenshots/<locale>/<device-key>/ down to the best 10
-# before uploading if a folder ends up with more.
+# Locale is set via `xcodebuild test -testLanguage -testRegion`, same
+# mechanism as Tools/CaptureStoreScreenshots.sh (env vars don't cross into
+# the simulator-hosted XCTest process, so this is the only reliable way).
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-CONFIG_FILE="$(dirname "${BASH_SOURCE[0]}")/screenshot-scenes.sh"
-if [[ ! -f "$CONFIG_FILE" ]]; then
-  echo "Missing config: $CONFIG_FILE" >&2
-  exit 1
-fi
-# shellcheck source=Tools/screenshot-scenes.sh
-source "$CONFIG_FILE"
-
-PROJECT="${XCODEPROJ}"
-SCHEME="${SCREENSHOT_SCHEME}"
+PROJECT="$ROOT_DIR/LogWeight.xcodeproj"
+SCHEME="LogWeightWatchScreenshots"
 OUT_ROOT="$ROOT_DIR/Docs/store-screenshots"
+OUT_KEY="watch-series-11"
 
-# App Store required device sizes: simulator name -> output key.
-STORE_DEVICE_NAMES=("iPhone 14 Plus" "iPad Pro 13-inch (M4)")
-STORE_DEVICE_KEYS=("iphone-6.5" "ipad-13")
+DEVICE_NAME="Apple Watch Series 11 (46mm)"
 
-# App Store locales to capture: language code -> region code. Each must have
-# an App/Shared/Resources/<language>.lproj.
+# All scene ids the watch test target produces — see App/WatchScreenshots/.
+ALL_SCENES=(
+  watch-entry-default
+  watch-history-default
+)
+
+# Locales to capture: language code -> region code. Each must have an
+# App/Shared/Resources/<language>.lproj.
 LOCALE_LANGUAGES=("en" "de")
 LOCALE_REGIONS=("US" "DE")
 
 boot_if_needed() {
   local name="$1"
   local udid
-  # grep -F for the literal name (device names like "iPad Pro 13-inch (M4)"
-  # contain parentheses that would otherwise be parsed as regex groups),
-  # then pull out the UDID by shape rather than by position.
   udid="$(xcrun simctl list devices available | grep -F "$name (" | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -1)"
   if [[ -z "$udid" ]]; then
     echo "Simulator not found: $name" >&2
@@ -80,8 +66,6 @@ run_all_scenes() {
     CODE_SIGNING_ALLOWED=NO \
     2>&1 | grep -E "(Test|error:|warning:|Build)" | grep -v "^$" || true
 
-  # xcodebuild exits non-zero when any scene test fails; tolerated here
-  # since other scenes in the same run may still have produced attachments.
   if [[ ! -d "$result_bundle" ]]; then
     echo "No result bundle produced — build likely failed." >&2
     exit 1
@@ -110,10 +94,6 @@ extract_attachments() {
     exit 1
   fi
 
-  # Whitelist by known scene id — xcodebuild also auto-attaches failure
-  # diagnostics (UI Snapshot, Screen Recording, Synthesized Event, Debug
-  # description, App UI hierarchy) whose "isAssociatedWithFailure" flag is
-  # not reliably set, so filtering on that alone lets them leak through.
   local known_scenes
   known_scenes="$(IFS=,; echo "${ALL_SCENES[*]}")"
 
@@ -128,7 +108,6 @@ known_scenes  = set("$known_scenes".split(","))
 with open(manifest_path) as f:
     data = json.load(f)
 
-# suggestedHumanReadableName format: "<scene-id>_<N>_<UUID>.png"
 uuid_suffix = re.compile(r"_\d+_[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\.png\$")
 
 copied = 0
@@ -160,26 +139,21 @@ PYEOF
   rm -rf "$result_bundle"
 }
 
-echo "Full App Store screenshot set: ${#STORE_DEVICE_NAMES[@]} device size(s) x ${#LOCALE_LANGUAGES[@]} locale(s), all scenes from screenshot-scenes.sh."
+echo "Apple Watch screenshot set: ${#LOCALE_LANGUAGES[@]} locale(s), ${#ALL_SCENES[@]} scene(s)."
 
 for l in "${!LOCALE_LANGUAGES[@]}"; do
   language="${LOCALE_LANGUAGES[$l]}"
   region="${LOCALE_REGIONS[$l]}"
+  out_dir="$OUT_ROOT/$language/$OUT_KEY"
+  result_bundle="$ROOT_DIR/tmp/watch-screenshots-$language.xcresult"
+  attach_tmp="$ROOT_DIR/tmp/watch-screenshots-$language-attachments"
 
-  for i in "${!STORE_DEVICE_NAMES[@]}"; do
-    device="${STORE_DEVICE_NAMES[$i]}"
-    key="${STORE_DEVICE_KEYS[$i]}"
-    out_dir="$OUT_ROOT/$language/$key"
-    result_bundle="$ROOT_DIR/tmp/store-screenshots-$language-$key.xcresult"
-    attach_tmp="$ROOT_DIR/tmp/store-screenshots-$language-$key-attachments"
-
-    echo ""
-    echo "=== $device ($key) [$language-$region] ==="
-    udid="$(boot_if_needed "$device")"
-    run_all_scenes "$udid" "$result_bundle" "$language" "$region"
-    extract_attachments "$result_bundle" "$attach_tmp" "$out_dir"
-  done
+  echo ""
+  echo "=== $DEVICE_NAME [$language-$region] ==="
+  udid="$(boot_if_needed "$DEVICE_NAME")"
+  run_all_scenes "$udid" "$result_bundle" "$language" "$region"
+  extract_attachments "$result_bundle" "$attach_tmp" "$out_dir"
 done
 
 echo ""
-echo "Full App Store screenshot set written to: $OUT_ROOT"
+echo "Apple Watch screenshot set written to: $OUT_ROOT/<locale>/$OUT_KEY"

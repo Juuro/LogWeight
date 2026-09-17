@@ -3,21 +3,22 @@ import Foundation
 /// Deterministic in-memory weight fixtures for AI-driven screenshot capture.
 ///
 /// Each case produces a reproducible `[Weight]` sample list so that the same
-/// `--seed=<rawValue>` launch argument always yields the same screen state.
-/// Anchor dates are derived from `referenceDate` so capture results never drift
-/// with the wall clock during a single session — pass an explicit `now` to
-/// override in tests.
+/// `--seed=<rawValue>` launch argument always yields the same *shape* of
+/// screen state. Anchor dates default to the current wall-clock time so the
+/// samples always fall inside HistoryView's default (recent) chart range,
+/// no matter how much later this runs — pass an explicit `now` to pin dates
+/// for unit tests that need bit-for-bit reproducibility.
 public enum ScreenshotFixture: String, Sendable, CaseIterable {
     case empty
     case singleEntry
     case linearTrend30Days
     case plateauThenDrop90Days
 
-    /// Stable anchor used by all fixtures so chart x-axes line up across captures.
+    /// Fixed anchor for unit tests that need bit-for-bit reproducible dates.
     /// 2026-05-01 12:00 UTC.
     public static let referenceDate: Date = Date(timeIntervalSince1970: 1_777_017_600)
 
-    public func samples(now: Date = ScreenshotFixture.referenceDate) -> [Weight] {
+    public func samples(now: Date = Date()) -> [Weight] {
         switch self {
         case .empty:
             return []

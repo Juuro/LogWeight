@@ -21,9 +21,18 @@ struct LogWeightWatchApp: App {
     }
 
     private static func makeStore() -> HealthKitStore {
-        if CommandLine.arguments.contains("--use-in-memory-store") {
-            return InMemoryHealthKitStore()
+        guard CommandLine.arguments.contains("--use-in-memory-store") else {
+            return HKHealthStoreAdapter()
         }
-        return HKHealthStoreAdapter()
+        let fixtureSamples = parseSeedFixture(from: CommandLine.arguments)?.samples() ?? []
+        return InMemoryHealthKitStore(samples: fixtureSamples)
+    }
+
+    private static func parseSeedFixture(from arguments: [String]) -> ScreenshotFixture? {
+        let prefix = "--seed="
+        guard let raw = arguments.first(where: { $0.hasPrefix(prefix) })?.dropFirst(prefix.count) else {
+            return nil
+        }
+        return ScreenshotFixture(rawValue: String(raw))
     }
 }
