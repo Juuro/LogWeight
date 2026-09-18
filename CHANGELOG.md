@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file (English only).
 Release versions and notes are managed by [release-please](https://github.com/googleapis/release-please).
 User-facing version (`MARKETING_VERSION`) is bumped when a Release PR is merged; build numbers are bumped separately by CI.
 
+## [0.5.0](https://github.com/Juuro/LogWeight/compare/v0.4.0...v0.5.0) (2026-09-18)
+
+
+### Features
+
+* Add optional in-app tip jar ([#41](https://github.com/Juuro/LogWeight/issues/41)) ([0ddd810](https://github.com/Juuro/LogWeight/commit/0ddd81045c57ff87b28647e27398ed8b20e6a039))
+* **screenshots:** add watchOS screenshot capture and shorten App Store subtitles ([8df70ea](https://github.com/Juuro/LogWeight/commit/8df70ea7231c00576b838af8648a2e86dc1b48b5))
+* **support:** add dedicated support instructions page ([ca1ecfa](https://github.com/Juuro/LogWeight/commit/ca1ecfa1ae99041c3b2d1265df06e2aa7afc8a01))
+
+
+### Bug Fixes
+
+* **build:** generate Info.plist for UI-test targets and fix accessibility audit findings ([a6c1442](https://github.com/Juuro/LogWeight/commit/a6c14422c9c5d3071599722c52153f5208a919ac))
+* **support:** add direct email and stable instructions link ([50579a0](https://github.com/Juuro/LogWeight/commit/50579a0dbffd390413f0cac3f88539c3735f6168))
+* **support:** clarify contact copy and instruction link text ([de7938d](https://github.com/Juuro/LogWeight/commit/de7938db4f74746efa7f3fd4515f1fc6d9d808be))
+* **support:** clarify support promise and export wording ([60c71bc](https://github.com/Juuro/LogWeight/commit/60c71bc0052d2d82ac23fb75fa33edf72bf46c7b))
+* **support:** improve external-link and navigation copy ([f3d4191](https://github.com/Juuro/LogWeight/commit/f3d41911c7f72b2570701dc41e3980ac071615cd))
+
 ## [0.4.0](https://github.com/Juuro/LogWeight/compare/v0.3.0...v0.4.0) (2026-05-18)
 
 
