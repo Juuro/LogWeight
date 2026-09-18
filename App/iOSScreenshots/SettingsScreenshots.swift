@@ -30,4 +30,20 @@ final class SettingsScreenshots: ScreenshotTestCase {
         Thread.sleep(forTimeInterval: 0.3)
         attachScreenshot(named: "settings-lbs-unit")
     }
+
+    /// Support LogWeight tip-jar screen — used as the IAP review screenshot in App Store Connect.
+    func test_settings_tipjar() throws {
+        try startStoreKitTestSession()
+        launchApp()
+        let settings = app.buttons["entry.settings"]
+        waitForElement(settings, named: "entry.settings")
+        settings.tap()
+        let tipJarLink = app.buttons["settings.tipjar"]
+        waitForElement(tipJarLink, named: "settings.tipjar")
+        tipJarLink.tap()
+        let smallTip = app.buttons["tipjar.product.dev.logweight.tip.small"]
+        waitForElement(smallTip, named: "tipjar.product.dev.logweight.tip.small", timeout: 10)
+        Thread.sleep(forTimeInterval: 0.3)
+        attachScreenshot(named: "settings-tipjar")
+    }
 }

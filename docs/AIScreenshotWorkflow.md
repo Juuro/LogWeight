@@ -27,18 +27,29 @@ Output PNGs land in `Docs/ai-screenshots/` (gitignored). The script prints the a
 
 ## Scene catalog
 
+All 10 scenes below are in `ALL_SCENES` and make up the App Store screenshot
+set (`Tools/CaptureStoreScreenshots.sh`) — capped there at exactly 10 per
+device size per Apple's upload limit.
+
 | Scene ID | Class | What it shows |
 |---|---|---|
 | `entry-default` | `EntryScreenshots` | Entry surface, splash dismissed, empty store |
 | `entry-after-plus-ten` | `EntryScreenshots` | Entry surface after 10 `+` taps — Save enabled |
 | `entry-keyboard-up` | `EntryScreenshots` | Entry surface with decimal-pad keyboard open |
-| `entry-xxxl-dynamic-type` | `EntryScreenshots` | Entry surface at XXXL accessibility text size |
 | `history-empty` | `HistoryScreenshots` | History sheet, no entries |
 | `history-with-chart-30d` | `HistoryScreenshots` | History sheet, 30-day linear trend chart |
 | `history-90d-plateau` | `HistoryScreenshots` | History sheet, 90-day plateau-then-drop chart |
-| `history-chart-crosshair` | `HistoryScreenshots` | History chart with crosshair/tooltip engaged |
+| `history-list-scrolled` | `HistoryScreenshots` | History list scrolled, chart follows |
+| `history-list-small-scroll` | `HistoryScreenshots` | History list nudged one row, chart in sync |
 | `settings-default` | `SettingsScreenshots` | Settings sheet, default state (kg) |
 | `settings-lbs-unit` | `SettingsScreenshots` | Settings sheet after switching to lbs |
+
+Not in `ALL_SCENES` — capture with `--scene` directly, excluded from the App
+Store set on purpose:
+
+| Scene ID | Class | What it shows |
+|---|---|---|
+| `settings-tipjar` | `SettingsScreenshots` | Support LogWeight (tip jar) screen — App Store Connect IAP review screenshot, not a marketing scene |
 
 ---
 

@@ -4,6 +4,7 @@
 # Usage:
 #   Tools/CaptureScene.sh --scene entry-default
 #   Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone 16 Pro"
+#   Tools/CaptureScene.sh --scene settings-tipjar --appearance light
 #   Tools/CaptureScene.sh --all
 #
 # Project-specific config (XCODEPROJ, SCREENSHOT_SCHEME, scene_to_test, ALL_SCENES)
@@ -40,15 +41,22 @@ OUT_DIR="$ROOT_DIR/Docs/ai-screenshots"
 SCENE=""
 DEVICE="iPhone 16 Pro"
 RUN_ALL=false
+APPEARANCE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --scene)    SCENE="$2"; shift 2 ;;
-    --device)   DEVICE="$2"; shift 2 ;;
-    --all)      RUN_ALL=true; shift ;;
+    --scene)      SCENE="$2"; shift 2 ;;
+    --device)     DEVICE="$2"; shift 2 ;;
+    --all)        RUN_ALL=true; shift ;;
+    --appearance) APPEARANCE="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
+
+if [[ -n "$APPEARANCE" && "$APPEARANCE" != "light" && "$APPEARANCE" != "dark" ]]; then
+  echo "Invalid --appearance: $APPEARANCE (must be 'light' or 'dark')" >&2
+  exit 1
+fi
 
 if [[ "$RUN_ALL" == false && -z "$SCENE" ]]; then
   echo "Usage: Tools/CaptureScene.sh --scene <name> | --all [--device <simulator name>]" >&2
@@ -180,6 +188,11 @@ PYEOF
 # --- Main ---
 echo "Booting simulator: $DEVICE"
 UDID="$(boot_if_needed "$DEVICE")"
+
+if [[ -n "$APPEARANCE" ]]; then
+  echo "Setting appearance: $APPEARANCE"
+  xcrun simctl ui "$UDID" appearance "$APPEARANCE"
+fi
 
 run_tests "$UDID"
 extract_attachments

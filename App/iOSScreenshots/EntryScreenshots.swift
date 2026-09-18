@@ -39,15 +39,4 @@ final class EntryScreenshots: ScreenshotTestCase {
         Thread.sleep(forTimeInterval: 0.2)
         attachScreenshot(named: "entry-keyboard-up")
     }
-
-    /// Entry surface at XXXL Dynamic Type — accessibility regression sanity check.
-    func test_entry_xxxl_dynamic_type() throws {
-        launchApp(extraArguments: [
-            "-UIPreferredContentSizeCategoryName",
-            "UICTContentSizeCategoryAccessibilityXXXL"
-        ])
-        waitForElement(app.buttons["entry.stepper.plus"], named: "entry.stepper.plus")
-        Thread.sleep(forTimeInterval: 0.3)
-        attachScreenshot(named: "entry-xxxl-dynamic-type")
-    }
 }

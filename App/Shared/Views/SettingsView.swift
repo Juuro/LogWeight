@@ -80,6 +80,17 @@ struct SettingsView: View {
                 }
 #endif
 
+#if os(iOS)
+                Section("Support") {
+                    NavigationLink {
+                        TipJarView()
+                    } label: {
+                        Label("Support LogWeight", systemImage: "heart")
+                    }
+                    .accessibilityIdentifier("settings.tipjar")
+                }
+#endif
+
                 Section("Apple Health") {
                     Link(destination: URL(string: "x-apple-health://")!) {
                         Label("Open Apple Health", systemImage: "heart.text.square")
