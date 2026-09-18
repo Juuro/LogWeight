@@ -72,7 +72,7 @@ struct LogWeightChartProvider: AppIntentTimelineProvider {
     private static func resolvedChartRange(
         configuration: LogWeightChartConfigIntent
     ) async -> ChartTimeRange {
-        let range = configuration.range.chartTimeRange
+        let range = (configuration.range ?? .oneWeek).chartTimeRange
         WidgetChartRangeStore.save(range)
         return range
     }

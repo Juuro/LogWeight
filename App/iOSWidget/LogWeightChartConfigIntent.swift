@@ -44,7 +44,7 @@ struct LogWeightChartConfigIntent: WidgetConfigurationIntent {
     static let description = IntentDescription("Shows your weight trend from Apple Health.")
 
     @Parameter(title: "Range")
-    var range: ChartWidgetRange
+    var range: ChartWidgetRange?
 
     init() {
         range = .oneWeek
