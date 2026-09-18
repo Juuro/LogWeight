@@ -75,6 +75,7 @@ struct EntryView: View {
                         .font(.title3.weight(.medium))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("entry.first-weight.prompt")
                 }
                 weightDisplay
@@ -281,7 +282,11 @@ struct EntryView: View {
         if state.saveStatus == .saving {
             return Color.accentColor.opacity(0.4)
         }
-        return Color.accentColor
+        // White label text on the default accent blue measures ~4.0:1 — under
+        // the 4.5:1 WCAG AA threshold for regular-weight text (XCUIAccessibilityAuditIssue
+        // "Contrast nearly passed"). Darken by HSB brightness so the fix still
+        // tracks whatever AccentColor the app ships.
+        return Color.accentColor.darkened(by: 0.15)
     }
 
     /// Maps `EntryState.SaveStatus.failed` reason codes to user-facing copy.
@@ -472,4 +477,17 @@ private extension UIView {
         state: EntryState(initialValueInKilograms: 75.0),
         store: InMemoryHealthKitStore()
     )
+}
+
+private extension Color {
+    /// Reduces HSB brightness while keeping hue/saturation, so a fixed
+    /// contrast adjustment still tracks whatever AccentColor the app ships.
+    func darkened(by amount: CGFloat) -> Color {
+        let uiColor = UIColor(self)
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard uiColor.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else {
+            return self
+        }
+        return Color(hue: hue, saturation: saturation, brightness: max(0, brightness - amount), opacity: alpha)
+    }
 }

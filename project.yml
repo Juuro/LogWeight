@@ -199,6 +199,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightUITests
         TEST_TARGET_NAME: LogWeight
+        GENERATE_INFOPLIST_FILE: YES
 
   LogWeightScreenshots:
     type: bundle.ui-testing
@@ -213,6 +214,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightScreenshots
         TEST_TARGET_NAME: LogWeight
+        GENERATE_INFOPLIST_FILE: YES
 
   LogWeightWatchScreenshots:
     type: bundle.ui-testing
@@ -226,6 +228,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.logweight.LogWeightWatchScreenshots
         TEST_TARGET_NAME: LogWeightWatchApp
+        GENERATE_INFOPLIST_FILE: YES
 
 schemes:
   LogWeight:

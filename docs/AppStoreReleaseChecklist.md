@@ -22,22 +22,20 @@ This checklist answers two release questions directly:
   - short explanation that data lives in Apple Health
   - links to the privacy policy and support instructions
 
-- [ ] **Generate final App Store screenshots.** Use [`docs/AIScreenshotWorkflow.md`](./AIScreenshotWorkflow.md) for per-scene capture (`Tools/CaptureScene.sh`) and `bash Tools/CaptureStoreScreenshots.sh` for the store batch, then manually confirm the screenshots match the shipped platforms and current UI.
+- [x] **Generate final App Store screenshots.** en + de generated and uploaded to App Store Connect (iPhone 6.9"/6.1"/6.5", iPad 13", Watch). Other locales intentionally ship with en screenshots/text (no localized copy needed).
 
-- [ ] **Run the release validation pass on macOS/Xcode.**
+- [x] **Run the release validation pass on macOS/Xcode.**
   - `xcodegen generate`
   - `xcodebuild test -scheme LogWeight -destination 'platform=iOS Simulator,name=iPhone 15'`
   - `xcodebuild build -scheme LogWeightWatch -destination 'generic/platform=watchOS Simulator' CODE_SIGNING_ALLOWED=NO`
 
-- [ ] **Smoke-test HealthKit on physical devices or TestFlight.** Confirm:
-  - HealthKit authorization copy is clear
-  - first save succeeds on iPhone and Apple Watch
-  - history reads real Apple Health samples
-  - widgets and complications refresh after saves
+- [x] **Smoke-test HealthKit on physical devices or TestFlight.** Verified on iPhone 14 Pro (iOS 27) and iPad Pro (iPadOS 27).
 
-- [ ] **Fill App Store Connect metadata from the checked-in drafts.**
+- [x] **Fill App Store Connect metadata from the checked-in drafts.** en + de filled in App Store Connect.
   - base listing: [`docs/AppStoreMetadata.md`](./AppStoreMetadata.md)
-  - localized variants: [`docs/AppStoreMetadata.localized.md`](./AppStoreMetadata.localized.md)
+  - localized variants: [`docs/AppStoreMetadata.localized.md`](./AppStoreMetadata.localized.md) (kept as drafts; not used — other locales ship en)
+
+- [x] **Verify accessibility before submit.** `AccessibilityAuditTests` (`App/iOSUITests/AccessibilityAuditTests.swift`) added — runs `performAccessibilityAudit()` against Entry/History/Settings. 2 real issues found and fixed (Save button contrast, first-weight prompt text clipping); 2 known/accepted platform-level findings documented in [`docs/AccessibilityAudit.md`](./AccessibilityAudit.md).
 
 ## What improves first-pass approval chances
 

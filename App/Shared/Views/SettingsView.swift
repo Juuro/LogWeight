@@ -83,6 +83,7 @@ struct SettingsView: View {
                 Section("Apple Health") {
                     Link(destination: URL(string: "x-apple-health://")!) {
                         Label("Open Apple Health", systemImage: "heart.text.square")
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Text("Your weight history lives in Apple Health. Edit, delete, or export it from the Health app.")
                         .font(.footnote)
