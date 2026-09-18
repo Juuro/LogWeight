@@ -4,8 +4,10 @@
 # Usage:
 #   Tools/CaptureScene.sh --scene entry-default
 #   Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone 16 Pro"
-#   Tools/CaptureScene.sh --scene settings-tipjar --appearance light
+#   Tools/CaptureScene.sh --scene settings-tipjar --appearance dark
 #   Tools/CaptureScene.sh --all
+#
+# Defaults to --appearance light. Pass --appearance dark to override.
 #
 # Project-specific config (XCODEPROJ, SCREENSHOT_SCHEME, scene_to_test, ALL_SCENES)
 # lives in Tools/screenshot-scenes.sh alongside this script.
@@ -41,7 +43,7 @@ OUT_DIR="$ROOT_DIR/Docs/ai-screenshots"
 SCENE=""
 DEVICE="iPhone 16 Pro"
 RUN_ALL=false
-APPEARANCE=""
+APPEARANCE="light"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -101,7 +103,7 @@ run_tests() {
     -testLanguage en \
     -testRegion US \
     CODE_SIGNING_ALLOWED=NO \
-    "${only_testing_flag[@]}" \
+    ${only_testing_flag[@]+"${only_testing_flag[@]}"} \
     2>&1 | grep -E "(Test|error:|warning:|Build)" | grep -v "^$" || true
 
   # xcodebuild exits non-zero when tests fail; we tolerate that because some
