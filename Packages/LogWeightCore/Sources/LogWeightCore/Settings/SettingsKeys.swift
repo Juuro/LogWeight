@@ -16,6 +16,8 @@ public enum SettingsKey {
     public static let reminderEnabled = "logweight_reminder_enabled"
     public static let reminderHour = "logweight_reminder_hour"
     public static let reminderMinute = "logweight_reminder_minute"
+    public static let successfulEntryCount = "logweight_successful_entry_count"
+    public static let tipPromptShown = "logweight_tip_prompt_shown"
     public static let schemaVersion = "logweight_settings_schema_version"
 }
 

@@ -1,0 +1,65 @@
+{
+  "identifier" : "5A0F1A54-9C3B-4B7B-8B1C-6F1B2E7C1A11",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "B89A08B9-F353-4094-A469-290ADF7A7679",
+      "localizations" : [
+        {
+          "description" : "A small tip to support LogWeight's development.",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.logweight.tip.small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "33FDA2EF-B828-452D-849A-99129C889541",
+      "localizations" : [
+        {
+          "description" : "A medium tip to support LogWeight's development.",
+          "displayName" : "Medium Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.logweight.tip.medium",
+      "referenceName" : "Medium Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "EB79018E-AC54-48A9-869B-C0E95BEFCE2E",
+      "localizations" : [
+        {
+          "description" : "A large tip to support LogWeight's development.",
+          "displayName" : "Large Tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.logweight.tip.large",
+      "referenceName" : "Large Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -111,3 +111,13 @@
 "No data" = "データなし";
 "No weight yet" = "まだ体重がありません";
 "No weight" = "体重なし";
+
+"Support" = "サポート";
+"Support LogWeight" = "LogWeightをサポート";
+"LogWeight is free, with no ads and no tracking. If it's useful to you, a tip helps keep it that way." = "LogWeightは無料で、広告もトラッキングもありません。役立っていると感じたら、チップがその継続を支えます。";
+"Thank you for supporting LogWeight!" = "LogWeightを応援していただきありがとうございます！";
+"The purchase didn't go through. Please try again." = "購入を完了できませんでした。もう一度お試しください。";
+"Enjoying LogWeight?" = "LogWeightは気に入っていますか？";
+"It's free, with no ads and no tracking. If it's been useful, a small tip helps keep it that way." = "無料で、広告もトラッキングもありません。役立っていたら、少額のチップがその継続を支えます。";
+"Leave a tip" = "チップを送る";
+"Maybe later" = "また今度";

@@ -20,6 +20,7 @@ struct LogWeightApp: App {
     private static let preparingHintDelay: Duration = .seconds(1.4)
 
     init() {
+        Self.resetUserDefaultsForUITestIfNeeded()
         SettingsMigrator.migrateIfNeeded()
         let store = Self.makeStore()
         self.healthKitStore = store
@@ -88,6 +89,20 @@ struct LogWeightApp: App {
         }
         let fixtureSamples = parseSeedFixture(from: CommandLine.arguments)?.samples() ?? []
         return InMemoryHealthKitStore(samples: fixtureSamples)
+    }
+
+    /// UI tests run in the same simulator app container across launches (and, on a
+    /// persistent CI runner, across separate CI jobs). `--use-in-memory-store` already
+    /// isolates HealthKit; without this, `logweight_*` UserDefaults keys — notably the
+    /// tip-jar `successfulEntryCount` counter — keep accumulating and can cross
+    /// `TipPromptCoordinator.promptThreshold`, popping the tip sheet mid-test and
+    /// breaking assertions that don't expect it.
+    private static func resetUserDefaultsForUITestIfNeeded() {
+        guard CommandLine.arguments.contains("--use-in-memory-store") else { return }
+        let defaults = UserDefaults.standard
+        for (key, _) in defaults.dictionaryRepresentation() where key.hasPrefix("logweight_") {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     private static func parseSeedFixture(from arguments: [String]) -> ScreenshotFixture? {

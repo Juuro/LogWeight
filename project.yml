@@ -207,6 +207,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: App/iOSScreenshots
+        excludes:
+          - "Resources/LogWeight.storekit"
       - path: App/iOSUITests/UITestNavigation.swift
     dependencies:
       - target: LogWeight
@@ -238,6 +240,7 @@ schemes:
         LogWeightUITests: [test]
     run:
       config: Debug
+      storeKitConfiguration: App/iOSScreenshots/Resources/LogWeight.storekit
     test:
       config: Debug
       targets:
@@ -272,6 +275,7 @@ schemes:
         LogWeightScreenshots: [test]
     run:
       config: Debug
+      storeKitConfiguration: App/iOSScreenshots/Resources/LogWeight.storekit
     test:
       config: Debug
       targets:

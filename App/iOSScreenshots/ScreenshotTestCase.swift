@@ -1,4 +1,5 @@
 import XCTest
+import StoreKitTest
 
 /// Base class for AI-driven screenshot scenes.
 ///
@@ -16,10 +17,38 @@ import XCTest
 class ScreenshotTestCase: XCTestCase {
 
     var app: XCUIApplication!
+    private var storeKitSession: SKTestSession?
 
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+    }
+
+    override func tearDownWithError() throws {
+        storeKitSession = nil
+    }
+
+    /// Starts a local StoreKit testing session from `Resources/LogWeight.storekit`
+    /// so IAP-driven scenes (the tip jar) load real `Product`s without a
+    /// network call. Scheme-level StoreKit configuration only applies to the
+    /// Run action, not Test, so scenes needing IAP call this explicitly
+    /// before `launchApp()`.
+    ///
+    /// Reads the file straight from the checked-out source tree via
+    /// `#filePath` rather than as a bundled resource: XcodeGen 2.46 silently
+    /// drops `.storekit` files from a target's `resources:` list (confirmed
+    /// against an identically-placed `.txt`, which copies fine), so bundling
+    /// isn't an option here.
+    @discardableResult
+    func startStoreKitTestSession() throws -> SKTestSession {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Resources/LogWeight.storekit")
+        let session = try SKTestSession(contentsOf: url)
+        session.disableDialogs = true
+        session.clearTransactions()
+        storeKitSession = session
+        return session
     }
 
     /// Launches the app with the standard screenshot launch arguments.

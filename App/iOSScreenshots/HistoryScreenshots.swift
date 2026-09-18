@@ -69,18 +69,6 @@ final class HistoryScreenshots: ScreenshotTestCase {
         attachScreenshot(named: "history-list-small-scroll")
     }
 
-    /// History tab with crosshair active (long-press on chart) showing tooltip.
-    func test_history_chart_crosshair() throws {
-        launchApp(seed: "linearTrend30Days")
-        openHistoryTab()
-        let chart = app.descendants(matching: .any)["history.chart"]
-        waitForElement(chart, named: "history.chart")
-        // Long-press the chart to engage the crosshair gesture.
-        chart.press(forDuration: 0.6)
-        Thread.sleep(forTimeInterval: 0.4)
-        attachScreenshot(named: "history-chart-crosshair")
-    }
-
     private func openHistoryTab() {
         app.openHistoryTab()
     }

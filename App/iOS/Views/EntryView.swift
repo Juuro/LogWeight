@@ -20,6 +20,9 @@ struct EntryView: View {
     @AppStorage(SettingsKey.hapticsEnabled) private var hapticsEnabled: Bool = true
 
     @State private var showSettings = false
+    @State private var showTipPrompt = false
+    @State private var showTipJar = false
+    @State private var pendingOpenTipJar = false
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
@@ -109,6 +112,17 @@ struct EntryView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showTipPrompt, onDismiss: {
+                if pendingOpenTipJar {
+                    pendingOpenTipJar = false
+                    showTipJar = true
+                }
+            }) {
+                TipPromptSheet(onOpenTipJar: { pendingOpenTipJar = true })
+            }
+            .sheet(isPresented: $showTipJar) {
+                NavigationStack { TipJarView() }
             }
             .sensoryFeedback(.success, trigger: state.saveStatus) { _, new in
                 if hapticsEnabled, case .savedAt = new { return true }
@@ -264,6 +278,10 @@ struct EntryView: View {
                 await state.commit(store: store)
                 if case .savedAt = state.saveStatus {
                     syncWidgetAfterSuccessfulSave()
+                    if TipPromptCoordinator.recordSuccessfulEntry() {
+                        TipPromptCoordinator.markPresented()
+                        showTipPrompt = true
+                    }
                 }
             }
         } label: {

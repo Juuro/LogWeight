@@ -4,7 +4,10 @@
 # Usage:
 #   Tools/CaptureScene.sh --scene entry-default
 #   Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone 16 Pro"
+#   Tools/CaptureScene.sh --scene settings-tipjar --appearance dark
 #   Tools/CaptureScene.sh --all
+#
+# Defaults to --appearance light. Pass --appearance dark to override.
 #
 # Project-specific config (XCODEPROJ, SCREENSHOT_SCHEME, scene_to_test, ALL_SCENES)
 # lives in Tools/screenshot-scenes.sh alongside this script.
@@ -40,15 +43,22 @@ OUT_DIR="$ROOT_DIR/Docs/ai-screenshots"
 SCENE=""
 DEVICE="iPhone 16 Pro"
 RUN_ALL=false
+APPEARANCE="light"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --scene)    SCENE="$2"; shift 2 ;;
-    --device)   DEVICE="$2"; shift 2 ;;
-    --all)      RUN_ALL=true; shift ;;
+    --scene)      SCENE="$2"; shift 2 ;;
+    --device)     DEVICE="$2"; shift 2 ;;
+    --all)        RUN_ALL=true; shift ;;
+    --appearance) APPEARANCE="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
+
+if [[ -n "$APPEARANCE" && "$APPEARANCE" != "light" && "$APPEARANCE" != "dark" ]]; then
+  echo "Invalid --appearance: $APPEARANCE (must be 'light' or 'dark')" >&2
+  exit 1
+fi
 
 if [[ "$RUN_ALL" == false && -z "$SCENE" ]]; then
   echo "Usage: Tools/CaptureScene.sh --scene <name> | --all [--device <simulator name>]" >&2
@@ -93,7 +103,7 @@ run_tests() {
     -testLanguage en \
     -testRegion US \
     CODE_SIGNING_ALLOWED=NO \
-    "${only_testing_flag[@]}" \
+    ${only_testing_flag[@]+"${only_testing_flag[@]}"} \
     2>&1 | grep -E "(Test|error:|warning:|Build)" | grep -v "^$" || true
 
   # xcodebuild exits non-zero when tests fail; we tolerate that because some
@@ -180,6 +190,11 @@ PYEOF
 # --- Main ---
 echo "Booting simulator: $DEVICE"
 UDID="$(boot_if_needed "$DEVICE")"
+
+if [[ -n "$APPEARANCE" ]]; then
+  echo "Setting appearance: $APPEARANCE"
+  xcrun simctl ui "$UDID" appearance "$APPEARANCE"
+fi
 
 run_tests "$UDID"
 extract_attachments

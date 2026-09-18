@@ -15,9 +15,13 @@
 # (A SCREENSHOT_LOCALE env var doesn't work here: env vars set by the calling
 # shell don't cross into the simulator-hosted XCTest process.)
 #
-# Note: Apple currently caps uploads at 10 screenshots per device size —
-# trim Docs/store-screenshots/<locale>/<device-key>/ down to the best 10
-# before uploading if a folder ends up with more.
+# Note: Apple caps uploads at 10 screenshots per device size. ALL_SCENES in
+# screenshot-scenes.sh is kept at exactly 10 for this reason — if it grows
+# past that, trim Docs/store-screenshots/<locale>/<device-key>/ before upload.
+#
+# Always captured in light mode (forced per-device below) — that's the
+# storefront's chosen presentation, independent of whatever appearance a
+# given simulator happens to be left in.
 
 set -euo pipefail
 
@@ -176,6 +180,10 @@ for l in "${!LOCALE_LANGUAGES[@]}"; do
     echo ""
     echo "=== $device ($key) [$language-$region] ==="
     udid="$(boot_if_needed "$device")"
+    # App Store screenshots are always captured in light mode — set explicitly
+    # rather than relying on whatever appearance the simulator happened to be
+    # left in (that state is per-simulator and doesn't travel with this repo).
+    xcrun simctl ui "$udid" appearance light
     run_all_scenes "$udid" "$result_bundle" "$language" "$region"
     extract_attachments "$result_bundle" "$attach_tmp" "$out_dir"
   done
