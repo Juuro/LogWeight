@@ -11,14 +11,6 @@ public enum TipJarProduct: String, CaseIterable, Sendable {
     case medium = "dev.logweight.tip.medium"
     case large = "dev.logweight.tip.large"
 
-    public var displayName: String {
-        switch self {
-        case .small: return "Small Tip"
-        case .medium: return "Medium Tip"
-        case .large: return "Large Tip"
-        }
-    }
-
     public var sfSymbol: String {
         switch self {
         case .small: return "cup.and.saucer"

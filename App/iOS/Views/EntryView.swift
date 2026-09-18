@@ -22,6 +22,7 @@ struct EntryView: View {
     @State private var showSettings = false
     @State private var showTipPrompt = false
     @State private var showTipJar = false
+    @State private var pendingOpenTipJar = false
     @State private var isEditingValue = false
     @State private var typedValue: String = ""
     @State private var clearSavedStatusTask: Task<Void, Never>?
@@ -112,8 +113,13 @@ struct EntryView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
-            .sheet(isPresented: $showTipPrompt) {
-                TipPromptSheet(onOpenTipJar: { showTipJar = true })
+            .sheet(isPresented: $showTipPrompt, onDismiss: {
+                if pendingOpenTipJar {
+                    pendingOpenTipJar = false
+                    showTipJar = true
+                }
+            }) {
+                TipPromptSheet(onOpenTipJar: { pendingOpenTipJar = true })
             }
             .sheet(isPresented: $showTipJar) {
                 NavigationStack { TipJarView() }

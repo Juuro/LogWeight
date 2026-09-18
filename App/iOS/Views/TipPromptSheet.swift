@@ -21,8 +21,8 @@ struct TipPromptSheet: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
-                dismiss()
                 onOpenTipJar()
+                dismiss()
             } label: {
                 Text("Leave a tip")
                     .frame(maxWidth: .infinity)
