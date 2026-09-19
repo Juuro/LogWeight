@@ -23,6 +23,5 @@ public enum SettingsMigrator {
 
     private static func mirrorWidgetPreferences(standardDefaults: UserDefaults) {
         WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup(standardDefaults: standardDefaults)
-        TrendArrowPreferences.mirrorToAppGroup(standardDefaults: standardDefaults)
     }
 }

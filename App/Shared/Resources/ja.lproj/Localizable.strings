@@ -65,11 +65,6 @@
 "Open Settings" = "設定を開く";
 "Log your weight" = "体重を記録しましょう";
 "Open LogWeight to record today's weight." = "LogWeightを開いて、今日の体重を記録してください。";
-"Display" = "表示";
-"Show trend arrow" = "トレンド矢印を表示";
-"Trending up" = "上昇傾向";
-"Trending down" = "下降傾向";
-"Weight stable" = "体重は安定";
 "Cannot Delete Entry" = "記録を削除できません";
 "OK" = "OK";
 "Delete" = "削除";

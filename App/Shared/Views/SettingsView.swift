@@ -9,7 +9,6 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.unitPreference) private var unitPreferenceRaw: String = WeightUnit.kilograms.rawValue
     @AppStorage(SettingsKey.defaultEntryMode) private var defaultEntryModeRaw: String = DefaultEntryMode.lastSaved.rawValue
     @AppStorage(SettingsKey.hapticsEnabled) private var hapticsEnabled: Bool = true
-    @AppStorage(SettingsKey.trendArrowEnabled) private var trendArrowEnabled: Bool = true
     @AppStorage(SettingsKey.reminderEnabled) private var reminderEnabled: Bool = false
     @AppStorage(SettingsKey.reminderHour) private var reminderHour: Int = DailyReminderSettings.defaultHour
     @AppStorage(SettingsKey.reminderMinute) private var reminderMinute: Int = DailyReminderSettings.defaultMinute
@@ -46,11 +45,6 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.prefill")
                     Toggle("Haptic feedback on save", isOn: $hapticsEnabled)
                         .accessibilityIdentifier("settings.haptics")
-                }
-
-                Section("Display") {
-                    Toggle("Show trend arrow", isOn: $trendArrowEnabled)
-                        .accessibilityIdentifier("settings.trendArrow")
                 }
 
 #if os(iOS)
@@ -124,10 +118,6 @@ struct SettingsView: View {
             }
             .onChange(of: unitPreferenceRaw) { _, _ in
                 WeightDisplayPreferences.mirrorUnitPreferenceToAppGroup()
-                WidgetTimelineRefresh.reloadEntryAndChartWidgets()
-            }
-            .onChange(of: trendArrowEnabled) { _, _ in
-                TrendArrowPreferences.mirrorToAppGroup()
                 WidgetTimelineRefresh.reloadEntryAndChartWidgets()
             }
 #if os(iOS)
