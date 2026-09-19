@@ -65,11 +65,6 @@
 "Open Settings" = "Ouvrir Réglages";
 "Log your weight" = "Enregistrez votre poids";
 "Open LogWeight to record today's weight." = "Ouvrez LogWeight pour enregistrer le poids du jour.";
-"Display" = "Affichage";
-"Show trend arrow" = "Afficher la flèche de tendance";
-"Trending up" = "Tendance à la hausse";
-"Trending down" = "Tendance à la baisse";
-"Weight stable" = "Poids stable";
 "Cannot Delete Entry" = "Impossible de supprimer l’entrée";
 "OK" = "OK";
 "Delete" = "Supprimer";

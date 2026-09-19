@@ -12,7 +12,6 @@ public enum SettingsKey {
     public static let unitPreference = "logweight_unit_preference"
     public static let defaultEntryMode = "logweight_default_entry_mode"
     public static let hapticsEnabled = "logweight_haptics_enabled"
-    public static let trendArrowEnabled = "logweight_trend_arrow_enabled"
     public static let reminderEnabled = "logweight_reminder_enabled"
     public static let reminderHour = "logweight_reminder_hour"
     public static let reminderMinute = "logweight_reminder_minute"
