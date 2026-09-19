@@ -48,11 +48,15 @@ STORE_DEVICE_KEYS=("iphone-6.5" "ipad-13")
 # sell best on the listing).
 STORE_SCENES=(entry-after-plus-ten history-90d-plateau settings-default)
 
-# App Store locales to capture: language code -> region code, one pair per
-# locale in docs/AppStoreMetadata.localized.md. Each must have an
-# App/Shared/Resources/<language>.lproj.
-LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl")
-LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL")
+# App Store locales to capture: language code -> region code -> output dir
+# key, one triple per locale in docs/AppStoreMetadata.localized.md (each must
+# have an App/Shared/Resources/<language>.lproj), plus the three English
+# storefront variants (all resolve to the single en.lproj bundle — only
+# testRegion differs, which is what drives the kg/lb default per
+# WeightDisplayPreferences.localeDefaultUnit).
+LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en" "en" "en")
+LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL" "GB" "US" "CA")
+LOCALE_KEYS=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en-GB" "en-US" "en-CA")
 
 boot_if_needed() {
   local name="$1"
@@ -181,16 +185,17 @@ echo "Full App Store screenshot set: ${#STORE_DEVICE_NAMES[@]} device size(s) x 
 for l in "${!LOCALE_LANGUAGES[@]}"; do
   language="${LOCALE_LANGUAGES[$l]}"
   region="${LOCALE_REGIONS[$l]}"
+  locale_key="${LOCALE_KEYS[$l]}"
 
   for i in "${!STORE_DEVICE_NAMES[@]}"; do
     device="${STORE_DEVICE_NAMES[$i]}"
     key="${STORE_DEVICE_KEYS[$i]}"
-    out_dir="$OUT_ROOT/$language/$key"
-    result_bundle="$ROOT_DIR/tmp/store-screenshots-$language-$key.xcresult"
-    attach_tmp="$ROOT_DIR/tmp/store-screenshots-$language-$key-attachments"
+    out_dir="$OUT_ROOT/$locale_key/$key"
+    result_bundle="$ROOT_DIR/tmp/store-screenshots-$locale_key-$key.xcresult"
+    attach_tmp="$ROOT_DIR/tmp/store-screenshots-$locale_key-$key-attachments"
 
     echo ""
-    echo "=== $device ($key) [$language-$region] ==="
+    echo "=== $device ($key) [$locale_key ($language-$region)] ==="
     udid="$(boot_if_needed "$device")"
     # App Store screenshots are always captured in light mode — set explicitly
     # rather than relying on whatever appearance the simulator happened to be
