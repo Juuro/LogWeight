@@ -33,7 +33,7 @@ struct TipJarView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if case .thankYou = store.purchaseState {
+            if store.showsThankYou {
                 Section {
                     Label("Thank you for supporting LogWeight!", systemImage: "heart.fill")
                         .foregroundStyle(.pink)
