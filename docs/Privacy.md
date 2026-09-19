@@ -18,6 +18,15 @@ The app:
 
 Cross-device synchronisation, when the user has more than one device, is handled by Apple Health itself.
 
+## Feedback
+
+Settings → Feedback offers two rows, both user-initiated:
+
+- **Send feedback** opens a draft in the user's own mail client, addressed to the support mailbox. The body is prefilled with app version, build, iOS version, and device model only. The user sees and can edit the draft before sending. Nothing is sent by the app itself, and no health data is included. If no mail app is available, the support address is copied to the clipboard instead.
+- **Rate LogWeight on the App Store** opens the App Store review page. No data is passed.
+
+Whatever the user chooses to write is processed as ordinary email by the support mailbox; it is not linked to any app-side identifier.
+
 ## Lawful basis
 
 The lawful basis for processing under GDPR is **explicit consent**, gathered through the standard HealthKit authorisation sheet. The user can revoke consent at any time in **Settings → Health → Data Access & Devices → LogWeight**. Once revoked, future writes will fail and the app surfaces a calm prompt to re-enable.
