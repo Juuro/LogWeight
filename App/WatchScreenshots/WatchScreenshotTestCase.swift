@@ -14,10 +14,12 @@ class WatchScreenshotTestCase: XCTestCase {
 
     /// Launches the watch app with an in-memory store, optionally preloaded
     /// with a `ScreenshotFixture` via `seed`. Display unit follows the
-    /// simulator's region (set via `xcodebuild test -testRegion`): DE
-    /// captures in kg, everything else in lb.
+    /// simulator's region (set via `xcodebuild test -testRegion`): only
+    /// `.us` is imperial (lb) — `.uk` (e.g. en-GB) still displays kg for
+    /// body weight despite Foundation reporting it as a distinct,
+    /// non-`.metric` measurement system.
     func launchApp(seed: String? = nil) {
-        let unit = Locale.current.region?.identifier == "DE" ? "kg" : "lb"
+        let unit = Locale.current.measurementSystem == .us ? "lb" : "kg"
         var args = ["--use-in-memory-store", "-logweight_unit_preference", unit]
         if let seed {
             args.append("--seed=\(seed)")

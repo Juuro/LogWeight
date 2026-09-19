@@ -18,6 +18,10 @@ struct SettingsView: View {
     @State private var pendingReminderEnabled: Bool?
 
     @Environment(\.dismiss) private var dismiss
+#if os(iOS)
+    @Environment(\.openURL) private var openURL
+    @State private var showsEmailCopiedAlert = false
+#endif
 
 #if os(iOS)
     private let reminderCoordinator = ReminderCoordinator()
@@ -83,6 +87,25 @@ struct SettingsView: View {
                     }
                     .accessibilityIdentifier("settings.tipjar")
                 }
+
+                Section("Feedback") {
+                    Button {
+                        sendFeedbackEmail()
+                    } label: {
+                        Label("Send feedback", systemImage: "envelope")
+                    }
+                    .accessibilityIdentifier("settings.feedback.email")
+
+                    Link(destination: FeedbackLinks.writeReviewURL) {
+                        Label("Rate LogWeight on the App Store", systemImage: "star")
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityIdentifier("settings.feedback.rate")
+
+                    Text("Feedback emails include only your app version, iOS version, and device model. No health data is attached.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
 #endif
 
                 Section("Apple Health") {
@@ -124,11 +147,49 @@ struct SettingsView: View {
             .task {
                 reminderAuthStatus = await reminderScheduler.authorizationStatus()
             }
+            .alert("Email address copied", isPresented: $showsEmailCopiedAlert) {
+            } message: {
+                Text(FeedbackLinks.supportAddress)
+            }
 #endif
         }
     }
 
 #if os(iOS)
+    /// Opens a prefilled mail draft. If no mail app can handle it, copies the
+    /// support address so the user can write from any client.
+    private func sendFeedbackEmail() {
+        let subject = String(localized: "LogWeight feedback")
+        guard let url = FeedbackLinks.mailtoURL(subject: subject, diagnostics: Self.feedbackDiagnostics()) else {
+            copySupportAddress()
+            return
+        }
+        openURL(url) { accepted in
+            if !accepted { copySupportAddress() }
+        }
+    }
+
+    private func copySupportAddress() {
+        UIPasteboard.general.string = FeedbackLinks.supportAddress
+        showsEmailCopiedAlert = true
+    }
+
+    private static func feedbackDiagnostics() -> FeedbackLinks.Diagnostics {
+        let info = Bundle.main.infoDictionary
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machine = withUnsafeBytes(of: &systemInfo.machine) { buffer in
+            String(decoding: buffer.prefix(while: { $0 != 0 }), as: UTF8.self)
+        }
+        let model = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? machine
+        return FeedbackLinks.Diagnostics(
+            appVersion: info?["CFBundleShortVersionString"] as? String ?? "?",
+            build: info?["CFBundleVersion"] as? String ?? "?",
+            osVersion: UIDevice.current.systemVersion,
+            deviceModel: model
+        )
+    }
+
     private var reminderEnabledBinding: Binding<Bool> {
         Binding(
             get: { reminderEnabled },

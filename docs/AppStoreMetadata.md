@@ -21,15 +21,15 @@ This file tracks App Store Connect metadata needed for a v1.0 submission.
 
 ## Description
 
-`LogWeight is the fastest calm way to log your body weight on Apple devices.
+LogWeight is the fastest calm way to log your body weight on Apple devices.
 
-• Save directly to Apple Health (Body Mass)
-• Stepper-first entry for one-handed use
-• Apple Watch support with Digital Crown input
-• History list with trend chart on iPhone and iPad
-• Privacy-first by design: no accounts, no analytics, no third-party SDKs
+- Save directly to Apple Health (Body Mass)
+- Stepper-first entry for one-handed use
+- Apple Watch support with Digital Crown input
+- History list with trend chart on iPhone and iPad
+- Privacy-first by design: no accounts, no analytics, no third-party SDKs
 
-Your data remains in Apple Health. LogWeight does not run its own weight database.`
+Your data remains in Apple Health. LogWeight does not run its own weight database.
 
 ## Keywords
 

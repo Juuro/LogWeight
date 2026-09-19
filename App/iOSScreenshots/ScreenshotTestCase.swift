@@ -59,11 +59,13 @@ class ScreenshotTestCase: XCTestCase {
     /// the calling shell don't cross into the simulator-hosted test process,
     /// so locale is driven by `xcodebuild test -testLanguage -testRegion`
     /// instead (see Tools/CaptureScene.sh and Tools/CaptureStoreScreenshots.sh).
-    /// Display unit follows that same region: DE captures in kg, everything
-    /// else in lb, passed via the `-logweight_unit_preference` NSUserDefaults
-    /// argument (crosses into the app process the same way `-AppleLanguages` did).
+    /// Display unit follows that region: only `.us` is imperial (lb) — `.uk`
+    /// (e.g. en-GB) still displays kg for body weight despite Foundation
+    /// reporting it as a distinct, non-`.metric` measurement system — passed
+    /// via the `-logweight_unit_preference` NSUserDefaults argument (crosses
+    /// into the app process the same way `-AppleLanguages` did).
     func launchApp(seed: String? = nil, extraArguments: [String] = []) {
-        let unit = Locale.current.region?.identifier == "DE" ? "kg" : "lb"
+        let unit = Locale.current.measurementSystem == .us ? "lb" : "kg"
         var args = [
             "--use-in-memory-store",
             "--skip-splash",

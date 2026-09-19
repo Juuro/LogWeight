@@ -28,10 +28,14 @@ ALL_SCENES=(
   watch-history-default
 )
 
-# Locales to capture: language code -> region code. Each must have an
-# App/Shared/Resources/<language>.lproj.
-LOCALE_LANGUAGES=("en" "de")
-LOCALE_REGIONS=("US" "DE")
+# Locales to capture: language code -> region code -> output dir key, one
+# triple per locale in docs/AppStoreMetadata.localized.md (each must have an
+# App/Shared/Resources/<language>.lproj), plus the three English storefront
+# variants (all resolve to the single en.lproj bundle — only testRegion
+# differs).
+LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en" "en" "en")
+LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL" "GB" "US" "CA")
+LOCALE_KEYS=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en-GB" "en-US" "en-CA")
 
 boot_if_needed() {
   local name="$1"
@@ -144,12 +148,13 @@ echo "Apple Watch screenshot set: ${#LOCALE_LANGUAGES[@]} locale(s), ${#ALL_SCEN
 for l in "${!LOCALE_LANGUAGES[@]}"; do
   language="${LOCALE_LANGUAGES[$l]}"
   region="${LOCALE_REGIONS[$l]}"
-  out_dir="$OUT_ROOT/$language/$OUT_KEY"
-  result_bundle="$ROOT_DIR/tmp/watch-screenshots-$language.xcresult"
-  attach_tmp="$ROOT_DIR/tmp/watch-screenshots-$language-attachments"
+  locale_key="${LOCALE_KEYS[$l]}"
+  out_dir="$OUT_ROOT/$locale_key/$OUT_KEY"
+  result_bundle="$ROOT_DIR/tmp/watch-screenshots-$locale_key.xcresult"
+  attach_tmp="$ROOT_DIR/tmp/watch-screenshots-$locale_key-attachments"
 
   echo ""
-  echo "=== $DEVICE_NAME [$language-$region] ==="
+  echo "=== $DEVICE_NAME [$locale_key ($language-$region)] ==="
   udid="$(boot_if_needed "$DEVICE_NAME")"
   run_all_scenes "$udid" "$result_bundle" "$language" "$region"
   extract_attachments "$result_bundle" "$attach_tmp" "$out_dir"

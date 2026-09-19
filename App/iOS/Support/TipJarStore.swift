@@ -20,6 +20,9 @@ final class TipJarStore {
 
     private(set) var products: [Product] = []
     private(set) var purchaseState: PurchaseState = .idle
+    /// Stays `true` for a week after the last tip, so the thank-you note
+    /// survives leaving and re-entering the screen.
+    private(set) var showsThankYou = TipThankYouPolicy.shouldShowThankYou()
     @ObservationIgnored
     private nonisolated(unsafe) var transactionListener: Task<Void, Never>?
 
@@ -52,6 +55,7 @@ final class TipJarStore {
             switch try await product.purchase() {
             case .success(.verified(let transaction)):
                 await transaction.finish()
+                recordTip(transaction)
                 purchaseState = .thankYou(tip)
             case .success(.unverified):
                 purchaseState = .failed
@@ -69,7 +73,15 @@ final class TipJarStore {
         guard case .verified(let transaction) = result else { return }
         await transaction.finish()
         if let tip = TipJarProduct(rawValue: transaction.productID) {
+            recordTip(transaction)
             purchaseState = .thankYou(tip)
         }
+    }
+
+    private func recordTip(_ transaction: Transaction) {
+        TipThankYouPolicy.recordTip(at: transaction.purchaseDate)
+        // Ensure the thank-you is visible immediately after a verified purchase,
+        // even if the local clock is behind the transaction’s purchaseDate.
+        showsThankYou = TipThankYouPolicy.shouldShowThankYou(now: transaction.purchaseDate)
     }
 }
