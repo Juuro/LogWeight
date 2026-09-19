@@ -28,10 +28,11 @@ ALL_SCENES=(
   watch-history-default
 )
 
-# Locales to capture: language code -> region code. Each must have an
+# Locales to capture: language code -> region code, one pair per locale in
+# docs/AppStoreMetadata.localized.md. Each must have an
 # App/Shared/Resources/<language>.lproj.
-LOCALE_LANGUAGES=("en" "de")
-LOCALE_REGIONS=("US" "DE")
+LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl")
+LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL")
 
 boot_if_needed() {
   local name="$1"

@@ -15,9 +15,9 @@
 # (A SCREENSHOT_LOCALE env var doesn't work here: env vars set by the calling
 # shell don't cross into the simulator-hosted XCTest process.)
 #
-# Note: Apple caps uploads at 10 screenshots per device size. ALL_SCENES in
-# screenshot-scenes.sh is kept at exactly 10 for this reason — if it grows
-# past that, trim Docs/store-screenshots/<locale>/<device-key>/ before upload.
+# Note: Apple caps uploads at 10 screenshots per device size. STORE_SCENES
+# below is a curated subset (currently 3) of ALL_SCENES in
+# screenshot-scenes.sh — stay under 10 if it grows.
 #
 # Always captured in light mode (forced per-device below) — that's the
 # storefront's chosen presentation, independent of whatever appearance a
@@ -43,10 +43,16 @@ OUT_ROOT="$ROOT_DIR/Docs/store-screenshots"
 STORE_DEVICE_NAMES=("iPhone 14 Plus" "iPad Pro 13-inch (M4)")
 STORE_DEVICE_KEYS=("iphone-6.5" "ipad-13")
 
-# App Store locales to capture: language code -> region code. Each must have
-# an App/Shared/Resources/<language>.lproj.
-LOCALE_LANGUAGES=("en" "de")
-LOCALE_REGIONS=("US" "DE")
+# Scenes captured for the store set — a curated subset of ALL_SCENES, not the
+# full ten (App Store screenshots don't need every scene, just the ones that
+# sell best on the listing).
+STORE_SCENES=(entry-after-plus-ten history-90d-plateau settings-default)
+
+# App Store locales to capture: language code -> region code, one pair per
+# locale in docs/AppStoreMetadata.localized.md. Each must have an
+# App/Shared/Resources/<language>.lproj.
+LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl")
+LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL")
 
 boot_if_needed() {
   local name="$1"
@@ -74,6 +80,11 @@ run_all_scenes() {
   rm -rf "$result_bundle"
   mkdir -p "$(dirname "$result_bundle")"
 
+  local only_testing_flags=()
+  for scene in "${STORE_SCENES[@]}"; do
+    only_testing_flags+=("-only-testing" "$(scene_to_test "$scene")")
+  done
+
   xcodebuild test \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
@@ -82,6 +93,7 @@ run_all_scenes() {
     -testLanguage "$language" \
     -testRegion "$region" \
     CODE_SIGNING_ALLOWED=NO \
+    "${only_testing_flags[@]}" \
     2>&1 | grep -E "(Test|error:|warning:|Build)" | grep -v "^$" || true
 
   # xcodebuild exits non-zero when any scene test fails; tolerated here
@@ -119,7 +131,7 @@ extract_attachments() {
   # description, App UI hierarchy) whose "isAssociatedWithFailure" flag is
   # not reliably set, so filtering on that alone lets them leak through.
   local known_scenes
-  known_scenes="$(IFS=,; echo "${ALL_SCENES[*]}")"
+  known_scenes="$(IFS=,; echo "${STORE_SCENES[*]}")"
 
   python3 << PYEOF
 import json, os, re, shutil
@@ -164,7 +176,7 @@ PYEOF
   rm -rf "$result_bundle"
 }
 
-echo "Full App Store screenshot set: ${#STORE_DEVICE_NAMES[@]} device size(s) x ${#LOCALE_LANGUAGES[@]} locale(s), all scenes from screenshot-scenes.sh."
+echo "Full App Store screenshot set: ${#STORE_DEVICE_NAMES[@]} device size(s) x ${#LOCALE_LANGUAGES[@]} locale(s) x ${#STORE_SCENES[@]} scene(s)."
 
 for l in "${!LOCALE_LANGUAGES[@]}"; do
   language="${LOCALE_LANGUAGES[$l]}"

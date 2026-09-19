@@ -33,10 +33,20 @@ extension XCUIApplication {
         }
     }
 
+    /// Localized "History" tab title, one per `App/Shared/Resources/*.lproj/Localizable.strings`
+    /// entry — needed because iPadOS 18's regular-width tab bar floats as a
+    /// top capsule outside the `tabBars` accessibility container and drops the
+    /// `tab.history` accessibility identifier entirely, so on iPad every
+    /// locale falls through to a label match.
+    private static let historyTabLabels = [
+        "History", "Verlauf", "Historique", "Historial", "Cronologia",
+        "Histórico", "履歴", "기록", "历史", "歷史", "Geschiedenis",
+    ]
+
     /// Opens the History tab on iPhone and iPad, in whatever locale the
     /// simulator is running (see Tools/CaptureStoreScreenshots.sh's
     /// `-testLanguage`/`-testRegion`) — falls back through stable identifier,
-    /// localized label (English and German), and tab index, in that order.
+    /// localized label (all supported locales), and tab index, in that order.
     /// iPadOS 18's regular-width tab bar floats as a top capsule outside the
     /// `tabBars` accessibility container, so the last fallbacks search `app.buttons` directly.
     func openHistoryTab(file: StaticString = #file, line: UInt = #line) {
@@ -47,7 +57,7 @@ extension XCUIApplication {
             return
         }
 
-        for label in ["History", "Verlauf"] {
+        for label in Self.historyTabLabels {
             let byLabel = tabBars.buttons[label]
             if byLabel.waitForExistence(timeout: 2) {
                 tapTabBarButton(byLabel.firstMatch)
@@ -67,7 +77,7 @@ extension XCUIApplication {
             return
         }
 
-        for label in ["History", "Verlauf"] {
+        for label in Self.historyTabLabels {
             let byLabel = buttons[label]
             if byLabel.waitForExistence(timeout: 2) {
                 tapTabBarButton(byLabel.firstMatch)
