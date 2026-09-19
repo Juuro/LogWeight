@@ -80,6 +80,8 @@ final class TipJarStore {
 
     private func recordTip(_ transaction: Transaction) {
         TipThankYouPolicy.recordTip(at: transaction.purchaseDate)
-        showsThankYou = TipThankYouPolicy.shouldShowThankYou()
+        // Ensure the thank-you is visible immediately after a verified purchase,
+        // even if the local clock is behind the transaction’s purchaseDate.
+        showsThankYou = TipThankYouPolicy.shouldShowThankYou(now: transaction.purchaseDate)
     }
 }
