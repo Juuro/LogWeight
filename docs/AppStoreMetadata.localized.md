@@ -2,6 +2,12 @@
 
 This file provides localized App Store listing copy for ten high-potential markets for a HealthKit-focused weight app.
 
+Note: subtitles avoid Apple trademark terms ("Health" / "Apple Health" /
+localized equivalents like ヘルスケア, 건강, 健康) after a Guideline 5.2.5
+(Intellectual Property) rejection. Those terms remain fine in promotional
+text/description as factual integration mentions — just not as subtitle
+marketing copy.
+
 ## Locales
 
 - `de-DE` (German)
@@ -17,7 +23,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## de-DE
 
-- **Subtitle:** `Schnell Gewicht in Health`
+- **Subtitle:** `Schnelles Gewichtstracking`
 - **Promotional text:** `LogWeight speichert dein Körpergewicht in Sekunden in Apple Health. Keine Werbung, kein Konto, kein Social Feed – nur schnelles Erfassen und klare Historie.`
 - **Description:**
   `LogWeight ist der schnellste ruhige Weg, dein Körpergewicht auf Apple-Geräten zu protokollieren.
@@ -31,7 +37,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## fr-FR
 
-- **Subtitle:** `Poids rapide dans Apple Santé`
+- **Subtitle:** `Suivi poids rapide et facile`
 - **Promotional text:** `LogWeight enregistre votre poids dans Apple Santé en quelques secondes. Sans pub, sans compte, sans fil social — uniquement une saisie rapide et un historique clair.`
 - **Description:**
   `LogWeight est le moyen le plus rapide et apaisé de journaliser votre poids sur les appareils Apple.
@@ -45,7 +51,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## es-ES
 
-- **Subtitle:** `Peso rápido en Apple Health`
+- **Subtitle:** `Seguimiento de peso fácil`
 - **Promotional text:** `LogWeight guarda tu peso en Apple Health en segundos. Sin anuncios, sin cuenta y sin funciones sociales: solo registro rápido e historial claro.`
 - **Description:**
   `LogWeight es la forma más rápida y tranquila de registrar tu peso en dispositivos Apple.
@@ -59,7 +65,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## it-IT
 
-- **Subtitle:** `Peso rapido su Apple Health`
+- **Subtitle:** `Peso semplice e rapido`
 - **Promotional text:** `LogWeight salva il tuo peso su Apple Health in pochi secondi. Niente pubblicità, niente account, niente feed social: solo inserimento rapido e cronologia chiara.`
 - **Description:**
   `LogWeight è il modo più rapido e tranquillo per registrare il peso sui dispositivi Apple.
@@ -73,7 +79,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## pt-BR
 
-- **Subtitle:** `Peso rápido no Apple Health`
+- **Subtitle:** `Registro peso rápido e fácil`
 - **Promotional text:** `LogWeight salva seu peso no Apple Health em segundos. Sem anúncios, sem conta e sem feed social — apenas registro rápido e histórico claro.`
 - **Description:**
   `LogWeight é a forma mais rápida e tranquila de registrar peso em dispositivos Apple.
@@ -87,7 +93,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## ja-JP
 
-- **Subtitle:** `Appleヘルスケアに体重を素早く記録`
+- **Subtitle:** `体重管理を早く簡単に`
 - **Promotional text:** `LogWeightなら数秒で体重をAppleヘルスケアに保存できます。広告なし、アカウント不要、SNS機能なし。すばやい入力と見やすい履歴だけ。`
 - **Description:**
   `LogWeightは、Appleデバイスで体重を静かに素早く記録するためのアプリです。
@@ -101,7 +107,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## ko-KR
 
-- **Subtitle:** `Apple 건강에 빠른 체중 기록`
+- **Subtitle:** `체중 관리 빠르고 간편하게`
 - **Promotional text:** `LogWeight로 체중을 몇 초 만에 Apple 건강에 저장하세요. 광고 없음, 계정 없음, 소셜 피드 없음. 빠른 입력과 깔끔한 기록만 제공합니다.`
 - **Description:**
   `LogWeight는 Apple 기기에서 체중을 빠르고 차분하게 기록하는 가장 쉬운 방법입니다.
@@ -115,7 +121,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## zh-Hans
 
-- **Subtitle:** `快速记录体重到 Apple 健康`
+- **Subtitle:** `体重管理，快速简单`
 - **Promotional text:** `使用 LogWeight，几秒即可将体重保存到 Apple 健康。无广告、无账号、无社交动态，只有快速录入和清晰历史。`
 - **Description:**
   `LogWeight 是在 Apple 设备上快速、安静记录体重的最佳方式。
@@ -129,7 +135,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## zh-Hant
 
-- **Subtitle:** `快速將體重記錄到 Apple 健康`
+- **Subtitle:** `體重管理，快速簡單`
 - **Promotional text:** `使用 LogWeight，幾秒內即可把體重儲存到 Apple 健康。無廣告、無帳號、無社群動態，只有快速輸入與清楚歷史。`
 - **Description:**
   `LogWeight 是在 Apple 裝置上快速且安靜記錄體重的最佳方式。
@@ -143,7 +149,7 @@ This file provides localized App Store listing copy for ten high-potential marke
 
 ## nl-NL
 
-- **Subtitle:** `Snel gewicht loggen in Health`
+- **Subtitle:** `Gewicht loggen, snel en simpel`
 - **Promotional text:** `Met LogWeight sla je je gewicht in seconden op in Apple Gezondheid. Geen advertenties, geen account, geen sociale feed — alleen snel invoeren en duidelijke historie.`
 - **Description:**
   `LogWeight is de snelste rustige manier om je gewicht te loggen op Apple-apparaten.

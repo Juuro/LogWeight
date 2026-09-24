@@ -10,10 +10,14 @@ This file tracks App Store Connect metadata needed for a v1.0 submission.
 - Platforms: iOS, iPadOS, watchOS companion
 - Age rating: 4+ (no user-generated content, no web access, no ads)
 
-## Subtitle options
+## Subtitle
 
-- `Fast weight logging to Health`
-- `Calm body-weight tracking`
+- `Weight tracking quick and easy`
+
+Note: avoid Apple trademark terms ("Health" / "Apple Health") in the
+subtitle — App Review flagged a prior draft under Guideline 5.2.5
+(Intellectual Property) for this. "Apple Health" is fine as a factual
+mention in promotional text/description, not as subtitle marketing copy.
 
 ## Promotional text
 
