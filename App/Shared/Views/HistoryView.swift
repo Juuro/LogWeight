@@ -5,7 +5,7 @@ import Charts
 #endif
 
 /// HealthKit history (source of truth). Shared by iOS and watchOS.
-/// iOS/iPadOS get a trend chart above the list; watchOS remains list-only.
+/// iOS/iPadOS get a trend chart above the list (beside it in regular width); watchOS remains list-only.
 struct HistoryView: View {
     let store: HealthKitStore
     let showsDoneButton: Bool
@@ -26,6 +26,13 @@ struct HistoryView: View {
     @State private var rowFrames: [Weight: CGRect] = [:]
     /// Outer list frame in the global coordinate space, refreshed by `HistoryListFrameKey`.
     @State private var listFrame: CGRect = .zero
+#endif
+#if !os(watchOS)
+    private static let sideBySideMinWidth: CGFloat = 480
+    /// Size available to the History content; landscape-shaped space (width > height)
+    /// drives side-by-side, read live so fold/unfold/rotation re-evaluates. Portrait
+    /// stays stacked even when wide so the chart stays wider than tall.
+    @State private var contentSize: CGSize = .zero
 #endif
     @Environment(\.dismiss) private var dismiss
 
@@ -138,66 +145,77 @@ struct HistoryView: View {
             }
             .accessibilityIdentifier("history.empty")
         } else {
-            VStack(spacing: 0) {
+            // AnyLayout keeps child identity when switching between stacked and
+            // side-by-side, so scroll position, hover and edit state survive a fold/unfold.
+            splitLayout {
 #if !os(watchOS)
                 chartSection
                     .padding(.horizontal)
+                    .containerRelativeFrame(.horizontal) { width, _ in
+                        usesSideBySideLayout ? width * 0.60 : width
+                    }
 #endif
 
-                HStack {
-                    Text("Recent entries")
-                        .font(.headline)
-                        .accessibilityIdentifier("history.recent-entries-label")
-                    Spacer()
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-
-                if let mutationError = mutationError {
-                    Text(mutationError)
-                        .font(.callout)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                        .padding(.bottom, 4)
-                        .accessibilityIdentifier("history.mutation-error")
-                }
-
-#if os(watchOS)
-                List {
-                    ForEach(weights, id: \.self) { weight in
-                        historyRow(for: weight)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Recent entries")
+                            .font(.headline)
+                            .accessibilityIdentifier("history.recent-entries-label")
+                        Spacer()
                     }
-                    .onDelete { offsets in
-                        Task { @MainActor in await delete(at: offsets) }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+
+                    if let mutationError = mutationError {
+                        Text(mutationError)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                            .padding(.bottom, 4)
+                            .accessibilityIdentifier("history.mutation-error")
                     }
-                }
-                .listStyle(.plain)
-                .accessibilityIdentifier("history.list")
-#else
-                // ScrollView + LazyVStack instead of List: SwiftUI's List on
-                // iOS/macOS bridges to UIKit cells and does NOT propagate scroll
-                // geometry to SwiftUI's `.onGeometryChange`, so the
-                // topmost-row-while-scrolling highlight cannot be driven from a
-                // List. ScrollView keeps SwiftUI in charge of layout.
-                ScrollView {
-                    LazyVStack(spacing: 0) {
+
+    #if os(watchOS)
+                    List {
                         ForEach(weights, id: \.self) { weight in
                             historyRow(for: weight)
-                            Divider()
-                                .padding(.leading)
+                        }
+                        .onDelete { offsets in
+                            Task { @MainActor in await delete(at: offsets) }
                         }
                     }
+                    .listStyle(.plain)
+                    .accessibilityIdentifier("history.list")
+    #else
+                    // ScrollView + LazyVStack instead of List: SwiftUI's List on
+                    // iOS/macOS bridges to UIKit cells and does NOT propagate scroll
+                    // geometry to SwiftUI's `.onGeometryChange`, so the
+                    // topmost-row-while-scrolling highlight cannot be driven from a
+                    // List. ScrollView keeps SwiftUI in charge of layout.
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(weights, id: \.self) { weight in
+                                historyRow(for: weight)
+                                Divider()
+                                    .padding(.leading)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("history.list")
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        proxy.frame(in: .global)
+                    } action: { newFrame in
+                        listFrame = newFrame
+                    }
+    #endif
                 }
-                .accessibilityIdentifier("history.list")
-                .onGeometryChange(for: CGRect.self) { proxy in
-                    proxy.frame(in: .global)
-                } action: { newFrame in
-                    listFrame = newFrame
-                }
-#endif
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+#if !os(watchOS)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { contentSize = $0 }
+#endif
             .disabled(isDeleting || isSavingEdit)
         }
     }
@@ -208,15 +226,34 @@ struct HistoryView: View {
     /// inside a List with native swipeActions for editing.
     @ViewBuilder
     private func historyRow(for weight: Weight) -> some View {
+        let valueText = Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
+            .font(.body.monospacedDigit())
+        let dateText = Text(dateFormatter.string(from: weight.recordedAt))
+            .font(.callout)
+            .foregroundStyle(.secondary)
+#if os(watchOS)
         let rowContent = HStack {
-            Text(formatter.format(kilograms: weight.valueInKilograms, in: displayUnit))
-                .font(.body.monospacedDigit())
+            valueText
             Spacer()
-            Text(dateFormatter.string(from: weight.recordedAt))
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            dateText
         }
         .privacySensitive()
+#else
+        // Narrow list pane (side-by-side layout): stack value above date instead of
+        // letting the date wrap mid-string.
+        let rowContent = ViewThatFits(in: .horizontal) {
+            HStack {
+                valueText
+                Spacer()
+                dateText.lineLimit(1)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                valueText
+                dateText.lineLimit(1)
+            }
+        }
+        .privacySensitive()
+#endif
 
 #if os(watchOS)
         rowContent
@@ -268,6 +305,21 @@ struct HistoryView: View {
                 }
             }
 #endif
+    }
+
+    private var usesSideBySideLayout: Bool {
+#if os(watchOS)
+        false
+#else
+        // Size class is not enough: iPhone landscape is compact width, yet wants this layout.
+        contentSize.width >= Self.sideBySideMinWidth && contentSize.width > contentSize.height
+#endif
+    }
+
+    private var splitLayout: AnyLayout {
+        usesSideBySideLayout
+            ? AnyLayout(HStackLayout(alignment: .top, spacing: 0))
+            : AnyLayout(VStackLayout(spacing: 0))
     }
 
 #if !os(watchOS)
@@ -447,7 +499,8 @@ struct HistoryView: View {
                         }
                     }
                 }
-                .frame(height: 180)
+                // Fixed 180pt when stacked; fills the chart pane height side by side.
+                .frame(minHeight: 180, maxHeight: usesSideBySideLayout ? .infinity : 180)
                 .accessibilityIdentifier("history.chart")
             }
         }
@@ -1000,10 +1053,26 @@ private struct ChartHoverOverlay: View {
 #endif
 
 #if DEBUG
-#Preview("History") {
-    HistoryView(store: InMemoryHealthKitStore(samples: [
-        Weight(valueInKilograms: 80.0, recordedAt: .now),
-        Weight(valueInKilograms: 79.5, recordedAt: .now.addingTimeInterval(-86_400))
-    ]))
+private func historyPreviewStore() -> InMemoryHealthKitStore {
+    InMemoryHealthKitStore(samples: (0..<40).map { day in
+        Weight(
+            valueInKilograms: 80.0 + Double(day % 7) * 0.2,
+            recordedAt: .now.addingTimeInterval(-86_400 * Double(day))
+        )
+    })
 }
+
+#Preview("History compact") {
+    HistoryView(store: historyPreviewStore())
+}
+
+#if !os(watchOS)
+#Preview("History wide", traits: .fixedLayout(width: 700, height: 500)) {
+    HistoryView(store: historyPreviewStore())
+}
+
+#Preview("History wide portrait", traits: .fixedLayout(width: 700, height: 900)) {
+    HistoryView(store: historyPreviewStore())
+}
+#endif
 #endif
