@@ -101,8 +101,16 @@ and by the Claude Code Bash hook in `.claude/settings.json`:
 - **Build number:** `Config/Version.xcconfig` (`CURRENT_PROJECT_VERSION`). CI increments on green runs; do not bump manually unless debugging locally.
 - After `project.yml` changes: `xcodegen generate`. See `docs/BuildAndDeploy.md`.
 
+## Spec-Driven Work
+
+- New features go through spec-kit: `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement`
+  (skills in `.claude/skills/speckit-*`, specs under `specs/`, principles in `.specify/memory/constitution.md`).
+- Decisions that outlive one feature get a new `ADR-NNN` in `docs/Architecture.md`; don't write an ADR per feature.
+- Keep `CLAUDE.md` Hard Rules and the constitution in sync.
+
 ## High-Value References
 
+- `.specify/memory/constitution.md` (spec-kit project principles)
 - `docs/Architecture.md` (ADR rationale)
 - `docs/Privacy.md` (GDPR/health-data constraints)
 - `docs/HealthKitAvailability.md` (platform capabilities)
