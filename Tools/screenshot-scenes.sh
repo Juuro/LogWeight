@@ -18,11 +18,14 @@ scene_to_test() {
     entry-keyboard-up)         echo "LogWeightScreenshots/EntryScreenshots/test_entry_keyboard_up" ;;
     history-empty)             echo "LogWeightScreenshots/HistoryScreenshots/test_history_empty" ;;
     history-with-chart-30d)    echo "LogWeightScreenshots/HistoryScreenshots/test_history_with_chart_30d" ;;
+    entry-landscape-keyboard-up) echo "LogWeightScreenshots/EntryScreenshots/test_entry_landscape_keyboard_up" ;;
+    history-landscape-30d)     echo "LogWeightScreenshots/HistoryScreenshots/test_history_landscape_30d" ;;
     history-90d-plateau)       echo "LogWeightScreenshots/HistoryScreenshots/test_history_90d_plateau" ;;
     history-list-scrolled)     echo "LogWeightScreenshots/HistoryScreenshots/test_history_list_scrolled" ;;
     history-list-small-scroll) echo "LogWeightScreenshots/HistoryScreenshots/test_history_list_small_scroll" ;;
     settings-default)          echo "LogWeightScreenshots/SettingsScreenshots/test_settings_default" ;;
     settings-lbs-unit)         echo "LogWeightScreenshots/SettingsScreenshots/test_settings_lbs_unit" ;;
+    # entry-landscape-keyboard-up and history-landscape-30d are likewise outside ALL_SCENES (Duo/landscape check only).
     # Not in ALL_SCENES: an App Store Connect IAP-review screenshot, not a
     # marketing scene — must stay out of the App Store screenshot set.
     settings-tipjar)           echo "LogWeightScreenshots/SettingsScreenshots/test_settings_tipjar" ;;
