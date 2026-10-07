@@ -48,15 +48,8 @@ STORE_DEVICE_KEYS=("iphone-6.5" "ipad-13")
 # sell best on the listing).
 STORE_SCENES=(entry-after-plus-ten history-90d-plateau settings-default)
 
-# App Store locales to capture: language code -> region code -> output dir
-# key, one triple per locale in docs/AppStoreMetadata.localized.md (each must
-# have an App/Shared/Resources/<language>.lproj), plus the three English
-# storefront variants (all resolve to the single en.lproj bundle — only
-# testRegion differs, which is what drives the kg/lb default per
-# WeightDisplayPreferences.localeDefaultUnit).
-LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en" "en" "en")
-LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL" "GB" "US" "CA")
-LOCALE_KEYS=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en-GB" "en-US" "en-CA")
+# App Store locales (LOCALE_LANGUAGES / LOCALE_REGIONS / LOCALE_KEYS) live in
+# Tools/screenshot-scenes.sh so the Duo script shares them.
 
 boot_if_needed() {
   local name="$1"

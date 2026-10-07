@@ -29,6 +29,11 @@ scene_to_test() {
     # Not in ALL_SCENES: an App Store Connect IAP-review screenshot, not a
     # marketing scene — must stay out of the App Store screenshot set.
     settings-tipjar)           echo "LogWeightScreenshots/SettingsScreenshots/test_settings_tipjar" ;;
+    duo-entry-portrait)        echo "LogWeightScreenshots/DuoScreenshots/test_duo_entry_portrait" ;;
+    duo-entry-landscape)       echo "LogWeightScreenshots/DuoScreenshots/test_duo_entry_landscape" ;;
+    duo-history-portrait)      echo "LogWeightScreenshots/DuoScreenshots/test_duo_history_portrait" ;;
+    duo-history-landscape)     echo "LogWeightScreenshots/DuoScreenshots/test_duo_history_landscape" ;;
+    duo-settings-portrait)     echo "LogWeightScreenshots/DuoScreenshots/test_duo_settings_portrait" ;;
     *)
       echo "Unknown scene: $1" >&2
       echo "Run Tools/CaptureScene.sh with no arguments to see available scenes." >&2
@@ -52,3 +57,23 @@ ALL_SCENES=(
   settings-default
   settings-lbs-unit
 )
+
+# iPhone Duo App Store scenes (see Tools/CaptureDuoStoreScreenshots.sh). Kept out of
+# ALL_SCENES: they are display-specific and not part of the regular scene set.
+DUO_SCENES=(
+  duo-entry-portrait
+  duo-entry-landscape
+  duo-history-portrait
+  duo-history-landscape
+  duo-settings-portrait
+)
+
+# App Store locales to capture: language code -> region code -> output dir
+# key, one triple per locale in docs/AppStoreMetadata.localized.md (each must
+# have an App/Shared/Resources/<language>.lproj), plus the three English
+# storefront variants (all resolve to the single en.lproj bundle — only
+# testRegion differs, which is what drives the kg/lb default per
+# WeightDisplayPreferences.localeDefaultUnit).
+LOCALE_LANGUAGES=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en" "en" "en")
+LOCALE_REGIONS=("DE" "FR" "ES" "IT" "BR" "JP" "KR" "CN" "TW" "NL" "GB" "US" "CA")
+LOCALE_KEYS=("de" "fr" "es" "it" "pt-BR" "ja" "ko" "zh-Hans" "zh-Hant" "nl" "en-GB" "en-US" "en-CA")
