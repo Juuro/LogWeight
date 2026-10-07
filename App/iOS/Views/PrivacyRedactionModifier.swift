@@ -10,13 +10,13 @@ import UIKit
 /// recording, AirPlay mirroring), AS FAR AS Apple's APIs report.
 ///
 /// Known limitations (DA8, documented in `Docs/Privacy.md`):
-/// - `UIScreen.isCaptured` does not always fire during AirPlay mirroring.
-/// - `UIScreen.isCaptured` does not fire during wired QuickTime recording.
+/// - `isSceneCaptured` does not always fire during AirPlay mirroring.
+/// - `isSceneCaptured` does not fire during wired QuickTime recording.
 /// These are Apple-framework limitations, not defects in LogWeight.
 struct PrivacyRedactionModifier: ViewModifier {
 
     @Environment(\.scenePhase) private var scenePhase
-    @State private var isCaptured: Bool = UIScreen.main.isCaptured
+    @Environment(\.isSceneCaptured) private var isCaptured
 
     func body(content: Content) -> some View {
         ZStack {
@@ -35,12 +35,6 @@ struct PrivacyRedactionModifier: ViewModifier {
                     )
                     .accessibilityHidden(true)
             }
-        }
-        .onAppear {
-            isCaptured = UIScreen.main.isCaptured
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIScreen.capturedDidChangeNotification)) { _ in
-            isCaptured = UIScreen.main.isCaptured
         }
     }
 
