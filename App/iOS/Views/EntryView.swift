@@ -76,13 +76,17 @@ struct EntryView: View {
     /// Extra space kept below the inline Save button while the keyboard is up.
     private static let glassKeyboardClearance: CGFloat = 28
 
+    private static let sideBySideMaxHeight: CGFloat = 520
+
     /// Space available to the entry content; landscape-shaped space (iPhone Duo closed
     /// landscape, any landscape phone) puts prompt/value beside steppers/Save so everything
     /// stays visible above the keyboard.
     @State private var contentSize: CGSize = .zero
 
     private var usesSideBySideLayout: Bool {
-        contentSize.width > contentSize.height * 1.1
+        // Only when height is genuinely scarce (landscape phones, Duo with keyboard); tall
+        // wide canvases such as iPad portrait keep the single centered column.
+        contentSize.width > contentSize.height * 1.1 && contentSize.height < Self.sideBySideMaxHeight
     }
 
     private var contentSpacing: CGFloat {

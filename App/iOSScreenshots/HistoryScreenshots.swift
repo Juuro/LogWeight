@@ -24,9 +24,9 @@ final class HistoryScreenshots: ScreenshotTestCase {
     /// Landscape History (iPhone Duo / wide canvases): chart and list side by side.
     func test_history_landscape_30d() throws {
         launchApp(seed: "linearTrend30Days")
-        XCUIDevice.shared.orientation = .landscapeLeft
         addTeardownBlock { XCUIDevice.shared.orientation = .portrait }
         openHistoryTab()
+        XCUIDevice.shared.orientation = .landscapeLeft
         let chart = app.descendants(matching: .any)["history.chart"]
         waitForElement(chart, named: "history.chart")
         Thread.sleep(forTimeInterval: 0.8)
