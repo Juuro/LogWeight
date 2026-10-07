@@ -69,33 +69,76 @@ struct EntryView: View {
         )
     }
 
+    /// Caps the stepper-first column so it stays phone-proportioned on wide
+    /// canvases (iPhone Duo inner display, iPad). Width-based, never idiom-based.
+    private static let maxContentWidth: CGFloat = 480
+
+    /// Extra space kept below the inline Save button while the keyboard is up.
+    private static let glassKeyboardClearance: CGFloat = 28
+
+    /// Space available to the entry content; landscape-shaped space (iPhone Duo closed
+    /// landscape, any landscape phone) puts prompt/value beside steppers/Save so everything
+    /// stays visible above the keyboard.
+    @State private var contentSize: CGSize = .zero
+
+    private var usesSideBySideLayout: Bool {
+        contentSize.width > contentSize.height * 1.1
+    }
+
+    private var contentSpacing: CGFloat {
+        valueFieldFocused ? 16 : 32
+    }
+
+    private var entryLayout: AnyLayout {
+        usesSideBySideLayout
+            ? AnyLayout(HStackLayout(spacing: 24))
+            : AnyLayout(VStackLayout(spacing: contentSpacing))
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
-                if canEditWithKeyboard {
-                    Text("Enter your first weight")
-                        .font(.title3.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("entry.first-weight.prompt")
+            // Same view tree in both layouts (only the outer AnyLayout swaps), so the weight
+            // field keeps its identity and keyboard focus across rotation/fold changes.
+            entryLayout {
+                VStack(spacing: contentSpacing) {
+                    if canEditWithKeyboard {
+                        Text("Enter your first weight")
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("entry.first-weight.prompt")
+                    }
+                    weightDisplay
                 }
-                weightDisplay
-                stepperRow
-                Spacer()
+                VStack(spacing: contentSpacing) {
+                    stepperRow
+                    if valueFieldFocused {
+                        // iOS 27's glass keyboard draws above its reported safe area (up to ~60 pt
+                        // on iPhone Duo), which would cover a bottom-pinned Save. While typing,
+                        // keep the full-width CTA in the content column with clearance instead.
+                        saveButton
+                            .padding(.bottom, Self.glassKeyboardClearance)
+                    }
+                }
             }
             .padding(.horizontal, 24)
+            .frame(maxWidth: usesSideBySideLayout ? .infinity : Self.maxContentWidth)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { contentSize = $0 }
             .background(Color(uiColor: .systemBackground))
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 12) {
                     statusLine
-                    saveButton
+                    if !valueFieldFocused {
+                        saveButton
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
+                .frame(maxWidth: Self.maxContentWidth)
+                .frame(maxWidth: .infinity)
                 .background(Color(uiColor: .systemBackground))
             }
             .privacySensitive()
@@ -165,6 +208,8 @@ struct EntryView: View {
         if isEditingValue || (canEditWithKeyboard && state.hasResolvedInitialWeight) {
             TextField("", text: weightInputBinding, prompt: Text(" "))
                 .keyboardType(.decimalPad)
+                .textContentType(nil)
+                .autocorrectionDisabled()
                 .focused($valueFieldFocused)
                 .optionalFirstWeightDefaultFocus(
                     $valueFieldFocused,
