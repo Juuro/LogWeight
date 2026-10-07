@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file (English only).
 Release versions and notes are managed by [release-please](https://github.com/googleapis/release-please).
 User-facing version (`MARKETING_VERSION`) is bumped when a Release PR is merged; build numbers are bumped separately by CI.
 
+## [1.1.0](https://github.com/Juuro/LogWeight/compare/v1.0.0...v1.1.0) (2026-10-07)
+
+
+### Features
+
+* iPhone Duo support (History split, Entry/Save fixes, landscape) ([#47](https://github.com/Juuro/LogWeight/issues/47)) ([db7e8ca](https://github.com/Juuro/LogWeight/commit/db7e8ca98863f65b33259824fff2686c367c2316))
+
 ## [0.5.0](https://github.com/Juuro/LogWeight/compare/v0.4.0...v0.5.0) (2026-09-18)
 
 
