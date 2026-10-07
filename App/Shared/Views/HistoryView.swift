@@ -240,16 +240,28 @@ struct HistoryView: View {
         .privacySensitive()
 #else
         // Narrow list pane (side-by-side layout): stack value above date instead of
-        // letting the date wrap mid-string.
-        let rowContent = ViewThatFits(in: .horizontal) {
-            HStack {
-                valueText
-                Spacer()
-                dateText.lineLimit(1)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                valueText
-                dateText.lineLimit(1)
+        // letting the date wrap mid-string. Stacked layout keeps the plain one-line row.
+        let rowContent = Group {
+            if usesSideBySideLayout {
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        valueText
+                        Spacer()
+                        // fixedSize makes ViewThatFits judge the one-line width, so a too-narrow
+                        // pane falls through to the stacked variant, where the date may wrap.
+                        dateText.fixedSize(horizontal: true, vertical: false)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        valueText
+                        dateText
+                    }
+                }
+            } else {
+                HStack {
+                    valueText
+                    Spacer()
+                    dateText
+                }
             }
         }
         .privacySensitive()
