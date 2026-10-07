@@ -39,4 +39,21 @@ final class EntryScreenshots: ScreenshotTestCase {
         Thread.sleep(forTimeInterval: 0.2)
         attachScreenshot(named: "entry-keyboard-up")
     }
+
+    /// Landscape first-weight entry with the keyboard up (iPhone Duo / small phones):
+    /// Save must stay fully visible above the keyboard.
+    func test_entry_landscape_keyboard_up() throws {
+        addTeardownBlock { XCUIDevice.shared.orientation = .portrait }
+        launchApp()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let textField = app.textFields["entry.value.textfield"]
+        if !textField.waitForExistence(timeout: 2) {
+            let display = app.descendants(matching: .any)["entry.value.display"]
+            waitForElement(display, named: "entry.value.display")
+            display.tap()
+            _ = textField.waitForExistence(timeout: 3)
+        }
+        Thread.sleep(forTimeInterval: 0.8)
+        attachScreenshot(named: "entry-landscape-keyboard-up")
+    }
 }

@@ -79,10 +79,53 @@ class ScreenshotTestCase: XCTestCase {
         app.launch()
     }
 
+    /// Forces portrait and waits until the app window is taller than wide. A previous
+    /// landscape scene can leave the simulator rotated, so portrait scenes verify instead of
+    /// assuming (otherwise a sideways frame with portrait pixel dimensions slips through).
+    func ensurePortrait() {
+        for _ in 0..<6 {
+            XCUIDevice.shared.orientation = .portrait
+            Thread.sleep(forTimeInterval: 1.0)
+            let frame = app.windows.firstMatch.frame
+            if frame.height > frame.width { return }
+            XCUIDevice.shared.orientation = .landscapeLeft
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        let frame = app.windows.firstMatch.frame
+        XCTFail("Device did not return to portrait (orientation=\(XCUIDevice.shared.orientation.rawValue), window=\(frame))")
+    }
+
+    /// Rotates the device to landscape and waits until the app window is wider than tall.
+    /// The simulator sometimes ignores the first request, so retry (with a portrait nudge)
+    /// and fail loudly instead of silently capturing a portrait frame.
+    func rotateToLandscape() {
+        addTeardownBlock { XCUIDevice.shared.orientation = .portrait }
+        for _ in 0..<6 {
+            XCUIDevice.shared.orientation = .landscapeLeft
+            Thread.sleep(forTimeInterval: 1.0)
+            let frame = app.windows.firstMatch.frame
+            if frame.width > frame.height { return }
+            XCUIDevice.shared.orientation = .portrait
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        let frame = app.windows.firstMatch.frame
+        XCTFail("Device did not rotate to landscape (orientation=\(XCUIDevice.shared.orientation.rawValue), window=\(frame), app=\(app.frame))")
+    }
+
+    /// The screen to capture. `XCUIScreen.main` is the iPhone Duo's outer display; with
+    /// `SCREENSHOT_DISPLAY=inner` (set by `Tools/CaptureDuoStoreScreenshots.sh --pose inner`,
+    /// forwarded via `TEST_RUNNER_SCREENSHOT_DISPLAY`) capture its second, inner screen.
+    private func captureScreen() -> XCUIScreen {
+        guard ProcessInfo.processInfo.environment["SCREENSHOT_DISPLAY"] == "inner" else {
+            return XCUIScreen.main
+        }
+        return XCUIScreen.screens.first { $0 != XCUIScreen.main } ?? XCUIScreen.main
+    }
+
     /// Captures the current screen and attaches it to the test result with
     /// the given name. The wrapper script extracts attachments by name.
     func attachScreenshot(named name: String) {
-        let screenshot = XCUIScreen.main.screenshot()
+        let screenshot = captureScreen().screenshot()
         let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = name
         attachment.lifetime = .keepAlways

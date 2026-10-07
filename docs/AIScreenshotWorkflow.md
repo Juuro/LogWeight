@@ -17,6 +17,11 @@ Tools/CaptureScene.sh --scene entry-default
 # Capture on a specific device (default: iPhone 16 Pro)
 Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone 16"
 
+# Capture on iPhone Duo (needs the iOS 27.1 simulator runtime; one-time setup:
+#   xcrun simctl create "iPhone Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo \
+#     com.apple.CoreSimulator.SimRuntime.iOS-27-1)
+Tools/CaptureScene.sh --scene history-with-chart-30d --device "iPhone Duo"
+
 # Capture all scenes at once
 Tools/CaptureScene.sh --all
 ```
