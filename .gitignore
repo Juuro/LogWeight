@@ -32,3 +32,10 @@ tmp/
 # Editor / OS noise
 *.swp
 *~
+
+# Local secrets (App Store Connect API key settings) — never committed
+.env
+
+# Python bytecode (Tools/asc)
+__pycache__/
+*.pyc

@@ -50,8 +50,9 @@ This checklist answers two release questions directly:
 
 1. Finish the final validation run.
 2. Publish the support URL and privacy policy URL.
-3. Generate final screenshots for iPhone, iPad, and Apple Watch.
-4. Copy the metadata drafts into App Store Connect.
-5. Paste concise HealthKit review notes.
-6. Upload the archive to TestFlight/App Store Connect.
-7. Do one final TestFlight pass on physical devices before pressing Submit for Review.
+3. Generate final screenshots for iPhone, iPad, Apple Watch and iPhone Duo into `docs/store-screenshots/` (see `docs/AIScreenshotWorkflow.md`; the capture scripts still write older file names, rename to the required layout first).
+4. Rewrite `docs/AppStoreWhatsNew.md` for the release (all languages, update the version line).
+5. Preview with `Tools/asc-release.py all`, then publish with `--apply` (see `docs/BuildAndDeploy.md`); this replaces copying metadata and screenshots by hand.
+6. Paste concise HealthKit review notes.
+7. The archive upload is part of `Tools/asc-release.py build` (no Xcode Archive needed).
+8. Do one final TestFlight pass on physical devices before pressing Submit for Review.
