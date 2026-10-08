@@ -79,10 +79,11 @@ def redacting_runner(secrets: list[str]):
     def run(cmd: list[str]) -> None:
         proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         assert proc.stdout is not None
-        for line in proc.stdout:
-            for needle in needles:
-                line = line.replace(needle, "<redacted>")
-            print(line, end="", flush=True)
+        with proc.stdout:
+            for line in proc.stdout:
+                for needle in needles:
+                    line = line.replace(needle, "<redacted>")
+                print(line, end="", flush=True)
         if proc.wait() != 0:
             raise StoreError(f"{cmd[0]} {cmd[1] if len(cmd) > 1 else ''} failed with exit code {proc.returncode}")
 

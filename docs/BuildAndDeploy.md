@@ -167,6 +167,7 @@ Tools/asc-release.py all --apply                  # build, upload, attach build,
 - Target version defaults to `MARKETING_VERSION` in `project.yml`; use `--version` when the store spells it differently (for example `1.1`). If the version is missing in the store it is created, never submitted.
 - Build number comes from `Config/Version.xcconfig` and is never edited by the tool. If it is already used by an unusable build, or by another version, the run stops.
 - Screenshots: `docs/store-screenshots/<store-locale>/<device>/NN-name.png`, exactly the required set per device (iPhone, iPad, Duo outer: `01-entry`, `02-history`, `03-settings`; Duo inner adds `04-entry-landscape`, `05-history-landscape`; Watch: `01-entry`, `02-history`). Unchanged images are not re-uploaded; order follows the number prefix.
+- Release notes ("What's New") come from `docs/AppStoreWhatsNew.md`: rewrite it for every release and set its `**Version:**` line; the sync refuses a stale file.
 - Texts come from `docs/AppStoreMetadata.md` (English, also used for en-US/en-GB/en-CA) and `docs/AppStoreMetadata.localized.md`. Only changed fields are written.
 - Exit codes: 0 ok, 1 usage/config, 2 validation (nothing written), 3 store refused part of the run (safe to re-run), 4 version not editable.
 - Unit tests (no network): `cd Tools && python3 -m unittest discover -s asc/tests -t .`

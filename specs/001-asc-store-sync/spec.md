@@ -175,7 +175,7 @@ The store listing shows only the screenshots that matter, the same story on ever
 - **FR-004**: The system MUST define screenshot order from local file names so that the order is identical across locales and across versions.
 - **FR-005**: The system MUST compare local images to what is already on the listing and MUST NOT re-upload images whose content is unchanged.
 - **FR-006**: The system MUST replace changed images in their original position and remove remote images that no longer exist locally, so the listing mirrors the local set.
-- **FR-007**: The system MUST sync subtitle, promotional text, description and keywords for every locale defined in the metadata documents.
+- **FR-007**: The system MUST sync subtitle, promotional text, description, keywords and the release notes ("What's New") for every locale defined in the metadata documents. The release notes live in their own per-release file that names the version it is for; the sync MUST refuse a file whose version does not match the target version.
 - **FR-008**: The system MUST compare local texts to the live listing and MUST NOT resend texts whose content is unchanged.
 - **FR-009**: The system MUST validate texts and images against store limits (character counts, image count per device size, image dimensions, no transparency) before sending, and report violations per locale and item.
 - **FR-010**: The system MUST offer a preview mode that reports all planned changes and makes none.

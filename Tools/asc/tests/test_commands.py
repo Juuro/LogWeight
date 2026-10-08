@@ -101,6 +101,14 @@ class CommandTests(unittest.TestCase):
         self.assertIn("unknown locale folder", out)
         self.assertEqual(code, EXIT_STORE)
 
+    def test_stale_whats_new_text_is_refused_with_exit_2_and_no_writes(self):
+        (self.tmp / "project.yml").write_text('    MARKETING_VERSION: "1.2.0"\n')
+        self.api.add_version("1.2.0", locales=("de-DE",))
+        code, out = self.run_cmd("texts", apply=True, locales=[])
+        self.assertEqual(code, EXIT_VALIDATION)
+        self.assertIn("rewrite the release notes", out)
+        self.assertEqual(self.api.writes, [])
+
     def test_status_is_read_only_and_flags_problems(self):
         (self.shots / "de-DE/iphone-6.5/03-settings.png").unlink()
         code, out = self.run_cmd("status")

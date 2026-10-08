@@ -27,7 +27,7 @@ class FakeApi:
         self.versions[vid] = {"versionString": version, "appStoreState": state, "platform": "IOS"}
         for locale in locales:
             self.version_locs[f"vl{next(self._ids)}"] = {"version": vid, "locale": locale,
-                                                         "promotionalText": "", "description": "", "keywords": ""}
+                                                         "promotionalText": "", "description": "", "keywords": "", "whatsNew": ""}
             self.info_locs[f"il{next(self._ids)}"] = {"locale": locale, "subtitle": ""}
         return vid
 

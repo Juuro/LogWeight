@@ -24,13 +24,25 @@ class ParseTests(unittest.TestCase):
         self.assertNotIn("\n  •", loaded["de-DE"].description)
         self.assertTrue(loaded["de-DE"].description.startswith("LogWeight ist"))
 
+    def test_whats_new_parses_for_all_locales_and_is_not_empty(self):
+        loaded = texts.load_all()
+        self.assertTrue(all(loaded[l].whatsNew for l in STORE_LOCALES))
+        self.assertEqual(loaded["en-AU"].whatsNew, loaded["en-US"].whatsNew)
+        self.assertEqual(loaded["pt-PT"].whatsNew, loaded["pt-BR"].whatsNew)
+        self.assertTrue(loaded["de-DE"].whatsNew.startswith("Jetzt für iPhone Duo"))
+
+    def test_whats_new_version_is_read_and_required(self):
+        self.assertEqual(texts.whats_new_version(), "1.1.0")
+        with self.assertRaises(Exception):
+            texts.parse_whats_new("## en\n\ntext")
+
     def test_limits_are_enforced(self):
         good = texts.load_all()["de-DE"]
-        too_long = texts.TextSet("x" * 31, "y" * 171, "z" * 4001, "k" * 101)
+        too_long = texts.TextSet("x" * 31, "y" * 171, "z" * 4001, "k" * 101, "n" * 4001)
         problems = texts.validate({"de-DE": too_long, "fr-FR": good}, ["de-DE", "fr-FR", "ja"])
         joined = " ".join(problems["de-DE"])
         for needle in ("subtitle has 31 characters (limit 30)", "promotionalText has 171", "description has 4001",
-                       "keywords has 101"):
+                       "keywords has 101", "whatsNew has 4001"):
             self.assertIn(needle, joined)
         self.assertIn("ja", problems)  # no text defined
 
@@ -54,7 +66,7 @@ class DiffTests(unittest.TestCase):
     def sync_remote(self):
         loc = next(v for v in self.api.version_locs.values() if v["locale"] == "de-DE")
         loc.update(promotionalText=self.local.promotionalText, description=self.local.description + "  \n",
-                   keywords=self.local.keywords)
+                   keywords=self.local.keywords, whatsNew=self.local.whatsNew)
         next(iter(self.api.info_locs.values()))["subtitle"] = self.local.subtitle
 
     def test_empty_store_updates_version_and_subtitle_targets(self):

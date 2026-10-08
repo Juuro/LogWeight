@@ -9,13 +9,14 @@ from .config import ROOT
 from .errors import ValidationError
 from .locales import ENGLISH_LOCALES, STORE_LOCALES, TEXT_COPIES, doc_locale_to_store
 
-LIMITS = {"subtitle": 30, "promotionalText": 170, "description": 4000, "keywords": 100}
+LIMITS = {"subtitle": 30, "promotionalText": 170, "description": 4000, "keywords": 100, "whatsNew": 4000}
 FIELDS = tuple(LIMITS)
 APP_INFO_FIELDS = ("subtitle",)
-VERSION_FIELDS = ("promotionalText", "description", "keywords")
+VERSION_FIELDS = ("promotionalText", "description", "keywords", "whatsNew")
 
 BASE_DOC = ROOT / "docs" / "AppStoreMetadata.md"
 LOCALIZED_DOC = ROOT / "docs" / "AppStoreMetadata.localized.md"
+WHATS_NEW_DOC = ROOT / "docs" / "AppStoreWhatsNew.md"
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class TextSet:
     promotionalText: str
     description: str
     keywords: str
+    whatsNew: str = ""
 
     def as_dict(self) -> dict[str, str]:
         return {f: getattr(self, f) for f in FIELDS}
@@ -96,15 +98,37 @@ def parse_localized(markdown: str) -> dict[str, TextSet]:
     return result
 
 
-def load_all(base_doc: Path = BASE_DOC, localized_doc: Path = LOCALIZED_DOC) -> dict[str, TextSet]:
+def parse_whats_new(markdown: str) -> tuple[str, dict[str, str]]:
+    """Returns (version the notes are for, {locale: text}); `en` is the English base."""
+    match = re.search(r"^\*\*Version:\*\*\s*(\S+)", markdown, re.M)
+    if not match:
+        raise ValidationError("AppStoreWhatsNew.md: missing line '**Version:** x.y.z'")
+    notes = {}
+    for heading, block in _sections(markdown).items():
+        if re.fullmatch(r"[a-z]{2,3}(-[A-Za-z]{2,4})?", heading):
+            notes[doc_locale_to_store(heading)] = normalize(block)
+    return match.group(1), notes
+
+
+def load_all(base_doc: Path = BASE_DOC, localized_doc: Path = LOCALIZED_DOC,
+             whats_new_doc: Path = WHATS_NEW_DOC) -> dict[str, TextSet]:
     base = parse_base(base_doc.read_text())
     localized = parse_localized(localized_doc.read_text())
-    texts = dict(localized)
+    _, notes = parse_whats_new(whats_new_doc.read_text())
+    texts = {loc: _with_notes(ts, notes.get(loc, "")) for loc, ts in localized.items()}
     for locale in ENGLISH_LOCALES:
-        texts[locale] = base
+        texts[locale] = _with_notes(base, notes.get("en", ""))
     for target, source in TEXT_COPIES.items():
         texts[target] = texts[source]
     return texts
+
+
+def _with_notes(ts: TextSet, notes: str) -> TextSet:
+    return TextSet(ts.subtitle, ts.promotionalText, ts.description, ts.keywords, notes)
+
+
+def whats_new_version(whats_new_doc: Path = WHATS_NEW_DOC) -> str:
+    return parse_whats_new(whats_new_doc.read_text())[0]
 
 
 def validate(texts: dict[str, TextSet], locales=STORE_LOCALES) -> dict[str, list[str]]:

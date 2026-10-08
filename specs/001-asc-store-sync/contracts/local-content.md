@@ -19,4 +19,5 @@ docs/store-screenshots/<store-locale>/<device-folder>/NN-<name>.png
 ## Texts
 - `docs/AppStoreMetadata.md`: English base. Sections `## Subtitle`, `## Promotional text`, `## Description`, `## Keywords`, text in backticks or the description block as today.
 - `docs/AppStoreMetadata.localized.md`: one `## <locale>` section per locale with bullets `**Subtitle:**`, `**Promotional text:**`, `**Description:**`, `**Keywords:**` (current format). Heading aliases: `it-IT` to `it`, `es-ES`, `fr-FR`, `de-DE`, `nl-NL`, `ja-JP` to `ja`, `ko-KR` to `ko`.
+- `docs/AppStoreWhatsNew.md`: `**Version:** x.y.z` line plus one `## <locale>` section per language (`en` covers en-AU/CA/GB/US). Rewritten every release; a version mismatch with the target fails validation (exit 2). `whatsNew` is written to the version localization.
 - A text field missing for a locale is a validation error (exit 2), not an empty write.

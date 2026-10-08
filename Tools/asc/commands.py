@@ -13,7 +13,7 @@ from . import screenshots as shots
 from . import texts as texts_mod
 from . import versions as ver
 from .config import BUNDLE_ID, ROOT, Credentials, read_build_number, resolve_version
-from .errors import (EXIT_OK, EXIT_STORE, EXIT_VALIDATION, AscError, NotEditableError, StoreError)
+from .errors import (EXIT_OK, EXIT_STORE, EXIT_VALIDATION, AscError, NotEditableError, StoreError, ValidationError)
 from .locales import DEVICE_ALIASES, DEVICE_FOLDERS, STORE_LOCALES, STORE_SETS
 from .plan import Action, Plan
 
@@ -31,6 +31,7 @@ class Options:
     xcconfig: Path | None = None
     base_doc: Path = texts_mod.BASE_DOC
     localized_doc: Path = texts_mod.LOCALIZED_DOC
+    whats_new_doc: Path = texts_mod.WHATS_NEW_DOC
 
 
 def _locales(opts: Options) -> list[str]:
@@ -100,8 +101,17 @@ def plan_screenshots(api, app_id: str, ctx: ver.Context, opts: Options, problems
     return actions
 
 
-def plan_texts(api, app_id: str, ctx: ver.Context, opts: Options, problems: Problems) -> list[Action]:
-    texts = texts_mod.load_all(opts.base_doc, opts.localized_doc)
+def check_whats_new_version(opts: Options, target: str) -> None:
+    """The release notes file is rewritten per release; a stale one must never ship (exit 2)."""
+    doc_version = texts_mod.whats_new_version(opts.whats_new_doc)
+    if not ver.same_version(doc_version, target):
+        raise ValidationError(f"{opts.whats_new_doc.name} is for version {doc_version}, target is {target}; "
+                              "rewrite the release notes for this release first")
+
+
+def plan_texts(api, app_id: str, ctx: ver.Context, opts: Options, problems: Problems, target: str) -> list[Action]:
+    check_whats_new_version(opts, target)
+    texts = texts_mod.load_all(opts.base_doc, opts.localized_doc, opts.whats_new_doc)
     locales = _locales(opts)
     bad = texts_mod.validate(texts, locales)
     for locale, items in bad.items():
@@ -139,7 +149,7 @@ def run(command: str, api, credentials: Credentials | None, opts: Options, out=p
         if command in ("screenshots", "all"):
             plan.extend(plan_screenshots(api, app_id, ctx, opts, problems, sleep))
         if command in ("texts", "all"):
-            plan.extend(plan_texts(api, app_id, ctx, opts, problems))
+            plan.extend(plan_texts(api, app_id, ctx, opts, problems, target))
     except NotEditableError as err:
         out(f"error: {err}")
         return err.exit_code
@@ -170,7 +180,11 @@ def _status(api, opts: Options, problems: Problems, out) -> int:
             problems.add(f"{g.locale}/{g.device}: {e}")
     for name in shots.unknown_locale_folders(opts.screenshot_root):
         problems.add(f"unknown locale folder: {name}")
-    texts = texts_mod.load_all(opts.base_doc, opts.localized_doc)
+    try:
+        check_whats_new_version(opts, resolve_version(opts.version, opts.project_yml))
+    except ValidationError as err:
+        problems.add(str(err))
+    texts = texts_mod.load_all(opts.base_doc, opts.localized_doc, opts.whats_new_doc)
     for locale, items in texts_mod.validate(texts, _locales(opts)).items():
         for item in items:
             problems.add(f"{locale}: {item}")

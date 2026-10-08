@@ -15,7 +15,7 @@ All entities are in memory for the duration of a run; nothing is persisted local
 - Rule: locale must exist locally and in the store; mismatches are reported, never auto-created or skipped silently.
 
 ## TextSet (local)
-- Fields: `subtitle` (≤30), `promotionalText` (≤170), `description` (≤4000), `keywords` (≤100 chars total, comma separated).
+- Fields: `subtitle` (≤30), `promotionalText` (≤170), `description` (≤4000), `keywords` (≤100 chars total, comma separated), `whatsNew` (≤4000, from `docs/AppStoreWhatsNew.md`, which carries the version it is for).
 - Source: `docs/AppStoreMetadata.md` (English, applied to en-US/en-GB/en-CA) and `docs/AppStoreMetadata.localized.md` (per heading). Formats in [contracts/local-content.md](contracts/local-content.md).
 - Rule: normalised (trimmed, line endings, bullet indentation) before comparison so formatting-only differences do not trigger writes.
 
