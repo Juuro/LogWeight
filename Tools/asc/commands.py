@@ -124,6 +124,8 @@ def _deferred_texts(api, app_id, ctx, texts, locale) -> None:
 def run(command: str, api, credentials: Credentials | None, opts: Options, out=print,
         runner=build_mod.default_runner, sleep=time.sleep) -> int:
     problems = Problems()
+    if runner is build_mod.default_runner and credentials is not None:
+        runner = build_mod.redacting_runner(credentials.secret_values())
     try:
         if command == "status":
             return _status(api, opts, problems, out)

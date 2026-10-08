@@ -194,7 +194,7 @@ description: "Task list for App Store Connect Release Sync"
 - [X] T047 [US6] Implement processing wait and attach in `Tools/asc/build.py` and `Tools/asc/versions.py`: poll `builds` filtered by app, build number and pre-release version until `processingState` is VALID (bounded, default 30 minutes, report INVALID/FAILED), compare the build's marketing version to the target and refuse a mismatch, then `PATCH appStoreVersions/{id}/relationships/build` (R9, FR-019)
 - [X] T048 [US6] Detect existing build in the store before archiving (same build number for this version): skip archive and upload, continue at wait/attach; never edit `Config/Version.xcconfig` or `project.yml`, never commit (FR-020, FR-021)
 - [X] T049 [US6] Wire `build` and `all` in `Tools/asc-release.py`: `all` runs build → attach → screenshots → texts; steps are individually runnable (FR-022); preview covers all steps
-- [ ] T050 [US6] Run quickstart step 7 on the next real release with the maintainer's go-ahead (archive takes minutes and uploads a real build); record any signing or export-compliance issue in `specs/001-asc-store-sync/research.md`
+- [X] T050 [US6] Run quickstart step 7 on the next real release with the maintainer's go-ahead (archive takes minutes and uploads a real build); record any signing or export-compliance issue in `specs/001-asc-store-sync/research.md`
 
 **Checkpoint**: Build delivered and attached repeatably
 
@@ -207,7 +207,7 @@ description: "Task list for App Store Connect Release Sync"
 - [X] T053 [P] Update `docs/AIScreenshotWorkflow.md`: new store layout (`docs/store-screenshots/<store-locale>/<device>/NN-name.png`) and the required set per device
 - [X] T054 [P] Add `Tools/asc/tests` to CI only if the maintainer wants it (propose a `python3 -m unittest discover Tools/asc/tests` job in `.github/workflows/ci.yml`; do not add secrets to CI)
 - [X] T055 Run `Tools/check-localizations.sh` and `python3 -m unittest discover Tools/asc/tests`; both must pass
-- [ ] T056 Run the full quickstart (`specs/001-asc-store-sync/quickstart.md` steps 1 to 9) against the next release version; tick SC-001 to SC-011
+- [X] T056 Run the full quickstart (`specs/001-asc-store-sync/quickstart.md` steps 1 to 9) against the next release version; tick SC-001 to SC-011
 
 ---
 

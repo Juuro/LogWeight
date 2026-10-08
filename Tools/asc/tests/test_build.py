@@ -95,6 +95,17 @@ class BuildTests(unittest.TestCase):
         found = build.wait_for_build(self.api, "app1", "22", "1.1", sleep=lambda s: None)
         self.assertEqual(found.state, "VALID")
 
+    def test_redacting_runner_hides_credentials_in_streamed_output(self):
+        import contextlib
+        import io
+        runner = build.redacting_runner(["KID-SECRET", "/path/to/key.p8"])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            runner(["echo", "-authenticationKeyID KID-SECRET -authenticationKeyPath /path/to/key.p8"])
+        self.assertNotIn("KID-SECRET", buf.getvalue())
+        self.assertNotIn("/path/to/key.p8", buf.getvalue())
+        self.assertIn("<redacted>", buf.getvalue())
+
     def test_verify_archive_requires_watch_app_and_extensions(self):
         root = Path(tempfile.mkdtemp()) / "A.xcarchive"
         app = root / "Products/Applications/LogWeight.app"
