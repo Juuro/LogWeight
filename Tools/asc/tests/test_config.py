@@ -62,9 +62,47 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.resolve_version(None, yml), "1.2.3")
         self.assertEqual(config.resolve_version("9.9", yml), "9.9")
 
-    def test_real_project_files_parse(self):
+    def test_real_marketing_version_parses(self):
         self.assertRegex(config.read_marketing_version(), r"^\d+\.\d+")
-        self.assertTrue(config.read_build_number().isdigit())
+
+    def test_build_number_env_override_wins(self):
+        import os
+        from unittest import mock
+        with mock.patch.dict(os.environ, {"BUILD_NUMBER": "4242"}):
+            self.assertEqual(config.read_build_number(), "4242")
+
+    def test_invalid_build_number_override_is_rejected(self):
+        import os
+        from unittest import mock
+        with mock.patch.dict(os.environ, {"BUILD_NUMBER": "12x"}):
+            with self.assertRaises(ConfigError):
+                config.read_build_number()
+
+    def test_build_number_from_git_history_when_available(self):
+        import os
+        import subprocess
+        from unittest import mock
+        shallow = subprocess.run(["git", "-C", str(config.ROOT), "rev-parse", "--is-shallow-repository"],
+                                 capture_output=True, text=True).stdout.strip()
+        if shallow != "false":
+            self.skipTest("shallow or non-git checkout cannot count commits")
+        env = {k: v for k, v in os.environ.items() if k != "BUILD_NUMBER"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertTrue(config.read_build_number().isdigit())
+
+    def test_shallow_checkout_is_a_clear_config_error(self):
+        import os
+        import shutil
+        import subprocess
+        from unittest import mock
+        repo = self.tmp / "clone"
+        (repo / "Tools").mkdir(parents=True)
+        shutil.copy(config.ROOT / "Tools" / "build-number.sh", repo / "Tools" / "build-number.sh")
+        # a plain directory without git at all behaves like a shallow clone: no countable history
+        result = subprocess.run([str(repo / "Tools" / "build-number.sh")], capture_output=True, text=True,
+                                env={k: v for k, v in os.environ.items() if k != "BUILD_NUMBER"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout.strip(), "")
 
 
 if __name__ == "__main__":
