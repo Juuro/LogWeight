@@ -25,6 +25,7 @@ class Options:
     locales: list[str] = field(default_factory=list)
     device: str | None = None
     strict: bool = False
+    allow_unmerged: bool = False
     verbose: bool = False
     screenshot_root: Path = shots.SCREENSHOT_ROOT
     project_yml: Path | None = None
@@ -145,6 +146,8 @@ def run(command: str, api, credentials: Credentials | None, opts: Options, out=p
         ctx = ver.Context()
         plan = Plan(ver.plan_version(api, app_id, target, ctx))
         if command in ("build", "all"):
+            if opts.apply and not opts.allow_unmerged:
+                build_mod.check_release_commit()
             plan.extend(build_mod.plan_build(api, app_id, ctx, target, number, credentials, runner, sleep))
         if command in ("screenshots", "all"):
             plan.extend(plan_screenshots(api, app_id, ctx, opts, problems, sleep))

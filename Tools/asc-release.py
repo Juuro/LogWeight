@@ -40,6 +40,8 @@ def parse(argv):
         p.add_argument("--device", help="limit to one device: iphone-6.5, ipad-13, iphone-duo, watch-series-11 (screenshots only)")
         p.add_argument("--env", help="credentials file (default: .env)")
         p.add_argument("--strict", action="store_true", help="any invalid group refuses the whole run (exit 2)")
+        p.add_argument("--allow-unmerged", action="store_true",
+                       help="build from a commit that is not on origin/main (the build number may collide later)")
         p.add_argument("--verbose", action="store_true")
     return parser.parse_args(argv)
 
@@ -47,7 +49,8 @@ def parse(argv):
 def main(argv=None) -> int:
     args = parse(argv if argv is not None else sys.argv[1:])
     opts = commands.Options(version=args.version, apply=args.apply, locales=args.locale,
-                            device=args.device, strict=args.strict, verbose=args.verbose)
+                            device=args.device, strict=args.strict, verbose=args.verbose,
+                            allow_unmerged=args.allow_unmerged)
     try:
         credentials = None
         api = None

@@ -100,7 +100,7 @@ The placeholder bundle identifier in Phase 1 is `dev.logweight.LogWeight`. Befor
 | Field                                                           | Source                    | Updated by                                                                                                 |
 | --------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | **Marketing version** (`MARKETING_VERSION`, user-facing)        | `project.yml`             | [release-please](https://github.com/googleapis/release-please) when you merge its **Release PR** on `main` |
-| **Build number** (`CURRENT_PROJECT_VERSION`, `CFBundleVersion`) | `Config/Version.xcconfig` | GitHub Actions after a **green** CI run (`[skip ci]` bump commits do not re-run CI)                        |
+| **Build number** (`CFBundleVersion`) | derived from git (`Tools/build-number.sh`, commit count) | automatically: every merge to `main` adds a commit; nothing is committed or pushed |
 
 - `VERSIONING_SYSTEM` is `apple-generic` in `project.yml`.
 - Do not hand-edit `MARKETING_VERSION` for releases; use the Release PR.
@@ -116,7 +116,7 @@ For a **major** semver bump, use one of:
 ## TestFlight
 
 1. Set your real bundle ID prefix and team in `project.yml`.
-2. Merge feature work to `main` (CI bumps the build number on green runs).
+2. Merge feature work to `main` (the build number rises automatically with the commit count).
 3. When ready for a new user-facing version, merge the **Release PR** from release-please on `main` (updates `MARKETING_VERSION` and `CHANGELOG.md`; creates `vX.Y.Z` on GitHub).
 4. Pull `main`, run `xcodegen generate`, archive in Xcode (_Product → Archive_).
 5. Upload to App Store Connect.
@@ -137,7 +137,7 @@ Output folder: `docs/store-screenshots/`
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on push to any branch (except pushes that only change `Config/Version.xcconfig`) and on `workflow_dispatch`:
+`.github/workflows/ci.yml` runs on push to any branch and on `workflow_dispatch`:
 
 - **Core tests:** `macos-latest`
 - **iOS + watchOS:** `macos-14` with **latest-stable Xcode** (matches the historical ~8m iOS job)
@@ -146,7 +146,6 @@ Output folder: `docs/store-screenshots/`
 2. In parallel after (1): **iOS** and **watchOS** jobs each run `.github/actions/apple-ci-setup` (Homebrew download cache, DerivedData cache, `xcodegen generate`).
 3. iOS: ensure iOS/watchOS simulator platforms only when missing, then `xcodebuild test` — all 13 `EntryViewSmokeTests`.
 4. watchOS: ensure watchOS simulator platform when missing, then `xcodebuild build -scheme LogWeightWatch …` — app + widget extension compile check.
-5. On **green** CI on `main`, a final job commits `CURRENT_PROJECT_VERSION + 1` to `Config/Version.xcconfig` with `[skip ci]`.
 
 `.github/workflows/release-please.yml` runs on push to `main` and opens or updates a Release PR from Conventional Commits since the last `v*` tag.
 
@@ -165,7 +164,7 @@ Tools/asc-release.py all --apply                  # build, upload, attach build,
 ```
 
 - Target version defaults to `MARKETING_VERSION` in `project.yml`; use `--version` when the store spells it differently (for example `1.1`). If the version is missing in the store it is created, never submitted.
-- Build number comes from `Config/Version.xcconfig` and is never edited by the tool. If it is already used by an unusable build, or by another version, the run stops.
+- Build number is the git commit count (`Tools/build-number.sh`; `BUILD_NUMBER` overrides it). A Run Script phase (`Tools/set-build-number.sh`) writes it into every app and extension in Release/archive builds, so Product → Archive in Xcode gets the same number as the tool. `build --apply` refuses uncommitted changes or a commit not on `origin/main` (`--allow-unmerged` overrides) and verifies the archive: same number in all bundles, signature valid. If the number is already used by an unusable build, or by another version, the run stops. `Config/Version.xcconfig` only holds a Debug placeholder.
 - Screenshots: `docs/store-screenshots/<store-locale>/<device>/NN-name.png`, exactly the required set per device (iPhone, iPad, Duo outer: `01-entry`, `02-history`, `03-settings`; Duo inner adds `04-entry-landscape`, `05-history-landscape`; Watch: `01-entry`, `02-history`). Unchanged images are not re-uploaded; order follows the number prefix.
 - Release notes ("What's New") come from `docs/AppStoreWhatsNew.md`: rewrite it for every release and set its `**Version:**` line; the sync refuses a stale file.
 - Texts come from `docs/AppStoreMetadata.md` (English, also used for en-US/en-GB/en-CA) and `docs/AppStoreMetadata.localized.md`. Only changed fields are written.

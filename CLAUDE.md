@@ -98,7 +98,7 @@ and by the Claude Code Bash hook in `.claude/settings.json`:
 ## Versioning
 
 - **Marketing version:** `MARKETING_VERSION` in `project.yml` (`# x-release-please-version`). Bump only by merging a release-please Release PR — do not edit by hand for releases.
-- **Build number:** `Config/Version.xcconfig` (`CURRENT_PROJECT_VERSION`). CI increments on green runs; do not bump manually unless debugging locally.
+- **Build number:** derived from the git commit count (`Tools/build-number.sh`) and written into Release/archive builds by a Run Script phase; never committed, never bumped by hand. `Config/Version.xcconfig` only holds a Debug placeholder.
 - After `project.yml` changes: `xcodegen generate`. See `docs/BuildAndDeploy.md`.
 
 ## Spec-Driven Work

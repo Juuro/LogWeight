@@ -6,6 +6,7 @@ INVALID/FAILED -> stop, because only the versioning process may change the numbe
 """
 from __future__ import annotations
 
+import plistlib
 import subprocess
 import time
 from dataclasses import dataclass
@@ -48,16 +49,50 @@ def _pre_version(api, item: dict, pre: dict) -> str:
     return ""
 
 
-def verify_archive(archive: Path) -> None:
-    """The archive must embed the Watch app and the extensions (FR-017)."""
+def _bundle_version(bundle: Path) -> str:
+    with (bundle / "Info.plist").open("rb") as handle:
+        return str(plistlib.load(handle).get("CFBundleVersion", ""))
+
+
+def verify_archive(archive: Path, expected_number: str | None = None, check_signature: bool = False) -> None:
+    """The archive must embed the Watch app and the extensions (FR-017), every bundle must carry the
+    expected build number, and the signature must still verify (the number is written after compile)."""
     apps = list((archive / "Products" / "Applications").glob("*.app"))
     if not apps:
         raise StoreError("archive contains no application")
     app = apps[0]
-    if not any((app / "Watch").glob("*.app")):
+    watch_apps = list((app / "Watch").glob("*.app"))
+    if not watch_apps:
         raise StoreError("archive does not embed the Apple Watch app")
-    if not any((app / "PlugIns").glob("*.appex")):
+    extensions = list((app / "PlugIns").glob("*.appex"))
+    if not extensions:
         raise StoreError("archive contains no app extensions (widget)")
+    if expected_number is not None:
+        bundles = [app, *watch_apps, *extensions, *(b for w in watch_apps for b in (w / "PlugIns").glob("*.appex"))]
+        wrong = [f"{b.name}={_bundle_version(b) or '?'}" for b in bundles if _bundle_version(b) != expected_number]
+        if wrong:
+            raise StoreError(f"archive build number mismatch (expected {expected_number}): {', '.join(wrong)}")
+    if check_signature:
+        result = subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], capture_output=True, text=True)
+        if result.returncode != 0:
+            raise StoreError("archive signature does not verify: " + result.stderr.strip().splitlines()[-1])
+
+
+def check_release_commit(run_git=None) -> None:
+    """Builds for the store come from a clean checkout of a commit that is already on origin/main:
+    the git-derived build number is only unique per main history (spec FR-020/FR-021)."""
+    from .errors import ValidationError
+
+    def git(*args):
+        if run_git is not None:
+            return run_git(*args)
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+
+    if git("status", "--porcelain", "--untracked-files=no").stdout.strip():
+        raise ValidationError("working tree has uncommitted changes; commit or stash them before building a release")
+    if git("merge-base", "--is-ancestor", "HEAD", "origin/main").returncode != 0:
+        raise ValidationError("HEAD is not on origin/main (fetch first); store builds must come from merged commits "
+                              "(override with --allow-unmerged)")
 
 
 def auth_flags(credentials: Credentials) -> list[str]:
@@ -140,7 +175,7 @@ def plan_build(api, app_id: str, ctx, marketing: str, number: str, credentials: 
         def do_archive():
             for cmd in archive_commands(credentials):
                 runner(cmd)
-            verify_archive(ARCHIVE_PATH)
+            verify_archive(ARCHIVE_PATH, number, check_signature=True)
 
         actions.append(Action("archive", f"{marketing} ({number})", "-", "xcodegen + xcodebuild archive", do_archive))
         actions.append(Action("upload_build", f"{marketing} ({number})", "-", "xcodebuild -exportArchive (upload)",

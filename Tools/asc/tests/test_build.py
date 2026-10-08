@@ -106,6 +106,41 @@ class BuildTests(unittest.TestCase):
         self.assertNotIn("/path/to/key.p8", buf.getvalue())
         self.assertIn("<redacted>", buf.getvalue())
 
+    def _archive(self, number="71"):
+        import plistlib
+        root = Path(tempfile.mkdtemp()) / "A.xcarchive"
+        app = root / "Products/Applications/LogWeight.app"
+        for bundle in (app, app / "Watch/W.app", app / "PlugIns/X.appex", app / "Watch/W.app/PlugIns/Y.appex"):
+            bundle.mkdir(parents=True)
+            (bundle / "Info.plist").write_bytes(plistlib.dumps({"CFBundleVersion": number}))
+        return root
+
+    def test_verify_archive_checks_build_number_in_every_bundle(self):
+        import plistlib
+        root = self._archive("71")
+        build.verify_archive(root, "71")
+        (root / "Products/Applications/LogWeight.app/PlugIns/X.appex/Info.plist").write_bytes(
+            plistlib.dumps({"CFBundleVersion": "22"}))
+        with self.assertRaisesRegex(StoreError, r"expected 71.*X.appex=22"):
+            build.verify_archive(root, "71")
+
+    def test_release_commit_must_be_clean_and_on_origin_main(self):
+        from types import SimpleNamespace as R
+        from asc.errors import ValidationError
+
+        def fake(dirty=False, merged=True):
+            def run(*args):
+                if args[0] == "status":
+                    return R(stdout=" M x" if dirty else "", returncode=0)
+                return R(stdout="", returncode=0 if merged else 1)
+            return run
+
+        build.check_release_commit(fake())
+        with self.assertRaisesRegex(ValidationError, "uncommitted"):
+            build.check_release_commit(fake(dirty=True))
+        with self.assertRaisesRegex(ValidationError, "not on origin/main"):
+            build.check_release_commit(fake(merged=False))
+
     def test_verify_archive_requires_watch_app_and_extensions(self):
         root = Path(tempfile.mkdtemp()) / "A.xcarchive"
         app = root / "Products/Applications/LogWeight.app"

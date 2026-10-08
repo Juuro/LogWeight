@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -81,11 +82,21 @@ def read_marketing_version(project_yml: Path | None = None) -> str:
 
 
 def read_build_number(xcconfig: Path | None = None) -> str:
-    path = xcconfig or ROOT / "Config" / "Version.xcconfig"
-    match = re.search(r"^\s*CURRENT_PROJECT_VERSION\s*=\s*([0-9]+)", path.read_text(), re.M)
-    if not match:
-        raise ConfigError(f"CURRENT_PROJECT_VERSION not found in {path.name}")
-    return match.group(1)
+    """Build number for the current commit (Tools/build-number.sh: git commit count, or $BUILD_NUMBER).
+
+    With an explicit xcconfig path (tests) the value is read from that file instead.
+    """
+    if xcconfig is not None:
+        match = re.search(r"^\s*CURRENT_PROJECT_VERSION\s*=\s*([0-9]+)", xcconfig.read_text(), re.M)
+        if not match:
+            raise ConfigError(f"CURRENT_PROJECT_VERSION not found in {xcconfig.name}")
+        return match.group(1)
+    result = subprocess.run([str(ROOT / "Tools" / "build-number.sh")], capture_output=True, text=True)
+    number = result.stdout.strip()
+    if result.returncode != 0 or not number.isdigit():
+        raise ConfigError("cannot derive the build number (shallow clone or no git history? "
+                          "set BUILD_NUMBER or fetch full history)")
+    return number
 
 
 def resolve_version(explicit: str | None, project_yml: Path | None = None) -> str:

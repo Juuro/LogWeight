@@ -1,3 +1,5 @@
-// Build number (CFBundleVersion). Auto-incremented by CI on green runs.
-// See .github/workflows/ci.yml and Tools/bump-build-number.sh.
-CURRENT_PROJECT_VERSION = 22
+// Placeholder build number (CFBundleVersion) for Debug and test builds.
+// Release/archive builds get the real number from git: Tools/set-build-number.sh (Run Script
+// phase on every app/extension target) writes the commit count into the built Info.plist.
+// See Tools/build-number.sh. Never bump this by hand.
+CURRENT_PROJECT_VERSION = 1
