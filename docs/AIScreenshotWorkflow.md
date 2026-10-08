@@ -130,3 +130,15 @@ All fixtures use a fixed anchor date (`ScreenshotFixture.referenceDate = 2026-05
 - `xcodegen generate` already run (or run it first: `xcodegen generate`)
 - The target simulator must appear in `xcrun simctl list devices available`
 - No HealthKit entitlements needed (uses `InMemoryHealthKitStore`)
+
+## Store screenshot layout (for `Tools/asc-release.py`)
+
+`Tools/asc-release.py` expects exactly `docs/store-screenshots/<store-locale>/<device>/NN-name.png`, with store locale ids (`de-DE`, `en-GB`, `it`, `ja`, ...; 17 locales) and this set per device:
+
+| Device folder | Files |
+|---|---|
+| `iphone-6.5`, `ipad-13`, `iphone-duo-outer` | `01-entry.png`, `02-history.png`, `03-settings.png` |
+| `iphone-duo-inner` | the same three, plus `04-entry-landscape.png`, `05-history-landscape.png` |
+| `watch-series-11` | `01-entry.png`, `02-history.png` |
+
+The capture scripts (`Tools/CaptureStoreScreenshots.sh`, `CaptureDuoStoreScreenshots.sh`, `CaptureWatchScreenshots.sh`) still write the older scene-based names and short locale keys; rename their output to this layout before syncing (`Tools/asc-release.py status` reports every mismatch).

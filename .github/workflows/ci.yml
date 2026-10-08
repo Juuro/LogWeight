@@ -29,6 +29,22 @@ jobs:
         working-directory: Packages/LogWeightCore
         run: swift test --parallel
 
+  asc-tool-tests:
+    name: Release tool tests (Tools/asc)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: unittest (no network, no secrets)
+        working-directory: Tools
+        run: python3 -m unittest discover -s asc/tests -t .
+
   ios-build:
     name: iOS build + UI smoke
     # macos-14 + latest-stable matches the ~8m baseline (iPad 10th gen, preinstalled simulators).
@@ -104,7 +120,7 @@ jobs:
   bump-build-number:
     name: Bump build number
     runs-on: ubuntu-latest
-    needs: [core-tests, ios-build, watch-build]
+    needs: [core-tests, asc-tool-tests, ios-build, watch-build]
     if: >-
       success() &&
       github.event_name == 'push' &&

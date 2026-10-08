@@ -151,3 +151,22 @@ Output folder: `docs/store-screenshots/`
 `.github/workflows/release-please.yml` runs on push to `main` and opens or updates a Release PR from Conventional Commits since the last `v*` tag.
 
 CI cannot exercise real HealthKit (no entitlements on GitHub-hosted runners). The `--use-in-memory-store` launch argument injects `InMemoryHealthKitStore` for UI tests.
+
+## Release to App Store Connect
+
+`Tools/asc-release.py` takes a release from a clean checkout to "version has build, screenshots and texts" (spec: `specs/001-asc-store-sync`). **Preview is the default; nothing is written without `--apply`.**
+
+Prerequisites: `pip install PyJWT cryptography`, Xcode, and a git-ignored `.env` with `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH` (App Store Connect API key). Secret values are never printed.
+
+```bash
+Tools/asc-release.py status                       # read-only: local layout + store state
+Tools/asc-release.py screenshots --locale de-DE   # preview one locale
+Tools/asc-release.py all --apply                  # build, upload, attach build, screenshots, texts
+```
+
+- Target version defaults to `MARKETING_VERSION` in `project.yml`; use `--version` when the store spells it differently (for example `1.1`). If the version is missing in the store it is created, never submitted.
+- Build number comes from `Config/Version.xcconfig` and is never edited by the tool. If it is already used by an unusable build, or by another version, the run stops.
+- Screenshots: `docs/store-screenshots/<store-locale>/<device>/NN-name.png`, exactly the required set per device (iPhone, iPad, Duo outer: `01-entry`, `02-history`, `03-settings`; Duo inner adds `04-entry-landscape`, `05-history-landscape`; Watch: `01-entry`, `02-history`). Unchanged images are not re-uploaded; order follows the number prefix.
+- Texts come from `docs/AppStoreMetadata.md` (English, also used for en-US/en-GB/en-CA) and `docs/AppStoreMetadata.localized.md`. Only changed fields are written.
+- Exit codes: 0 ok, 1 usage/config, 2 validation (nothing written), 3 store refused part of the run (safe to re-run), 4 version not editable.
+- Unit tests (no network): `cd Tools && python3 -m unittest discover -s asc/tests -t .`
