@@ -81,3 +81,11 @@ This document records the architectural decisions that shape Phase 1. Decisions 
 **Decision.** iOS UI tests now include history/chart visibility, settings controls, keyboard-save guard, and an `Accessibility XXXL` save flow in addition to smoke save.
 
 **Rationale.** This captures common regressions (layout clipping, control discovery, broken save path) while keeping CI runtime practical.
+
+## ADR-011 — Voice and automation entry is a guarded exception to stepper-first entry
+
+**Status:** accepted.
+
+**Decision.** `LogWeightIntent` (Siri, Shortcuts, Action Button, Spotlight) logs a weight the user speaks or supplies, without opening the app and without the stepper (an exception to ADR-007). It runs through `WeightLogger` in `LogWeightCore` and `HealthKitStore` only, and is guarded by: a plausible range (20–500 kg) and large-jump (more than 10 kg) check that asks for confirmation and refuses when nobody can be asked (unattended runs); a 60-second duplicate window against the newest sample from any source (including Apple Health's own Siri logging); device unlock required (`authenticationPolicy = .requiresAuthentication`); and a confirmation only after the write succeeded. The widget's `SaveWeightIntent` is unchanged, hidden from Shortcuts, and has no spoken phrases. Spoken phrases are localized in `App/iOS/Resources/<locale>.lproj/AppShortcuts.strings`, checked by `Tools/check-localizations.sh`.
+
+**Rationale.** A hands-free path cannot offer a stepper or keyboard, and opening the app defeats its purpose. The guardrails replace the stepper's "small deliberate steps" with explicit checks, so a mis-heard value does not silently land in long-lived health data. Phrases include the app name so Siri can tell LogWeight apart from Apple Health's built-in weight logging. See `specs/002-siri-log-weight/`.
