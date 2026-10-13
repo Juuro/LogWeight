@@ -14,9 +14,19 @@ The app:
 - maintains **no** separate weight database.
 - writes **no** weight values to logs, `UserDefaults`, `Keychain`, files, or any other persistent storage.
 - contains **no** third-party SDKs (no analytics, no crash reporters, no auth providers).
-- does **not** access the contact book, location, microphone, camera, photos, or any sensor other than HealthKit body-mass.
+- does **not** access the contact book, location, microphone, camera, photos, or any sensor other than HealthKit body-mass. (When you log a weight by voice, Siri handles the audio inside the operating system; the app only receives the resulting number.)
 
 Cross-device synchronisation, when the user has more than one device, is handled by Apple Health itself.
+
+## Siri and Shortcuts
+
+LogWeight offers a "Log Weight" action for Siri, the Shortcuts app, Spotlight, and the Action Button.
+
+- Voice and Shortcuts input are processed by the operating system under Apple's own privacy terms. The app receives only a numeric weight and writes it to Apple Health through the same path as manual entry.
+- The action requires an unlocked device, does not open the app, and does not donate interactions or shortcuts.
+- Spoken values, weights, and dates are never written to logs; instrumentation records only literal event names and numeric error codes.
+- Nothing leaves the device because of this feature, and it adds no analytics, tracking, or third-party SDKs.
+- A small cached copy of the latest saved weight is written to the app group so widgets can render, exactly as for manual saves; it is not a separate weight database.
 
 ## Feedback
 
