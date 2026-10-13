@@ -122,3 +122,22 @@
 "Feedback emails include only your app version, iOS version, and device model. No health data is attached." = "意見回饋郵件僅包含 App 版本、iOS 版本和裝置型號，不會附帶任何健康資料。";
 "Email address copied" = "電子郵件地址已拷貝";
 "LogWeight feedback" = "LogWeight 意見回饋";
+
+"What's your weight?" = "你的體重是多少？";
+"Logged %@." = "已記錄 %@。";
+"Open LogWeight once to allow access to Apple Health." = "請先開啟一次 LogWeight，以允許存取「Apple 健康」。";
+"Enter a valid weight." = "請輸入有效的體重。";
+"Couldn't log your weight. Please try again." = "無法記錄你的體重。請重試。";
+
+"Log ${weight}" = "記錄 ${weight}";
+"Saves your weight to Apple Health." = "將你的體重儲存到「Apple 健康」。";
+
+"%@ looks unusual. Log it anyway?" = "%@ 看起來不太尋常。仍要記錄嗎？";
+
+"Not logged. That weight looks unusual." = "未記錄。該體重看起來不太尋常。";
+
+"Already logged %@." = "%@ 已記錄。";
+
+"Unit" = "單位";
+"Kilograms" = "公斤";
+"Pounds" = "磅";

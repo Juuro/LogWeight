@@ -122,3 +122,22 @@
 "Feedback emails include only your app version, iOS version, and device model. No health data is attached." = "Los correos de comentarios solo incluyen la versión de la app, la versión de iOS y el modelo del dispositivo. No se adjuntan datos de salud.";
 "Email address copied" = "Dirección de correo copiada";
 "LogWeight feedback" = "Comentarios sobre LogWeight";
+
+"What's your weight?" = "¿Cuánto pesas?";
+"Logged %@." = "%@ registrado.";
+"Open LogWeight once to allow access to Apple Health." = "Abre LogWeight una vez para permitir el acceso a Apple Health.";
+"Enter a valid weight." = "Introduce un peso válido.";
+"Couldn't log your weight. Please try again." = "No se pudo registrar tu peso. Inténtalo de nuevo.";
+
+"Log ${weight}" = "Registrar ${weight}";
+"Saves your weight to Apple Health." = "Guarda tu peso en Apple Health.";
+
+"%@ looks unusual. Log it anyway?" = "%@ parece inusual. ¿Registrarlo de todos modos?";
+
+"Not logged. That weight looks unusual." = "No registrado. Ese peso parece inusual.";
+
+"Already logged %@." = "%@ ya registrado.";
+
+"Unit" = "Unidad";
+"Kilograms" = "Kilogramos";
+"Pounds" = "Libras";

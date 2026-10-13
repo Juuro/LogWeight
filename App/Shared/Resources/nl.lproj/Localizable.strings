@@ -122,3 +122,22 @@
 "Feedback emails include only your app version, iOS version, and device model. No health data is attached." = "Feedbackmails bevatten alleen je app-versie, iOS-versie en apparaatmodel. Er worden geen gezondheidsgegevens meegestuurd.";
 "Email address copied" = "E-mailadres gekopieerd";
 "LogWeight feedback" = "LogWeight-feedback";
+
+"What's your weight?" = "Hoeveel weeg je?";
+"Logged %@." = "%@ vastgelegd.";
+"Open LogWeight once to allow access to Apple Health." = "Open LogWeight één keer om toegang tot Apple Gezondheid toe te staan.";
+"Enter a valid weight." = "Voer een geldig gewicht in.";
+"Couldn't log your weight. Please try again." = "Je gewicht kon niet worden vastgelegd. Probeer het opnieuw.";
+
+"Log ${weight}" = "${weight} vastleggen";
+"Saves your weight to Apple Health." = "Slaat je gewicht op in Apple Gezondheid.";
+
+"%@ looks unusual. Log it anyway?" = "%@ ziet er ongebruikelijk uit. Toch vastleggen?";
+
+"Not logged. That weight looks unusual." = "Niet vastgelegd. Dat gewicht ziet er ongebruikelijk uit.";
+
+"Already logged %@." = "%@ al vastgelegd.";
+
+"Unit" = "Eenheid";
+"Kilograms" = "Kilogram";
+"Pounds" = "Pond (lb)";

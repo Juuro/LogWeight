@@ -47,11 +47,14 @@ struct DecrementWeightIntent: AppIntent {
     }
 }
 
-/// Saves through HealthKit in the host app process. Widget extensions cannot
-/// reliably write body-mass samples; `openAppWhenRun` hands off to LogWeight.
+/// Widget-only: saves the widget's staged value through HealthKit in the host
+/// app process. Widget extensions cannot reliably write body-mass samples;
+/// `openAppWhenRun` hands off to LogWeight. Hidden from Shortcuts and has no
+/// spoken phrases; voice and Shortcuts logging uses `LogWeightIntent`.
 struct SaveWeightIntent: AppIntent {
     static let title: LocalizedStringResource = "Save Weight"
     static let openAppWhenRun = true
+    static let isDiscoverable = false
 
     func perform() async throws -> some IntentResult {
         let store = HKHealthStoreAdapter()

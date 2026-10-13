@@ -1,0 +1,4 @@
+/* Spoken phrases for LogWeightIntent. Each value must contain ${applicationName} exactly once. */
+"Log weight in ${applicationName}" = "Gewicht in ${applicationName} erfassen";
+"Log my weight in ${applicationName}" = "Mein Gewicht in ${applicationName} erfassen";
+"Save weight in ${applicationName}" = "Gewicht in ${applicationName} speichern";
